@@ -29,7 +29,7 @@ from backend.config import settings
 class ResearchState(TypedDict):
     url: str
     concept: Optional[str]
-    "source_type": Optional[str]          # arxiv | pdf_url | generic_research_url | upload
+    source_type: Optional[str]          # arxiv | pdf_url | generic_research_url | upload
     arxiv_id: Optional[str]
     title: Optional[str]
     authors: list[str]
