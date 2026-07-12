@@ -1,0 +1,75 @@
+# ── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ──────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Logs ───────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+celerybeat-schedule
+
+# ── Environment / Secrets ────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+env/
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── Node / Next.js ───────────────────────────────────────────────────────────
+node_modules/
+/.next/
+/out/
+/build
+*.tsbuildinfo
+next-env.d.ts
+
+# ── Testing / Coverage ───────────────────────────────────────────────────────
+/coverage
+.nyc_output
+
+# ── Misc build artifacts ──────────────────────────────────────────────────────
+.vercel
+*.pem
+
+# ── Temporary / debug files ────────────────────────────────────────────────────
+*.dump
+*.dump.html
+*.session.json
+*.session.pkl
+test.pdf
+job_id.txt
+startup.txt
+scratch_check.py
+login_dump.html
+post_dump.html
+post_dump_new.html
+
+# ── Backend scratch / debug scripts (keep folder, ignore contents) ────────────
+backend/scratch/*
+!backend/scratch/.gitkeep
+
+# ── Data wipe script — do not ship to production ─────────────────────────────
+backend/wipe_data.py
