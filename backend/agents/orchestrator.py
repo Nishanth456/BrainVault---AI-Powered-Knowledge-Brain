@@ -128,6 +128,63 @@ async def plaintext_agent_node(state: BrainVaultState) -> dict:
     }
 
 
+# ── Phase 3: Real Blog agent adapter ─────────────────────────────────────────
+
+async def blog_agent_node(state: BrainVaultState) -> dict:
+    """
+    Adapter: runs the Blog LangGraph subgraph and merges results
+    back into the master BrainVaultState.
+    """
+    from backend.agents.blog_agent import blog_subgraph, BlogState
+
+    blog_state = BlogState(
+        url=state["raw_input"].strip(),
+        concept=state.get("concept") or "",
+        site=None,
+        title=None,
+        author=None,
+        published_date=None,
+        article_text=None,
+        summary=None,
+        key_concepts=None,
+        tags=None,
+        metadata=None,
+        difficulty=None,
+        knowledge_tree=None,
+        knowledge_domain=None,
+        is_interview_qna=None,
+        qna_pairs=None,
+        agent_steps=[],
+        error=None,
+    )
+
+    compiled = blog_subgraph.compile()
+    result = await compiled.ainvoke(blog_state)
+
+    metadata = result.get("metadata") or {}
+    is_qna = result.get("is_interview_qna")
+    final_type = "interview_qna" if is_qna else "blog"
+
+    return {
+        "input_type":       final_type,
+        "extracted_text":   result.get("article_text", ""),
+        "title":            metadata.get("title", result.get("title", "")),
+        "summary":          result.get("summary", ""),
+        "key_concepts":     result.get("key_concepts") or [],
+        "tags":             result.get("tags") or [],
+        "difficulty":       result.get("difficulty", 3),
+        "knowledge_tree":   result.get("knowledge_tree", ""),
+        "knowledge_domain": result.get("knowledge_domain"),
+        "qna_pairs":        result.get("qna_pairs") or [],
+        "metadata":         metadata,
+        "attachments":      [],
+        "agent_steps":      result.get("agent_steps") or [],
+        "error":            result.get("error"),
+        "source_url":       state["raw_input"].strip(),
+        "author":           result.get("author", ""),
+    }
+
+
 # ── Stub nodes (Phase 0 — pass state through until implemented) ────────────────
 
 async def detect_input_node(state: BrainVaultState) -> dict:
@@ -188,9 +245,12 @@ def build_master_graph():
     # Phase 1: real LinkedIn agent
     graph.add_node("linkedin_agent", linkedin_agent_node)
 
+    # Phase 3: real Blog agent
+    graph.add_node("blog_agent", blog_agent_node)
+
     # All other agents: stubs until their phase
     stub_agents = [
-        "blog_agent", "pdf_agent", "research_agent",
+        "pdf_agent", "research_agent",
         "github_agent", "youtube_agent", "course_agent",
     ]
     for name in stub_agents:

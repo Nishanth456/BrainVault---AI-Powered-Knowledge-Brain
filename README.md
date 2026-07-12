@@ -49,7 +49,7 @@ In another **new terminal**:
 ```bash
 cd frontend
 npm install   # only the first time
-npm run dev
+npm.cmd run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.

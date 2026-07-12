@@ -67,6 +67,12 @@ export async function listNotes(limit = 20): Promise<KnowledgeItem[]> {
   return res.json()
 }
 
+export async function listBlogs(limit = 20): Promise<KnowledgeItem[]> {
+  const res = await fetch(`${API_BASE}/api/knowledge/blogs?limit=${limit}`)
+  if (!res.ok) throw new Error(`Blogs list failed: ${res.status}`)
+  return res.json()
+}
+
 export async function getKnowledgeItem(id: string): Promise<KnowledgeItem> {
   const res = await fetch(`${API_BASE}/api/knowledge/${id}`)
   if (!res.ok) throw new Error(`Get failed: ${res.status}`)
