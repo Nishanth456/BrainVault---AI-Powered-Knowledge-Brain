@@ -188,6 +188,175 @@ async def blog_agent_node(state: BrainVaultState) -> dict:
     }
 
 
+# ── Phase 4: Real Research paper agent adapter ───────────────────────────────
+
+async def research_agent_node(state: BrainVaultState) -> dict:
+    """
+    Adapter: runs the Research LangGraph subgraph and merges results
+    back into the master BrainVaultState.
+    """
+    from backend.agents.research_agent import research_subgraph, ResearchState
+
+    research_state = ResearchState(
+        url=state["raw_input"].strip(),
+        concept=state.get("concept") or "",
+        source_type=None,
+        arxiv_id=None,
+        title=None,
+        authors=[],
+        published_date=None,
+        abstract=None,
+        primary_category=None,
+        pdf_url=None,
+        source_url=None,
+        local_pdf_path=None,
+        minio_path=None,
+        article_text=None,
+        structured=None,
+        summary=None,
+        key_concepts=None,
+        tags=None,
+        metadata=None,
+        difficulty=None,
+        knowledge_tree=None,
+        knowledge_domain=None,
+        agent_steps=[],
+        error=None,
+    )
+
+    compiled = research_subgraph.compile()
+    result = await compiled.ainvoke(research_state)
+
+    metadata = result.get("metadata") or {}
+    final_title = result.get("title") or metadata.get("title", "Untitled Research Paper")
+
+    attachments = []
+    if result.get("minio_path"):
+        attachments.append({
+            "filename": result.get("minio_path", "").split("/")[-1],
+            "minio_path": result["minio_path"],
+            "file_type": "pdf",
+            "file_size_bytes": None,
+            "page_count": metadata.get("page_count"),
+            "extracted_text": (result.get("article_text") or "")[:20000],
+        })
+
+    return {
+        "input_type":       "research",
+        "extracted_text":   result.get("article_text", ""),
+        "title":            final_title,
+        "summary":          result.get("summary", ""),
+        "key_concepts":     result.get("key_concepts") or [],
+        "tags":             result.get("tags") or [],
+        "difficulty":       result.get("difficulty", 3),
+        "knowledge_tree":   result.get("knowledge_tree", ""),
+        "knowledge_domain": result.get("knowledge_domain"),
+        "qna_pairs":        [],
+        "metadata":         metadata,
+        "attachments":      attachments,
+        "agent_steps":      result.get("agent_steps") or [],
+        "error":            result.get("error"),
+        "source_url":       result.get("source_url") or state["raw_input"].strip(),
+        "author":           ", ".join(result.get("authors") or []),
+    }
+
+
+# ── Phase 5: Real YouTube agent adapter (stub) ───────────────────────────────
+
+async def youtube_agent_node(state: BrainVaultState) -> dict:
+    """Stub adapter for the YouTube agent."""
+    return {
+        "input_type":       "youtube",
+        "extracted_text":   "",
+        "title":            "YouTube video (stub)",
+        "summary":          "",
+        "key_concepts":     [],
+        "tags":             [],
+        "difficulty":       3,
+        "knowledge_tree":   "",
+        "knowledge_domain": None,
+        "qna_pairs":        [],
+        "metadata":         {},
+        "attachments":      [],
+        "agent_steps":      ["🎬 YouTube agent stub invoked"],
+        "error":            None,
+        "source_url":       state["raw_input"].strip(),
+        "author":           None,
+    }
+
+
+# ── Phase 6: Real GitHub agent adapter (stub) ────────────────────────────────
+
+async def github_agent_node(state: BrainVaultState) -> dict:
+    """Stub adapter for the GitHub agent."""
+    return {
+        "input_type":       "github",
+        "extracted_text":   "",
+        "title":            "GitHub repository (stub)",
+        "summary":          "",
+        "key_concepts":     [],
+        "tags":             [],
+        "difficulty":       3,
+        "knowledge_tree":   "",
+        "knowledge_domain": None,
+        "qna_pairs":        [],
+        "metadata":         {},
+        "attachments":      [],
+        "agent_steps":      ["🐙 GitHub agent stub invoked"],
+        "error":            None,
+        "source_url":       state["raw_input"].strip(),
+        "author":           None,
+    }
+
+
+# ── Phase 7: Real Course agent adapter (stub) ────────────────────────────────
+
+async def course_agent_node(state: BrainVaultState) -> dict:
+    """Stub adapter for the Course agent."""
+    return {
+        "input_type":       "course",
+        "extracted_text":   "",
+        "title":            "Course (stub)",
+        "summary":          "",
+        "key_concepts":     [],
+        "tags":             [],
+        "difficulty":       3,
+        "knowledge_tree":   "",
+        "knowledge_domain": None,
+        "qna_pairs":        [],
+        "metadata":         {},
+        "attachments":      [],
+        "agent_steps":      ["🎓 Course agent stub invoked"],
+        "error":            None,
+        "source_url":       state["raw_input"].strip(),
+        "author":           None,
+    }
+
+
+# ── Phase 8: Real Certification agent adapter (stub) ─────────────────────────
+
+async def certification_agent_node(state: BrainVaultState) -> dict:
+    """Stub adapter for the Certification agent."""
+    return {
+        "input_type":       "certification",
+        "extracted_text":   "",
+        "title":            "Certification (stub)",
+        "summary":          "",
+        "key_concepts":     [],
+        "tags":             [],
+        "difficulty":       3,
+        "knowledge_tree":   "",
+        "knowledge_domain": None,
+        "qna_pairs":        [],
+        "metadata":         {},
+        "attachments":      [],
+        "agent_steps":      ["🏅 Certification agent stub invoked"],
+        "error":            None,
+        "source_url":       state["raw_input"].strip(),
+        "author":           None,
+    }
+
+
 # ── Stub nodes (Phase 0 — pass state through until implemented) ────────────────
 
 async def detect_input_node(state: BrainVaultState) -> dict:
@@ -225,14 +394,15 @@ def route_by_type(state: BrainVaultState) -> str:
     """Route to the right agent based on detected input type."""
     input_type = state.get("input_type", "plaintext")
     routing = {
-        "linkedin":  "linkedin_agent",
-        "blog":      "blog_agent",
-        "pdf":       "pdf_agent",
-        "research":  "research_agent",
-        "github":    "github_agent",
-        "youtube":   "youtube_agent",
-        "course":    "course_agent",
-        "plaintext": "plaintext_agent",
+        "linkedin":       "linkedin_agent",
+        "blog":           "blog_agent",
+        "pdf":            "pdf_agent",
+        "research":       "research_agent",
+        "github":         "github_agent",
+        "youtube":        "youtube_agent",
+        "course":         "course_agent",
+        "certification":  "certification_agent",
+        "plaintext":      "plaintext_agent",
     }
     return routing.get(input_type, "plaintext_agent")
 
@@ -251,22 +421,30 @@ def build_master_graph():
     # Phase 3: real Blog agent
     graph.add_node("blog_agent", blog_agent_node)
 
-    # All other agents: stubs until their phase
-    stub_agents = [
-        "pdf_agent", "research_agent",
-        "github_agent", "youtube_agent", "course_agent",
-    ]
-    for name in stub_agents:
-        graph.add_node(name, stub_agent_node)
+    # Phase 4: real Research agent
+    graph.add_node("research_agent", research_agent_node)
+
+    # Phase 5-8: stub adapters for future agents
+    graph.add_node("youtube_agent", youtube_agent_node)
+    graph.add_node("github_agent", github_agent_node)
+    graph.add_node("course_agent", course_agent_node)
+    graph.add_node("certification_agent", certification_agent_node)
 
     # Phase 2: real plaintext agent
     graph.add_node("plaintext_agent", plaintext_agent_node)
+
+    # PDFs are handled by the research agent for now
+    graph.add_node("pdf_agent", research_agent_node)
 
     # Store node
     graph.add_node("store", store_node)
 
     # Routing
-    all_agents = ["linkedin_agent", "blog_agent"] + stub_agents + ["plaintext_agent"]
+    all_agents = [
+        "linkedin_agent", "blog_agent", "research_agent",
+        "youtube_agent", "github_agent", "course_agent", "certification_agent",
+        "plaintext_agent", "pdf_agent",
+    ]
     graph.set_entry_point("detect_input")
     graph.add_conditional_edges("detect_input", route_by_type, {
         name: name for name in all_agents

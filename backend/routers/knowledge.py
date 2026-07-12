@@ -232,6 +232,54 @@ async def get_blog_items(
     ]
 
 
+@router.get("/papers")
+async def get_paper_items(
+    limit: int = Query(default=20, le=100),
+    offset: int = Query(default=0, ge=0),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return all Research Paper knowledge items."""
+    result = await db.execute(
+        select(KnowledgeItem)
+        .options(selectinload(KnowledgeItem.attachments))
+        .where(KnowledgeItem.type == "research")
+        .order_by(KnowledgeItem.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    items = result.scalars().all()
+
+    return [
+        {
+            "id":                   str(item.id),
+            "type":                 item.type,
+            "title":                item.title,
+            "summary":              item.summary,
+            "source_url":           item.source_url,
+            "author":               item.author,
+            "key_concepts":         item.key_concepts or [],
+            "tags":                 item.tags or [],
+            "difficulty":           item.difficulty,
+            "reading_time_minutes": item.reading_time_minutes,
+            "importance_score":     item.importance_score,
+            "knowledge_tree":       item.knowledge_tree,
+            "knowledge_domain":     item.knowledge_domain,
+            "created_at":           item.created_at.isoformat(),
+            "attachments": [
+                {
+                    "id":         str(att.id),
+                    "filename":   att.filename,
+                    "minio_path": att.minio_path,
+                    "file_type":  att.file_type,
+                    "page_count": att.page_count,
+                }
+                for att in item.attachments
+            ],
+        }
+        for item in items
+    ]
+
+
 @router.get("/{item_id}")
 async def get_knowledge_item(item_id: str, db: AsyncSession = Depends(get_db)):
     """Get a single knowledge item by ID, including its attachments."""
@@ -249,6 +297,7 @@ async def get_knowledge_item(item_id: str, db: AsyncSession = Depends(get_db)):
         "type":           item.type,
         "title":          item.title,
         "summary":        item.summary,
+        "raw_content":    item.raw_content,
         "source_url":     item.source_url,
         "author":         item.author,
         "key_concepts":   item.key_concepts or [],
@@ -256,6 +305,7 @@ async def get_knowledge_item(item_id: str, db: AsyncSession = Depends(get_db)):
         "difficulty":     item.difficulty,
         "reading_time":   item.reading_time_minutes,
         "knowledge_tree": item.knowledge_tree,
+        "knowledge_domain": item.knowledge_domain,
         "created_at":     item.created_at.isoformat(),
         "attachments": [
             {

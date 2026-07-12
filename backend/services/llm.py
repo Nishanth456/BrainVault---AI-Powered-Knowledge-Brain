@@ -15,16 +15,17 @@ async def detect_input_type(raw_input: str) -> str:
     Returns: 'linkedin' | 'blog' | 'pdf' | 'research' | 'github' | 'youtube' | 'course' | 'plaintext'
     """
     prompt = f"""Classify this input into exactly one of these categories:
-linkedin, blog, pdf, research, github, youtube, course, plaintext
+linkedin, blog, pdf, research, github, youtube, course, certification, plaintext
 
 Rules:
 - linkedin: any linkedin.com URL
 - blog: Medium, Dev.to, Hashnode, Substack, or any blog post URL
 - pdf: a .pdf file path or PDF URL
-- research: arxiv.org URL or academic paper link
+- research: arxiv.org URL, ResearchGate, or any academic paper link
 - github: github.com URL
 - youtube: youtube.com or youtu.be URL
 - course: Udemy, Coursera, fast.ai, DeepLearning.AI URL
+- certification: certification exam page, practice test, or credential URL
 - plaintext: everything else (pasted text, notes, code, conversations)
 
 Input: {raw_input[:500]}
@@ -40,7 +41,7 @@ Respond with ONLY the category name, nothing else."""
         )
 
         detected = response.choices[0].message.content.strip().lower()
-        valid_types = ["linkedin", "blog", "pdf", "research", "github", "youtube", "course", "plaintext"]
+        valid_types = ["linkedin", "blog", "pdf", "research", "github", "youtube", "course", "certification", "plaintext"]
         return detected if detected in valid_types else "plaintext"
 
     except Exception as e:
