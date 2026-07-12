@@ -95,6 +95,42 @@ async def extract_blog_metadata(state: BlogState) -> dict:
     title = state.get("title") or ""
     author = state.get("author") or ""
 
+    # If we already have a good title from the scraper, trust it and just clean author
+    if title and len(title) > 5:
+        if not author:
+            response = await call_llm(
+                prompt=f"""Extract the author name or publication from this blog text.
+Return ONLY a JSON object:
+{{
+  "author": "the author name or publication"
+}}
+
+Current author hint: {author or "unknown"}
+
+Text sample:
+{text[:2000]}
+
+Return ONLY valid JSON.""",
+                model="groq/llama-3.1-8b-instant",
+                system="You are a metadata extraction assistant. Return only valid JSON.",
+                max_tokens=100,
+                temperature=0,
+            )
+            try:
+                clean = response.strip().strip("```json").strip("```").strip()
+                data = json.loads(clean)
+                final_author = data.get("author") or author or "Unknown"
+            except Exception:
+                final_author = author or "Unknown"
+        else:
+            final_author = author
+
+        return {
+            "title": title,
+            "author": final_author,
+            "agent_steps": [f"✅ Metadata extracted — {title} by {final_author}"],
+        }
+
     response = await call_llm(
         prompt=f"""Extract the article title and author from this blog text.
 Return ONLY a JSON object:

@@ -66,13 +66,17 @@ async def fetch_blog(url: str) -> dict:
 
     soup = BeautifulSoup(html, "lxml")
 
-    # Title
+    # Title: prefer article heading, then og:title, then <title>
     title = None
-    if soup.title:
+    h1 = soup.find("h1")
+    if h1:
+        title = h1.get_text(strip=True)
+    if not title:
+        og_title = soup.find("meta", property="og:title")
+        if og_title and og_title.get("content"):
+            title = og_title["content"].strip()
+    if not title and soup.title:
         title = soup.title.get_text(strip=True)
-    og_title = soup.find("meta", property="og:title")
-    if og_title and og_title.get("content"):
-        title = og_title["content"].strip()
 
     # Author
     author = None

@@ -263,7 +263,7 @@ def build_master_graph():
     graph.add_node("store", store_node)
 
     # Routing
-    all_agents = ["linkedin_agent"] + stub_agents + ["plaintext_agent"]
+    all_agents = ["linkedin_agent", "blog_agent"] + stub_agents + ["plaintext_agent"]
     graph.set_entry_point("detect_input")
     graph.add_conditional_edges("detect_input", route_by_type, {
         name: name for name in all_agents

@@ -1,8 +1,7 @@
 "use client"
 import { useState } from "react"
-import Link from "next/link"
 import {
-  Clock, BookOpen, ExternalLink, User, Globe, ChevronRight, Trash2, Loader2
+  Clock, ExternalLink, User, Globe, Trash2, Loader2
 } from "lucide-react"
 
 const difficultyLabel = ["", "Beginner", "Basic", "Intermediate", "Advanced", "Expert"]
@@ -57,119 +56,101 @@ export function BlogCard({ item, onDelete }: { item: BlogItem; onDelete?: (id: s
   }
 
   return (
-    <div className="group relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-5
-                    hover:border-orange-500/30 hover:bg-white/[0.05] transition-all duration-300
-                    flex flex-col gap-3.5 overflow-hidden">
-
+    <a
+      href={item.source_url || "#"}
+      target={item.source_url ? "_blank" : undefined}
+      rel={item.source_url ? "noopener noreferrer" : undefined}
+      className="group block relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 hover:border-orange-500/30 hover:bg-white/[0.05] transition-all duration-300 overflow-hidden"
+    >
       {/* Subtle gradient on hover */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300
-                      bg-gradient-to-br from-orange-600/5 via-transparent to-transparent rounded-2xl pointer-events-none" />
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-orange-600/5 via-transparent to-transparent rounded-2xl pointer-events-none" />
 
-      {/* Header row */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-orange-500/15 flex items-center justify-center flex-shrink-0">
-            <Globe size={13} className="text-orange-400" />
-          </div>
-          <span className="text-xs text-zinc-500 font-medium">{item.site || "Blog"}</span>
+      <div className="relative flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
+        {/* Site icon */}
+        <div className="w-10 h-10 rounded-xl bg-orange-500/15 flex items-center justify-center flex-shrink-0">
+          <Globe size={18} className="text-orange-400" />
         </div>
 
-        <div className="flex items-center gap-2">
-          {diff > 0 && (
-            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${difficultyColor[diff]}`}>
-              {difficultyLabel[diff]}
+        {/* Main content */}
+        <div className="flex-1 min-w-0 flex flex-col gap-3">
+          {/* Header row: site + difficulty + delete */}
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-xs text-zinc-500 font-medium">{item.site || "Blog"}</span>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {diff > 0 && (
+                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${difficultyColor[diff]}`}>
+                  {difficultyLabel[diff]}
+                </span>
+              )}
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  handleDelete()
+                }}
+                disabled={isDeleting}
+                className="text-zinc-500 hover:text-red-400 p-1 rounded-md hover:bg-red-400/10 transition-colors disabled:opacity-50"
+                title="Delete this blog"
+              >
+                {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Title */}
+          <h3 className="text-base font-semibold text-white leading-snug line-clamp-2">
+            {item.title || "Untitled Blog Post"}
+          </h3>
+
+          {/* Author + reading time */}
+          <div className="flex items-center gap-3 text-xs text-zinc-500 flex-wrap">
+            {item.author && (
+              <span className="flex items-center gap-1.5">
+                <User size={11} />
+                <span className="truncate max-w-[200px]">{item.author}</span>
+              </span>
+            )}
+            <span className="flex items-center gap-1.5">
+              <Clock size={11} />
+              {item.reading_time_minutes ? `${item.reading_time_minutes} min read` : "Saved"}
             </span>
+          </div>
+
+          {/* Summary */}
+          {item.summary && (
+            <p
+              className="text-sm text-zinc-400 leading-relaxed line-clamp-2"
+              title={item.summary}
+            >
+              {item.summary}
+            </p>
           )}
 
-          <button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="text-zinc-500 hover:text-red-400 p-1 rounded-md hover:bg-red-400/10 transition-colors disabled:opacity-50"
-            title="Delete this blog"
-          >
-            {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-          </button>
+          {/* Tags */}
+          {item.tags?.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {item.tags.slice(0, 6).map(tag => (
+                <span
+                  key={tag}
+                  className="px-2 py-0.5 text-[11px] bg-orange-600/10 text-orange-300
+                             rounded-full border border-orange-600/15"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
 
-      {/* Title */}
-      <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2 -mb-1">
-        {item.title || "Untitled Blog Post"}
-      </h3>
-
-      {/* Author */}
-      {item.author && (
-        <div className="flex items-center gap-1.5 text-xs text-zinc-500">
-          <User size={11} />
-          <span className="truncate">{item.author}</span>
-        </div>
-      )}
-
-      {/* Summary */}
-      <p
-        className="text-xs text-zinc-400 leading-relaxed line-clamp-2"
-        title={item.summary}
-      >
-        {item.summary}
-      </p>
-
-      {/* Tags */}
-      {item.tags?.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {item.tags.slice(0, 4).map(tag => (
-            <span
-              key={tag}
-              className="px-2 py-0.5 text-[11px] bg-orange-600/10 text-orange-300
-                         rounded-full border border-orange-600/15"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Knowledge tree */}
-      {item.knowledge_tree && (
-        <div className="flex items-center gap-1 text-[11px] text-zinc-600 truncate">
-          <ChevronRight size={10} className="flex-shrink-0" />
-          <span className="truncate">{item.knowledge_tree}</span>
-        </div>
-      )}
-
-      {/* Footer actions */}
-      <div className="flex items-center gap-2 mt-auto pt-2 border-t border-white/[0.05]">
-        <Link
-          href={`/knowledge/blogs/${item.id}/reader`}
-          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium
-                     bg-orange-600/20 hover:bg-orange-600/35 text-orange-300 hover:text-orange-200
-                     rounded-lg py-2 px-3 transition-all duration-200 border border-orange-600/20
-                     hover:border-orange-500/40"
-        >
-          <BookOpen size={12} />
-          Read
-        </Link>
-
+        {/* External link arrow */}
         {item.source_url && (
-          <a
-            href={item.source_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1.5 text-xs text-zinc-500
-                       hover:text-zinc-300 rounded-lg py-2 px-3 border border-white/[0.06]
-                       hover:border-white/15 transition-all duration-200"
-          >
-            <ExternalLink size={11} />
-            Source
-          </a>
-        )}
-
-        {!item.source_url && (
-          <div className="flex items-center gap-1.5 text-xs text-zinc-600">
-            <Clock size={11} />
-            {item.reading_time_minutes ? `${item.reading_time_minutes} min read` : "Saved"}
+          <div className="hidden sm:flex items-center justify-center w-9 h-9 rounded-lg border border-white/[0.08]
+                          text-zinc-500 group-hover:text-orange-300 group-hover:border-orange-500/30
+                          transition-colors flex-shrink-0 self-center">
+            <ExternalLink size={15} />
           </div>
         )}
       </div>
-    </div>
+    </a>
   )
 }
