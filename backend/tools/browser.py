@@ -20,6 +20,8 @@ from backend.config import settings
 # ── Cookie persistence ────────────────────────────────────────────────────────
 # Store cookies next to this file so they survive restarts
 _COOKIE_FILE = Path(__file__).parent.parent / "linkedin_session.json"
+_LOGIN_DUMP_FILE = Path(__file__).parent.parent / "login_dump.html"
+_POST_DUMP_FILE = Path(__file__).parent.parent / "post_dump.html"
 
 
 class LinkedInScraper:
@@ -50,23 +52,23 @@ class LinkedInScraper:
             "viewport": {"width": 1280, "height": 800},
             "extra_http_headers": {"Accept-Language": "en-US,en;q=0.9"},
         }
-        
+
         if _COOKIE_FILE.exists():
             print("🍪 LinkedIn session restored from storage state file")
             context_args["storage_state"] = str(_COOKIE_FILE)
-            
+
         context = await browser.new_context(**context_args)
 
         if _COOKIE_FILE.exists():
             # Session is loaded natively via context creation, skip headless login
             return context, browser
 
-        # No saved session — need to log in
+        # No saved session — try auto-login with credentials as a last resort
         await self._login(context)
         return context, browser
 
     async def _login(self, context: BrowserContext) -> None:
-        """Log in to LinkedIn and save session cookies."""
+        """Log in to LinkedIn and save session storage state."""
         email = settings.LINKEDIN_EMAIL
         password = settings.LINKEDIN_PASSWORD
 
@@ -74,7 +76,7 @@ class LinkedInScraper:
             print("⚠️ LinkedIn credentials not configured in backend/.env")
             return
 
-        print("🔐 Logging in to LinkedIn...")
+        print("🔐 No saved session found; attempting auto-login to LinkedIn...")
         page = await context.new_page()
 
         try:
@@ -89,7 +91,7 @@ class LinkedInScraper:
 
             # Submit login form
             await page.keyboard.press("Enter")
-            
+
             # Wait for login to complete by checking for a known post-login element or URL
             try:
                 await page.wait_for_url("**/feed/**", timeout=15000)
@@ -97,25 +99,36 @@ class LinkedInScraper:
                 pass
             current_url = page.url
             if "feed" in current_url or "mynetwork" in current_url or current_url == "https://www.linkedin.com/":
-                print("✅ LinkedIn login successful")
-                # Save cookies for future requests
-                cookies = await context.cookies()
-                _COOKIE_FILE.write_text(json.dumps(cookies))
+                print("✅ LinkedIn auto-login successful")
+                _COOKIE_FILE.parent.mkdir(parents=True, exist_ok=True)
+                await context.storage_state(path=str(_COOKIE_FILE))
                 print(f"🍪 Session saved to {_COOKIE_FILE}")
             elif "checkpoint" in current_url or "challenge" in current_url:
                 print("⚠️ LinkedIn 2FA/CAPTCHA required — cannot proceed automatically")
+                await self._save_login_dump(page)
             elif "login" in current_url:
-                print("❌ LinkedIn login failed — check credentials in backend/.env")
+                print("❌ LinkedIn auto-login failed — check credentials in backend/.env")
+                await self._save_login_dump(page)
             else:
-                # Still save cookies — may have succeeded in a different way
-                cookies = await context.cookies()
-                _COOKIE_FILE.write_text(json.dumps(cookies))
+                # Still save session — may have succeeded in a different way
+                _COOKIE_FILE.parent.mkdir(parents=True, exist_ok=True)
+                await context.storage_state(path=str(_COOKIE_FILE))
                 print(f"✅ LinkedIn session saved (landed at: {current_url})")
 
         except Exception as e:
             print(f"❌ Login error: {e}")
+            await self._save_login_dump(page)
         finally:
             await page.close()
+
+    async def _save_login_dump(self, page: Page) -> None:
+        """Save the current page HTML so the user can inspect login failures."""
+        try:
+            html = await page.content()
+            _LOGIN_DUMP_FILE.write_text(html, encoding="utf-8")
+            print(f"📝 Login debug dump saved to {_LOGIN_DUMP_FILE}")
+        except Exception as dump_err:
+            print(f"⚠️ Could not save login dump: {dump_err}")
 
     async def _is_session_valid(self, page: Page) -> bool:
         """Check if the current session is still valid (not redirected to login)."""
@@ -134,23 +147,18 @@ class LinkedInScraper:
                 await page.goto(url, wait_until="networkidle", timeout=45000)
                 await page.wait_for_timeout(4000)  # Let dynamic content load
 
-                # If we hit the login wall, the session has expired — re-login
+                # If we hit the login wall, the session has expired — do NOT auto-login
+                # because LinkedIn blocks headless logins. Ask the user to re-run the
+                # manual login script instead.
                 if not await self._is_session_valid(page):
-                    print("🔄 Session expired — re-logging in...")
+                    print("🔄 LinkedIn session expired or invalid.")
+                    print("   Please run: python scripts/linkedin_login.py")
+                    print("   Then restart the Celery worker and try again.")
                     _COOKIE_FILE.unlink(missing_ok=True)  # Clear stale cookies
+                    await self._save_post_dump(page)
                     await page.close()
-                    await context.close()
                     await browser.close()
-
-                    # Start fresh
-                    async with async_playwright() as p2:
-                        context2, browser2 = await self._get_authenticated_context(p2)
-                        page2 = await context2.new_page()
-                        await page2.goto(url, wait_until="networkidle", timeout=45000)
-                        await page2.wait_for_timeout(4000)
-                        html = await page2.content()
-                        await browser2.close()
-                    return html
+                    return ""
 
                 # Try to expand "see more" on post text
                 try:
@@ -174,6 +182,15 @@ class LinkedInScraper:
                 await browser.close()
 
         return html
+
+    async def _save_post_dump(self, page: Page) -> None:
+        """Save the current page HTML so the user can inspect post fetch failures."""
+        try:
+            html = await page.content()
+            _POST_DUMP_FILE.write_text(html, encoding="utf-8")
+            print(f"📝 Post debug dump saved to {_POST_DUMP_FILE}")
+        except Exception as dump_err:
+            print(f"⚠️ Could not save post dump: {dump_err}")
 
     def extract_post_data(self, html: str) -> dict:
         """

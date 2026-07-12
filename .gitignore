@@ -66,6 +66,8 @@ scratch_check.py
 login_dump.html
 post_dump.html
 post_dump_new.html
+login_dump*.html
+post_dump*.html
 
 # ── Backend scratch / debug scripts (keep folder, ignore contents) ────────────
 backend/scratch/*
@@ -73,3 +75,9 @@ backend/scratch/*
 
 # ── Data wipe script — do not ship to production ─────────────────────────────
 backend/wipe_data.py
+
+# ── LinkedIn session / debug files ────────────────────────────────────────────
+backend/linkedin_session.json
+backend/*.dump.html
+backend/*.session.json
+backend/*.session.pkl

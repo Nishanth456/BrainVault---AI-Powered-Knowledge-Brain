@@ -30,3 +30,16 @@ build/
 # Logs
 *.log
 celerybeat-schedule
+
+# LinkedIn session / debug files
+linkedin_session.json
+*.dump.html
+*.session.json
+*.session.pkl
+
+# Scratch workspace
+scratch/*
+!scratch/.gitkeep
+
+# Data wipe script — do not ship to production
+wipe_data.py
