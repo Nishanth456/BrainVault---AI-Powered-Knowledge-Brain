@@ -21,20 +21,23 @@ This starts PostgreSQL, Qdrant, MinIO, and Redis.
 
 ### 2. Run the backend API
 
+Run Uvicorn from the **project root** so Python can resolve the `backend` package:
+
 ```bash
-cd backend
+cd C:\Users\nisha\Projects\BrainVault
 # activate your virtual environment first, e.g. .venv\Scripts\activate on Windows
-uvicorn main:app --reload --port 8000
+uvicorn backend.main:app --reload --port 8000
 ```
+
+> Do not run this from inside the `backend` folder — imports like `from backend.config import settings` require the parent directory to be on the Python path.
 
 ### 3. Run the Celery worker
 
 In a **new terminal**:
 
 ```bash
-cd backend
-# activate your virtual environment
-celery -A tasks.ingestion worker --loglevel=info -P eventlet
+cd C:\Users\nisha\Projects\BrainVault
+backend\venv\Scripts\celery.exe -A backend.tasks.ingestion worker --loglevel=info --pool=solo
 ```
 
 > The worker loads `browser.py` once at startup. After any change to the LinkedIn scraper or agents, **restart the Celery worker** so the new code takes effect.
