@@ -2,7 +2,7 @@
 blog_scraper.py — Fetch and extract content from blog URLs.
 
 Supports:
-- Medium (medium.com, *.medium.com)
+- Medium (medium.com, *.medium.com) via Playwright to bypass Cloudflare
 - Dev.to
 - Hashnode
 - Substack
@@ -33,6 +33,42 @@ def _site_name(url: str) -> str:
     return "Blog"
 
 
+def _is_medium(url: str) -> bool:
+    host = urlparse(url).netloc.lower()
+    return "medium.com" in host or host.endswith(".medium.com")
+
+
+async def _fetch_with_playwright(url: str) -> str:
+    """Use Playwright to fetch the page HTML (for sites that block httpx)."""
+    from playwright.async_api import async_playwright
+
+    html = ""
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(
+            headless=True,
+            args=[
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-blink-features=AutomationControlled",
+            ],
+        )
+        context = await browser.new_context(
+            user_agent=USER_AGENT,
+            viewport={"width": 1280, "height": 800},
+            extra_http_headers={"Accept-Language": "en-US,en;q=0.9"},
+        )
+        page = await context.new_page()
+        try:
+            await page.goto(url, wait_until="networkidle", timeout=45000)
+            await page.wait_for_timeout(3000)
+            html = await page.content()
+        finally:
+            await page.close()
+            await browser.close()
+    return html
+
+
 async def fetch_blog(url: str) -> dict:
     """
     Fetch a blog page and extract clean article text + metadata.
@@ -47,22 +83,31 @@ async def fetch_blog(url: str) -> dict:
         "error": str | None,
     }
     """
+    html = ""
     try:
         async with httpx.AsyncClient(timeout=30, headers={"User-Agent": USER_AGENT}, follow_redirects=True) as client:
             resp = await client.get(url)
             resp.raise_for_status()
             html = resp.text
+
+        # If we got a Cloudflare challenge or tiny payload, fall back to Playwright
+        if len(html) < 2000 or "challenges.cloudflare.com" in html or "cf-mitigated" in html:
+            raise ValueError("Cloudflare challenge detected")
     except Exception as e:
-        return {
-            "url": url,
-            "site": _site_name(url),
-            "title": None,
-            "author": None,
-            "published_date": None,
-            "raw_html": "",
-            "article_text": "",
-            "error": f"Failed to fetch blog: {e}",
-        }
+        # Fallback to Playwright for Medium and other protected sites
+        try:
+            html = await _fetch_with_playwright(url)
+        except Exception as pw_err:
+            return {
+                "url": url,
+                "site": _site_name(url),
+                "title": None,
+                "author": None,
+                "published_date": None,
+                "raw_html": "",
+                "article_text": "",
+                "error": f"Failed to fetch blog: {pw_err}",
+            }
 
     soup = BeautifulSoup(html, "lxml")
 
