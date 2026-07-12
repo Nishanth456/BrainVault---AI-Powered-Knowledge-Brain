@@ -175,17 +175,33 @@ async def summarize_blog(state: BlogState) -> dict:
     text = (state.get("article_text") or "")[:8000]
 
     summary = await call_llm(
-        prompt=f"""Summarize this blog article in 3-5 short sentences.
+        prompt=f"""Summarize this blog article in 3-5 short sentenced paragraph.
 Focus on the key technical insight or learning. Be specific and concise.
 
-IMPORTANT: Output ONLY the summary. No intro, no conclusion.
+CRITICAL RULES:
+- Output ONLY the summary sentences.
+- Do NOT start with "Here is a summary", "Here is a summary of", "In summary", "This article discusses", or any similar meta-text.
+- Do NOT add an introduction, conclusion, or explanation.
+- Do NOT use bullet points or numbered lists.
 
 Article:
 {text}""",
         model="groq/gemma2-9b-it",
-        system="You are a technical knowledge extraction expert.",
+        system="You are a technical knowledge extraction expert. Return only the requested summary with no meta commentary.",
         max_tokens=300,
     )
+
+    # Strip common LLM meta-prefaces as a safety net
+    meta_prefixes = [
+        r"(?i)^here\s+is\s+a\s+summary[^\n]*",
+        r"(?i)^here\s+is\s+the\s+summary[^\n]*",
+        r"(?i)^in\s+summary[^\n]*",
+        r"(?i)^this\s+article\s+discusses[^\n]*",
+        r"(?i)^summary[^\n]*",
+    ]
+    import re
+    for pattern in meta_prefixes:
+        summary = re.sub(pattern, "", summary).strip()
 
     return {
         "summary": summary,
@@ -245,36 +261,40 @@ async def generate_blog_metadata(state: BlogState) -> dict:
     summary = state.get("summary", "")
     concepts = state.get("key_concepts", [])
     tags = state.get("tags", [])
+    existing_title = state.get("title") or "Untitled Blog Post"
 
     response = await call_llm(
-        prompt=f"""Generate metadata for this blog article. Return ONLY a JSON object:
+        prompt=f"""Rate the importance of this blog article on a scale of 1-10.
+Return ONLY a JSON object:
 
 {{
-  "title": "descriptive title (max 100 chars)",
   "importance_score": <integer 1-10>
 }}
 
+Title: {existing_title}
 Summary: {summary}
 Concepts: {concepts}
 Tags: {tags}
 
 Return ONLY valid JSON.""",
         model="groq/llama-3.3-70b-versatile",
-        system="You are a knowledge management expert. Return only valid JSON.",
-        max_tokens=150,
+        system="You are a knowledge management expert. Return only valid JSON with the importance score.",
+        max_tokens=100,
         temperature=0,
     )
 
     try:
         clean = response.strip().strip("```json").strip("```").strip()
         metadata = json.loads(clean)
+        importance_score = max(1, min(10, int(metadata.get("importance_score", 5))))
     except Exception:
-        metadata = {
-            "title": state.get("title") or "Untitled Blog Post",
-            "importance_score": 5,
-        }
+        importance_score = 5
 
-    metadata["reading_time_minutes"] = reading_time
+    metadata = {
+        "title": existing_title,
+        "importance_score": importance_score,
+        "reading_time_minutes": reading_time,
+    }
 
     return {
         "metadata": metadata,

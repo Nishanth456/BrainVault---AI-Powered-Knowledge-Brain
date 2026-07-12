@@ -165,10 +165,13 @@ async def blog_agent_node(state: BrainVaultState) -> dict:
     is_qna = result.get("is_interview_qna")
     final_type = "interview_qna" if is_qna else "blog"
 
+    # Prefer the original scraper title; only fall back to metadata title if missing
+    final_title = result.get("title") or metadata.get("title", "")
+
     return {
         "input_type":       final_type,
         "extracted_text":   result.get("article_text", ""),
-        "title":            metadata.get("title", result.get("title", "")),
+        "title":            final_title,
         "summary":          result.get("summary", ""),
         "key_concepts":     result.get("key_concepts") or [],
         "tags":             result.get("tags") or [],

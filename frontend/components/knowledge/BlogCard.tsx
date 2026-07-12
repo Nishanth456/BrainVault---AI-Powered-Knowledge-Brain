@@ -1,8 +1,12 @@
 "use client"
-import { useState } from "react"
 import {
-  Clock, ExternalLink, User, Globe, Trash2, Loader2
+    Clock, ExternalLink,
+    Globe,
+    Loader2,
+    Trash2,
+    User
 } from "lucide-react"
+import { useState } from "react"
 
 const difficultyLabel = ["", "Beginner", "Basic", "Intermediate", "Advanced", "Expert"]
 const difficultyColor = [
