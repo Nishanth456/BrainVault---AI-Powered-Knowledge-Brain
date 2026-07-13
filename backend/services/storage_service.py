@@ -2,6 +2,7 @@
 storage_service.py — Saves a completed BrainVaultState to PostgreSQL + Qdrant.
 Phase 1: also saves attachments and generates/upserts embeddings.
 """
+import json
 import uuid
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,17 +17,18 @@ async def save_knowledge_item(state: BrainVaultState) -> uuid.UUID:
     2. Qdrant — embedding vector for semantic search
 
     Also updates the corresponding ingestion_job status to 'done'.
-    Returns the new knowledge_item UUID.
+    Returns the new knowledge_item UUID (or the first item id for QnA/playlists).
     """
     item_id = uuid.uuid4()
     job_id = state.get("job_id")
-    input_type = state.get("input_type", "plaintext")
+    input_type = state.get("input_type") or "plaintext"
     metadata = state.get("metadata") or {}
 
     async with AsyncSessionLocal() as db:
         qna_pairs = state.get("qna_pairs")
         inserted_items = []
-        
+
+        # ── Interview Q&A: one item per Q&A pair ────────────────────────────────
         if qna_pairs and len(qna_pairs) > 0:
             for pair in qna_pairs:
                 q_id = uuid.uuid4()
@@ -66,21 +68,80 @@ async def save_knowledge_item(state: BrainVaultState) -> uuid.UUID:
                     "text": f"Q: {pair.get('q')}\nA: {pair.get('a')}",
                     "topic": pair.get("topic", state.get("knowledge_tree"))
                 })
-        else:
-            # Insert standard single knowledge item
+
+        # ── YouTube playlist: single redirect item only ─────────────────────
+        elif input_type == "youtube_playlist":
+            playlist_id = state.get("playlist_id") or metadata.get("playlist_id")
+
             await db.execute(text("""
                 INSERT INTO knowledge_items (
                     id, type, title, summary, raw_content,
                     source_url, author,
                     key_concepts, tags, difficulty,
                     reading_time_minutes, importance_score,
-                    knowledge_tree, knowledge_domain, embedding_id
+                    knowledge_tree, knowledge_domain, embedding_id,
+                    video_duration_seconds, channel_name, thumbnail_path, chapters, transcript, playlist_id
                 ) VALUES (
                     :id, :type, :title, :summary, :raw_content,
                     :source_url, :author,
                     :key_concepts, :tags, :difficulty,
                     :reading_time_minutes, :importance_score,
-                    :knowledge_tree, :knowledge_domain, :embedding_id
+                    :knowledge_tree, :knowledge_domain, :embedding_id,
+                    :video_duration_seconds, :channel_name, :thumbnail_path, :chapters, :transcript, :playlist_id
+                )
+            """), {
+                "id":                   str(item_id),
+                "type":                 "youtube_playlist",
+                "title":                state.get("title") or metadata.get("title") or "Untitled Playlist",
+                "summary":              state.get("summary") or "",
+                "raw_content":          json.dumps({
+                    "playlist_id": playlist_id,
+                    "channel": metadata.get("channel"),
+                    "description": metadata.get("description"),
+                    "video_count": metadata.get("video_count") or 0,
+                }),
+                "source_url":           state.get("source_url") or state.get("raw_input", ""),
+                "author":               state.get("author") or metadata.get("channel") or "",
+                "key_concepts":         state.get("key_concepts") or [],
+                "tags":                 state.get("tags") or [],
+                "difficulty":           state.get("difficulty"),
+                "reading_time_minutes": metadata.get("reading_time_minutes"),
+                "importance_score":     metadata.get("importance_score"),
+                "knowledge_tree":       state.get("knowledge_tree"),
+                "knowledge_domain":     state.get("knowledge_domain"),
+                "embedding_id":         None,
+                "video_duration_seconds": None,
+                "channel_name":         state.get("channel_name") or metadata.get("channel") or "",
+                "thumbnail_path":       state.get("thumbnail_path"),
+                "chapters":             None,
+                "transcript":           None,
+                "playlist_id":          playlist_id,
+            })
+            inserted_items.append({
+                "id": str(item_id),
+                "text": (state.get("extracted_text") or state.get("summary") or "")[:5000],
+                "topic": state.get("knowledge_tree")
+            })
+
+        # ── Standard single knowledge item ────────────────────────────────────
+        else:
+            await db.execute(text("""
+                INSERT INTO knowledge_items (
+                    id, type, title, summary, raw_content,
+                    source_url, author,
+                    key_concepts, tags, difficulty,
+                    reading_time_minutes, importance_score,
+                    knowledge_tree, knowledge_domain, embedding_id,
+                    repo_stars, repo_language, tech_stack, architecture_summary,
+                    video_duration_seconds, channel_name, thumbnail_path, chapters, transcript, playlist_id
+                ) VALUES (
+                    :id, :type, :title, :summary, :raw_content,
+                    :source_url, :author,
+                    :key_concepts, :tags, :difficulty,
+                    :reading_time_minutes, :importance_score,
+                    :knowledge_tree, :knowledge_domain, :embedding_id,
+                    :repo_stars, :repo_language, :tech_stack, :architecture_summary,
+                    :video_duration_seconds, :channel_name, :thumbnail_path, :chapters, :transcript, :playlist_id
                 )
             """), {
                 "id":                   str(item_id),
@@ -98,6 +159,16 @@ async def save_knowledge_item(state: BrainVaultState) -> uuid.UUID:
                 "knowledge_tree":       state.get("knowledge_tree"),
                 "knowledge_domain":     state.get("knowledge_domain"),
                 "embedding_id":         None,
+                "repo_stars":           state.get("repo_stars"),
+                "repo_language":        state.get("repo_language"),
+                "tech_stack":           state.get("tech_stack") or [],
+                "architecture_summary": state.get("architecture_summary"),
+                "video_duration_seconds": state.get("video_duration_seconds"),
+                "channel_name":         state.get("channel_name"),
+                "thumbnail_path":       state.get("thumbnail_path"),
+                "chapters":             json.dumps(state.get("chapters") or []) if state.get("chapters") else None,
+                "transcript":           ("\n".join([seg.get("text") or "" for seg in (state.get("transcript") or [])])[:20000]) if state.get("transcript") else None,
+                "playlist_id":          state.get("playlist_id"),
             })
             inserted_items.append({
                 "id": str(item_id),
@@ -155,7 +226,7 @@ async def save_knowledge_item(state: BrainVaultState) -> uuid.UUID:
             embed_text = " ".join(filter(None, [
                 state.get("title") or metadata.get("title", ""),
                 item["text"],
-                " ".join(state.get("key_concepts") or []),
+                " ".join([c for c in (state.get("key_concepts") or []) if c]),
             ]))
             
             if embed_text.strip():

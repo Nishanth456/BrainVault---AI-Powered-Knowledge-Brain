@@ -30,11 +30,11 @@ def ensure_collection():
                     distance=Distance.COSINE
                 )
             )
-            print(f"✅ Qdrant collection '{settings.QDRANT_COLLECTION_NAME}' created")
+            print(f"Qdrant collection '{settings.QDRANT_COLLECTION_NAME}' created")
         else:
-            print(f"✅ Qdrant collection '{settings.QDRANT_COLLECTION_NAME}' already exists")
+            print(f"Qdrant collection '{settings.QDRANT_COLLECTION_NAME}' already exists")
     except Exception as e:
-        print(f"⚠️ Qdrant collection setup failed: {e}")
+        print(f"Qdrant collection setup failed: {e}")
 
 
 def upsert_knowledge_item(

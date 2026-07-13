@@ -2,6 +2,7 @@
 knowledge.py — Knowledge item API endpoints.
 Phase 1: adds /linkedin endpoint with attachments + expands /{id} to include attachments.
 """
+import json
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text, select
@@ -264,6 +265,120 @@ async def get_paper_items(
             "importance_score":     item.importance_score,
             "knowledge_tree":       item.knowledge_tree,
             "knowledge_domain":     item.knowledge_domain,
+            "created_at":           item.created_at.isoformat(),
+            "attachments": [
+                {
+                    "id":         str(att.id),
+                    "filename":   att.filename,
+                    "minio_path": att.minio_path,
+                    "file_type":  att.file_type,
+                    "page_count": att.page_count,
+                }
+                for att in item.attachments
+            ],
+        }
+        for item in items
+    ]
+
+
+@router.get("/github")
+async def get_github_items(
+    limit: int = Query(default=20, le=100),
+    offset: int = Query(default=0),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return all GitHub repository knowledge items."""
+    result = await db.execute(
+        select(KnowledgeItem)
+        .options(selectinload(KnowledgeItem.attachments))
+        .where(KnowledgeItem.type == "github")
+        .order_by(KnowledgeItem.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    items = result.scalars().all()
+
+    return [
+        {
+            "id":                   str(item.id),
+            "type":                 item.type,
+            "title":                item.title,
+            "summary":              item.summary,
+            "source_url":           item.source_url,
+            "author":               item.author,
+            "key_concepts":         item.key_concepts or [],
+            "tags":                 item.tags or [],
+            "difficulty":           item.difficulty,
+            "knowledge_tree":       item.knowledge_tree,
+            "knowledge_domain":     item.knowledge_domain,
+            "repo_stars":           item.repo_stars,
+            "repo_language":        item.repo_language,
+            "tech_stack":           item.tech_stack or [],
+            "architecture_summary": item.architecture_summary,
+            "created_at":           item.created_at.isoformat(),
+            "attachments": [
+                {
+                    "id":         str(att.id),
+                    "filename":   att.filename,
+                    "minio_path": att.minio_path,
+                    "file_type":  att.file_type,
+                    "page_count": att.page_count,
+                }
+                for att in item.attachments
+            ],
+        }
+        for item in items
+    ]
+
+
+def _safe_load_chapters(chapters_raw: str | None) -> list:
+    """Safely parse the chapters JSON column; return [] on any failure."""
+    if not chapters_raw:
+        return []
+    try:
+        parsed = json.loads(chapters_raw)
+        return parsed if isinstance(parsed, list) else []
+    except Exception:
+        return []
+
+
+@router.get("/youtube")
+async def get_youtube_items(
+    limit: int = Query(default=20, le=100),
+    offset: int = Query(default=0),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return all YouTube video knowledge items."""
+    result = await db.execute(
+        select(KnowledgeItem)
+        .options(selectinload(KnowledgeItem.attachments))
+        .where(KnowledgeItem.type.in_(["youtube", "youtube_video", "youtube_playlist"]))
+        .order_by(KnowledgeItem.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    items = result.scalars().all()
+
+    return [
+        {
+            "id":                   str(item.id),
+            "type":                 item.type,
+            "title":                item.title,
+            "summary":              item.summary,
+            "source_url":           item.source_url,
+            "author":               item.author,
+            "key_concepts":         item.key_concepts or [],
+            "tags":                 item.tags or [],
+            "difficulty":           item.difficulty,
+            "knowledge_tree":       item.knowledge_tree,
+            "knowledge_domain":     item.knowledge_domain,
+            "video_duration_seconds": item.video_duration_seconds,
+            "channel_name":         item.channel_name,
+            "thumbnail_path":       item.thumbnail_path,
+            "chapters":             _safe_load_chapters(item.chapters),
+            "transcript":           item.transcript,
+            "playlist_id":          item.playlist_id,
+            "video_count":          len(_safe_load_chapters(item.chapters)) if item.type == "youtube_playlist" else None,
             "created_at":           item.created_at.isoformat(),
             "attachments": [
                 {

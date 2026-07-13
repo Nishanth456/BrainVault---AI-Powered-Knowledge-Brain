@@ -19,6 +19,21 @@ CREATE TABLE IF NOT EXISTS knowledge_items (
     knowledge_subdomain TEXT,
     knowledge_topic TEXT,
     embedding_id TEXT,                  -- Qdrant point ID
+
+    -- GitHub-specific fields
+    repo_stars INTEGER,
+    repo_language TEXT,
+    tech_stack TEXT[],
+    architecture_summary TEXT,
+
+    -- YouTube-specific fields
+    video_duration_seconds INTEGER,
+    channel_name TEXT,
+    thumbnail_path TEXT,                -- MinIO path to thumbnail image
+    chapters TEXT,                      -- JSON string of chapter markers
+    transcript TEXT,
+    playlist_id TEXT,
+
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

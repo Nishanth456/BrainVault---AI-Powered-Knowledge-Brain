@@ -45,7 +45,7 @@ Respond with ONLY the category name, nothing else."""
         return detected if detected in valid_types else "plaintext"
 
     except Exception as e:
-        print(f"⚠️ LLM detection failed, defaulting to plaintext: {e}")
+        print(f"LLM detection failed, defaulting to plaintext: {e}")
         return "plaintext"
 
 
@@ -73,7 +73,7 @@ async def call_llm(
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        print(f"⚠️ Primary model failed: {e}. Trying fallback: {fallback_model}")
+        print(f"Primary model failed: {e}. Trying fallback: {fallback_model}")
         # Auto-fallback if rate limited or model unavailable
         response = await acompletion(
             model=fallback_model,
@@ -96,6 +96,7 @@ async def stream_rag_response(system: str, prompt: str):
     models = [
         "groq/llama-3.3-70b-versatile",
         "groq/llama-3.1-8b-instant",
+        "groq/llama-3.3-70b-specdec",
         "gemini/gemini-2.0-flash",
     ]
     last_error = None
@@ -118,8 +119,8 @@ async def stream_rag_response(system: str, prompt: str):
             return
         except Exception as e:
             last_error = e
-            print(f"⚠️ Streaming model {model} failed: {e}")
+            print(f"Streaming model {model} failed: {e}")
             continue
 
-    print(f"⚠️ All streaming models failed: {last_error}")
+    print(f"All streaming models failed: {last_error}")
     yield "I'm sorry, I couldn't generate a response right now. Please try again."

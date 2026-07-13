@@ -26,6 +26,21 @@ class KnowledgeItem(Base):
     knowledge_subdomain: Mapped[str | None] = mapped_column(Text)
     knowledge_topic: Mapped[str | None] = mapped_column(Text)
     embedding_id: Mapped[str | None] = mapped_column(Text)
+
+    # GitHub-specific fields
+    repo_stars: Mapped[int | None] = mapped_column(Integer)
+    repo_language: Mapped[str | None] = mapped_column(Text)
+    tech_stack: Mapped[list[str] | None] = mapped_column(ARRAY(Text))
+    architecture_summary: Mapped[str | None] = mapped_column(Text)
+
+    # YouTube-specific fields
+    video_duration_seconds: Mapped[int | None] = mapped_column(Integer)
+    channel_name: Mapped[str | None] = mapped_column(Text)
+    thumbnail_path: Mapped[str | None] = mapped_column(Text)
+    chapters: Mapped[dict | None] = mapped_column(Text)  # JSON string of chapters
+    transcript: Mapped[str | None] = mapped_column(Text)
+    playlist_id: Mapped[str | None] = mapped_column(Text)
+
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=datetime.utcnow)
 

@@ -5,9 +5,10 @@ interface EmptyStateProps {
   title: string
   description: string
   hint?: string
+  action?: ReactNode
 }
 
-export function EmptyState({ icon, title, description, hint }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, hint, action }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-24 text-center px-4">
       <div className="w-16 h-16 rounded-2xl bg-card border border-border flex items-center justify-center mb-5 shadow-inner">
@@ -18,6 +19,7 @@ export function EmptyState({ icon, title, description, hint }: EmptyStateProps) 
       {hint && (
         <p className="text-xs text-muted-foreground/60 mt-3 max-w-xs leading-relaxed">{hint}</p>
       )}
+      {action && <div className="mt-5">{action}</div>}
     </div>
   )
 }

@@ -237,17 +237,17 @@ async def build_combined_text(state: LinkedInState) -> dict:
             label = f"[ATTACHED PDF: {f.get('filename', 'document')}]"
             parts.append(f"{label}\n{f['extracted_text'][:15000]}")
 
-    combined = "\n\n".join(parts)
+    combined = "\n\n".join([p for p in parts if p])
     return {
         "combined_text": combined,
         "agent_steps": [f"✅ Combined content: {len(combined):,} characters"],
     }
 
 
-# ── Node 5: Summarize with Groq gemma2-9b-it ─────────────────────────────────
+# ── Node 5: Summarize with Groq llama-3.1-8b-instant ─────────────────────────
 
 async def summarize_content(state: LinkedInState) -> dict:
-    """LLM Call — Groq gemma2-9b-it — generate a single short sentence summary."""
+    """LLM Call — Groq llama-3.1-8b-instant — generate a single short sentence summary."""
     if state.get("error"):
         return {}
 
@@ -279,7 +279,7 @@ Content:
 
     summary = await call_llm(
         prompt=prompt,
-        model="groq/gemma2-9b-it",
+        model="groq/llama-3.1-8b-instant",
         system="You are a technical knowledge extraction expert. Write clear, specific, one-sentence summaries.",
         max_tokens=100,
     )

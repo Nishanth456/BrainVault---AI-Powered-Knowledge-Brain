@@ -257,55 +257,131 @@ async def research_agent_node(state: BrainVaultState) -> dict:
         "agent_steps":      result.get("agent_steps") or [],
         "error":            result.get("error"),
         "source_url":       result.get("source_url") or state["raw_input"].strip(),
-        "author":           ", ".join(result.get("authors") or []),
+        "author":           ", ".join([a for a in (result.get("authors") or []) if a]),
     }
 
 
-# ── Phase 5: Real YouTube agent adapter (stub) ───────────────────────────────
+# ── Phase 5: Real YouTube agent adapter ──────────────────────────────────────
 
 async def youtube_agent_node(state: BrainVaultState) -> dict:
-    """Stub adapter for the YouTube agent."""
+    """Adapter: runs the YouTube LangGraph subgraph and merges results."""
+    from backend.agents.youtube_agent import youtube_subgraph, YouTubeState
+
+    youtube_state = YouTubeState(
+        url=state["raw_input"].strip(),
+        concept=state.get("concept") or "",
+        video_id=None,
+        playlist_id=None,
+        type=None,
+        metadata=None,
+        transcript=None,
+        thumbnail_path=None,
+        chapters=None,
+        chapter_summaries=None,
+        summary=None,
+        key_concepts=None,
+        tags=None,
+        difficulty=None,
+        knowledge_tree=None,
+        knowledge_domain=None,
+        metadata_payload=None,
+        agent_steps=[],
+        error=None,
+    )
+
+    compiled = youtube_subgraph.compile()
+    result = await compiled.ainvoke(youtube_state)
+
+    metadata = result.get("metadata") or {}
+    metadata_payload = result.get("metadata_payload") or {}
+    merged_metadata = {**metadata, **metadata_payload}
+
+    # Fallback to 'youtube' if the subgraph failed to set a concrete type
+    youtube_type = result.get("type") or "youtube"
+
     return {
-        "input_type":       "youtube",
-        "extracted_text":   "",
-        "title":            "YouTube video (stub)",
-        "summary":          "",
-        "key_concepts":     [],
-        "tags":             [],
-        "difficulty":       3,
-        "knowledge_tree":   "",
-        "knowledge_domain": None,
-        "qna_pairs":        [],
-        "metadata":         {},
-        "attachments":      [],
-        "agent_steps":      ["🎬 YouTube agent stub invoked"],
-        "error":            None,
-        "source_url":       state["raw_input"].strip(),
-        "author":           None,
+        "input_type":           youtube_type,
+        "extracted_text":       result.get("summary", ""),
+        "title":                metadata.get("title", "Untitled Video"),
+        "summary":              result.get("summary", ""),
+        "key_concepts":         result.get("key_concepts") or [],
+        "tags":                 result.get("tags") or [],
+        "difficulty":           result.get("difficulty", 3),
+        "knowledge_tree":       result.get("knowledge_tree", ""),
+        "knowledge_domain":     result.get("knowledge_domain"),
+        "qna_pairs":            [],
+        "metadata":             merged_metadata,
+        "attachments":          [],
+        "agent_steps":          result.get("agent_steps") or [],
+        "error":                result.get("error"),
+        "source_url":           metadata.get("source_url", state["raw_input"].strip()),
+        "author":               metadata.get("channel", ""),
+        "video_duration_seconds": metadata.get("duration_seconds"),
+        "channel_name":         metadata.get("channel"),
+        "thumbnail_path":       result.get("thumbnail_path"),
+        "chapters":             result.get("chapter_summaries") or [],
+        "transcript":           result.get("transcript") or [],
+        "playlist_id":          result.get("playlist_id"),
     }
 
 
-# ── Phase 6: Real GitHub agent adapter (stub) ────────────────────────────────
+# ── Phase 6: Real GitHub agent adapter ─────────────────────────────────────────
 
 async def github_agent_node(state: BrainVaultState) -> dict:
-    """Stub adapter for the GitHub agent."""
+    """Adapter: runs the GitHub LangGraph subgraph and merges results."""
+    from backend.agents.github_agent import github_subgraph, GitHubState
+
+    github_state = GitHubState(
+        url=state["raw_input"].strip(),
+        concept=state.get("concept") or "",
+        owner=None,
+        repo=None,
+        metadata=None,
+        readme=None,
+        structure=None,
+        key_files=None,
+        tech_stack=None,
+        summary=None,
+        architecture_summary=None,
+        purpose=None,
+        key_concepts=None,
+        tags=None,
+        difficulty=None,
+        knowledge_tree=None,
+        knowledge_domain=None,
+        metadata_payload=None,
+        agent_steps=[],
+        error=None,
+    )
+
+    compiled = github_subgraph.compile()
+    result = await compiled.ainvoke(github_state)
+
+    metadata = result.get("metadata") or {}
+    metadata_payload = result.get("metadata_payload") or {}
+    merged_metadata = {**metadata, **metadata_payload}
+
     return {
-        "input_type":       "github",
-        "extracted_text":   "",
-        "title":            "GitHub repository (stub)",
-        "summary":          "",
-        "key_concepts":     [],
-        "tags":             [],
-        "difficulty":       3,
-        "knowledge_tree":   "",
-        "knowledge_domain": None,
-        "qna_pairs":        [],
-        "metadata":         {},
-        "attachments":      [],
-        "agent_steps":      ["🐙 GitHub agent stub invoked"],
-        "error":            None,
-        "source_url":       state["raw_input"].strip(),
-        "author":           None,
+        "input_type":           "github",
+        "extracted_text":       "\n\n".join(filter(None, [result.get("summary") or "", result.get("architecture_summary") or ""])),
+        "title":                metadata.get("full_name", f"{result.get('owner')}/{result.get('repo')}"),
+        "summary":              result.get("summary", ""),
+        "key_concepts":         result.get("key_concepts") or [],
+        "tags":                 result.get("tags") or [],
+        "difficulty":           result.get("difficulty", 3),
+        "knowledge_tree":       result.get("knowledge_tree", ""),
+        "knowledge_domain":     result.get("knowledge_domain"),
+        "qna_pairs":            [],
+        "metadata":             merged_metadata,
+        "attachments":          [],
+        "agent_steps":          result.get("agent_steps") or [],
+        "error":                result.get("error"),
+        "source_url":           metadata.get("source_url", state["raw_input"].strip()),
+        "author":               metadata.get("owner", ""),
+        "repo_stars":           metadata.get("stars"),
+        "repo_language":        metadata.get("language"),
+        "tech_stack":           result.get("tech_stack") or [],
+        "architecture_summary": result.get("architecture_summary", ""),
     }
 
 
@@ -379,8 +455,18 @@ async def stub_agent_node(state: BrainVaultState) -> dict:
 
 
 async def store_node(state: BrainVaultState) -> dict:
-    """Saves the enriched state to PostgreSQL + Qdrant."""
-    from backend.services.storage_service import save_knowledge_item
+    """Saves the enriched state to PostgreSQL + Qdrant, or marks the job failed if an agent error occurred."""
+    from backend.services.storage_service import save_knowledge_item, mark_job_failed
+
+    error = state.get("error")
+    if error:
+        if state.get("job_id"):
+            await mark_job_failed(state["job_id"], error)
+        return {
+            "agent_steps": [f"❌ {error}"],
+            "error": error,
+        }
+
     item_id = await save_knowledge_item(state)
     return {
         "knowledge_item_id": str(item_id),

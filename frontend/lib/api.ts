@@ -108,6 +108,18 @@ export async function listPapers(limit = 20): Promise<KnowledgeItem[]> {
   return res.json()
 }
 
+export async function getGitHubRepos(limit = 20): Promise<KnowledgeItem[]> {
+  const res = await fetch(`${API_BASE}/api/knowledge/github?limit=${limit}`)
+  if (!res.ok) throw new Error(`GitHub list failed: ${res.status}`)
+  return res.json()
+}
+
+export async function getYouTubeVideos(limit = 20): Promise<KnowledgeItem[]> {
+  const res = await fetch(`${API_BASE}/api/knowledge/youtube?limit=${limit}`)
+  if (!res.ok) throw new Error(`YouTube list failed: ${res.status}`)
+  return res.json()
+}
+
 export async function getKnowledgeItem(id: string): Promise<KnowledgeItem> {
   const res = await fetch(`${API_BASE}/api/knowledge/${id}`)
   if (!res.ok) throw new Error(`Get failed: ${res.status}`)

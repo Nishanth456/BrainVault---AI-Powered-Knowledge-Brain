@@ -1,0 +1,6 @@
+                  id                  |       type       |                                         title                                          | thumbnail_path |                                source_url                                
+--------------------------------------+------------------+----------------------------------------------------------------------------------------+----------------+--------------------------------------------------------------------------
+ 01957bbb-7c72-4fef-9733-c851a5094018 | youtube_video    | Getting Started With Using Microsoft Copilot Cowork-End To End Use Case Implementation |                | https://www.youtube.com/watch?v=XT78ESl8PbM
+ 0b265832-c848-45f0-8110-8f7aa76fa6a1 | youtube_playlist | Essence of calculus                                                                    |                | https://www.youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr
+(2 rows)
+

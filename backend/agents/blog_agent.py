@@ -186,7 +186,7 @@ CRITICAL RULES:
 
 Article:
 {text}""",
-        model="groq/gemma2-9b-it",
+        model="groq/llama-3.1-8b-instant",
         system="You are a technical knowledge extraction expert. Return only the requested summary with no meta commentary.",
         max_tokens=300,
     )

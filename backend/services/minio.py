@@ -16,11 +16,11 @@ def ensure_bucket():
     try:
         if not client.bucket_exists(settings.MINIO_BUCKET_NAME):
             client.make_bucket(settings.MINIO_BUCKET_NAME)
-            print(f"✅ MinIO bucket '{settings.MINIO_BUCKET_NAME}' created")
+            print(f"MinIO bucket '{settings.MINIO_BUCKET_NAME}' created")
         else:
-            print(f"✅ MinIO bucket '{settings.MINIO_BUCKET_NAME}' already exists")
+            print(f"MinIO bucket '{settings.MINIO_BUCKET_NAME}' already exists")
     except Exception as e:
-        print(f"⚠️ MinIO bucket setup failed: {e}")
+        print(f"MinIO bucket setup failed: {e}")
 
 
 def upload_bytes(filename: str, data: bytes, content_type: str = "application/octet-stream") -> str:
