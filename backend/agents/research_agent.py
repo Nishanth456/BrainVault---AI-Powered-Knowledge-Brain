@@ -86,6 +86,9 @@ async def resolve_source_node(state: ResearchState) -> dict:
     url = state["url"].strip()
     try:
         resolved = await resolve_research_source(url)
+        steps = [f"✅ Resolved research source: {resolved['source_type']}"]
+        if resolved.get("is_blocked"):
+            steps.append("⚠️ Source page is blocked by Cloudflare/security check; using URL-derived title")
         return {
             "source_type":      resolved["source_type"],
             "arxiv_id":         resolved["arxiv_id"],
@@ -96,7 +99,7 @@ async def resolve_source_node(state: ResearchState) -> dict:
             "primary_category": resolved["primary_category"],
             "pdf_url":          resolved["pdf_url"],
             "source_url":       resolved["source_url"],
-            "agent_steps":      [f"✅ Resolved research source: {resolved['source_type']}"],
+            "agent_steps":      steps,
         }
     except Exception as e:
         return {
@@ -280,6 +283,13 @@ async def summarize_research_node(state: ResearchState) -> dict:
     text = (state.get("article_text") or "")[:12000]
     abstract = state.get("abstract") or ""
 
+    # If the source page was blocked and we have no real content, don't hallucinate a summary
+    if state.get("source_type") == "generic_research_url" and not abstract.strip() and not text.strip():
+        return {
+            "summary": "Could not extract a summary because the source page is protected by a security check. Open the source link to read the full paper.",
+            "agent_steps": ["⚠️ Source page blocked; no summary generated"],
+        }
+
     # If we have a good abstract but no extracted text, use the abstract as the summary
     if not text.strip() and abstract.strip():
         return {
@@ -330,8 +340,18 @@ async def extract_research_concepts_node(state: ResearchState) -> dict:
     abstract = (state.get("abstract") or "")[:2000]
     concept = state.get("concept") or ""
     category = state.get("primary_category") or ""
+    title = state.get("title") or ""
 
     context = text.strip() or abstract.strip()
+
+    # If we have no real content, derive tags from the title instead of hallucinating
+    if not context:
+        title_tags = [t for t in title.split() if len(t) > 2 and t.lower() not in {"the", "and", "for", "with", "based", "system"}][:6]
+        return {
+            "key_concepts": title_tags or ["Research Paper"],
+            "tags": title_tags or ["research"],
+            "agent_steps": ["⚠️ No content available; tags derived from title"],
+        }
 
     response = await call_llm(
         prompt=f"""Extract key concepts and tags from this research paper.
@@ -457,7 +477,10 @@ Return ONLY valid JSON. Do NOT rewrite or summarise the title.""",
     try:
         clean = response.strip().strip("```json").strip("```").strip()
         data = json.loads(clean)
-        final_title = data.get("title") or title or "Untitled Research Paper"
+        llm_title = data.get("title") or ""
+        # Only trust the LLM title if it is reasonably specific; otherwise keep the URL-derived title
+        final_title = llm_title if len(llm_title.split()) >= 4 else title
+        final_title = final_title or "Untitled Research Paper"
     except Exception:
         final_title = title or "Untitled Research Paper"
 

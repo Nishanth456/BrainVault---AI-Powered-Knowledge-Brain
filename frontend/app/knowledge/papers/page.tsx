@@ -3,8 +3,8 @@ import { PaperCard, type PaperItem } from "@/components/knowledge/PaperCard"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/EmptyState"
 import { ChevronDown, ChevronRight, FileText, Filter, FolderOpen, RefreshCw } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useEffect, useMemo, useState } from "react"
 
 // Group items by their knowledge tree path (or "Uncategorised")
 function groupBySection(items: PaperItem[]): Record<string, PaperItem[]> {

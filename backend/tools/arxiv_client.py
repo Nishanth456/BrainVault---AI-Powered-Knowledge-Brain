@@ -208,9 +208,38 @@ async def _resolve_generic_research_url(url: str) -> dict:
                     abstract = text
                     break
 
-    # Clean up ResearchGate title suffixes
+    # Detect Cloudflare / security block pages and treat as a failure
+    BLOCK_SIGNALS = [
+        "security check required",
+        "just a moment",
+        "checking your browser",
+        "please wait while we verify",
+        "cf-mitigated",
+        "challenges.cloudflare.com",
+        "verify you are human",
+        "ddos protection",
+        "access denied",
+    ]
+    page_text = soup.get_text(" ", strip=True).lower() if html else ""
+    status_code = getattr(resp, "status_code", 200) if "resp" in dir() else 200
+    is_blocked = any(signal in page_text for signal in BLOCK_SIGNALS) or status_code >= 403
+
+    # Clean up ResearchGate title suffixes and block-page titles
     if title:
         title = re.sub(r"\s*[-|]\s*ResearchGate\s*$", "", title, flags=re.IGNORECASE).strip()
+        title = re.sub(r"\s*[-|]\s*Please verify you are a human\s*$", "", title, flags=re.IGNORECASE).strip()
+
+    # If the page is blocked, derive a title from the URL path so we don't show "Security check required"
+    if is_blocked or not title or title.lower() in {"security check required", "just a moment...", "access denied"}:
+        path = urlparse(url).path
+        # e.g. /publication/388932669_An_Artificial_Intelligence_Based_Attendance_Monitoring_System_for_Malpractice_Control
+        slug = path.strip("/").split("/")[-1]
+        slug = re.sub(r"^\d+_", "", slug)  # drop leading numeric id
+        derived = slug.replace("_", " ").replace("-", " ").strip()
+        derived = re.sub(r"\s+", " ", derived)
+        if len(derived) > 10:
+            title = derived
+        abstract = None  # don't trust any abstract from a block page
 
     return {
         "source_type": "generic_research_url",
@@ -222,4 +251,5 @@ async def _resolve_generic_research_url(url: str) -> dict:
         "pdf_url": None,
         "source_url": url,
         "arxiv_id": None,
+        "is_blocked": is_blocked,
     }

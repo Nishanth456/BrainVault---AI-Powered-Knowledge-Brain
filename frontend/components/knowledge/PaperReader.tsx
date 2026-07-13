@@ -1,16 +1,22 @@
 "use client"
-import { useState, useCallback, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+    ArrowLeft,
+    Bookmark,
+    BookOpen, ChevronDown,
+    ChevronLeft, ChevronRight,
+    ChevronRight as ChevronRightIcon,
+    ExternalLink,
+    FileText,
+    MessageSquare,
+    ZoomIn, ZoomOut
+} from "lucide-react"
+import Link from "next/link"
+import { useCallback, useEffect, useState } from "react"
 import { Document, Page, pdfjs } from "react-pdf"
 import "react-pdf/dist/Page/AnnotationLayer.css"
 import "react-pdf/dist/Page/TextLayer.css"
-import {
-  ChevronLeft, ChevronRight, MessageSquare, Bookmark,
-  ExternalLink, ArrowLeft, FileText, ZoomIn, ZoomOut,
-  BookOpen, ChevronDown, ChevronRight as ChevronRightIcon
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import Link from "next/link"
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 
