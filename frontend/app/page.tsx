@@ -1,5 +1,5 @@
 import { UniversalInput } from "@/components/dashboard/UniversalInput"
-import { BookOpen, Sparkles } from "lucide-react"
+import { Sparkles } from "lucide-react"
 
 export default function DashboardPage() {
   return (

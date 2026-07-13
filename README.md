@@ -2,6 +2,14 @@
 
 Capture anything. Understand everything. Paste any URL, text, or file. BrainVault's AI agents automatically extract, classify, and organise it into your personal knowledge brain.
 
+## 📚 Documentation
+
+For a deep dive into the technical stack, architecture, and flows, please refer to the detailed documentation:
+
+- **[Backend Architecture & Agents](documentation/backend.md)**: Complete breakdown of the LangGraph master orchestrator, the 9 agent subgraphs, and exhaustive details on LLM usage (Groq, Gemini, and local Ollama embeddings).
+- **[Frontend Architecture](documentation/frontend.md)**: Details on the Next.js App Router stack, Tailwind CSS v4 styling, component-driven design, and premium aesthetic philosophy.
+- **[Infrastructure Flow](documentation/infrastructure.md)**: Explanation of the containerized core services (PostgreSQL, Redis, Qdrant, MinIO) and the end-to-end data ingestion pipeline.
+
 ---
 
 ## 🚀 Quick Start (Local Development)

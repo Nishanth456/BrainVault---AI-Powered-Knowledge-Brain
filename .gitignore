@@ -81,3 +81,7 @@ backend/linkedin_session.json
 backend/*.dump.html
 backend/*.session.json
 backend/*.session.pkl
+
+# ── Project Specific Folders ──────────────────────────────────────────────────
+phases/
+

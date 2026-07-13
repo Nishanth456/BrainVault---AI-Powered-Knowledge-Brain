@@ -1,7 +1,13 @@
 # 🧠 BrainVault — Implementation Blueprint
 
+> **NOTE:** This document serves as the **original architectural blueprint and planning document**. 
+> For the **actual, up-to-date technical documentation** of the live codebase, please refer to the files in the `documentation/` directory:
+> - `documentation/backend.md` (LangGraph Agents, LLM usage, FastAPI)
+> - `documentation/frontend.md` (Next.js 16, UI, State)
+> - `documentation/infrastructure.md` (Docker, Celery, Databases)
+
 > **Full-Stack Architecture: 100% Free & Open-Source**
-> *LangGraph · Multi-agent · Real tools · Many LLM calls · No paid APIs · Self-hosted*
+> *LangGraph · Multi-agent · Celery · Many LLM calls · Local Embeddings · Self-hosted*
 
 ---
 
@@ -18,9 +24,11 @@ Every component in this stack is:
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│               Frontend (Next.js 15)                 │  ← Premium SaaS UI
+│               Frontend (Next.js 16)                 │  ← Premium SaaS UI
 ├─────────────────────────────────────────────────────┤
-│              Backend API (FastAPI)                  │  ← REST + SSE Streaming
+│              Backend API (FastAPI)                  │  ← REST 
+├─────────────────────────────────────────────────────┤
+│         Task Queue (Celery + Redis)                 │  ← Async Background processing
 ├─────────────────────────────────────────────────────┤
 │   Agentic Core (LangGraph — StateGraph Engine)      │  ← Multi-agent orchestration
 ├─────────────────────────────────────────────────────┤

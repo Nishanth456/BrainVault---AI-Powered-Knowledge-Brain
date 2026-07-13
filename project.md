@@ -48,26 +48,50 @@ Current tools require **manual organization** and cannot reason about the knowle
 
 ---
 
-## How It Works — The Big Picture
+## How It Works — The Big Picture (LangGraph Architecture)
+
+BrainVault's ingestion pipeline is orchestrated by a powerful **LangGraph** state machine.
 
 ```
 User pastes anything (URL / text / PDF / code / notes)
               ↓
-   Master Orchestrator Agent
+   FastAPI pushes task to Celery & Redis
               ↓
-   Detects input type automatically
+   Master Orchestrator Agent (LangGraph)
               ↓
-   Routes to the right Specialized Agent
+   Detects input type automatically (via Groq llama-3.1)
               ↓
-   Agent extracts, analyzes, enriches content
+   Routes to 1 of 9 Specialized Agent Subgraphs
               ↓
-   AI generates full metadata + difficulty score
+   Agent fetches, parses, and extracts raw data
               ↓
-   Content stored in the correct Knowledge Space
+   Agent enriches content (Summaries, Concepts, Tags) 
+   (via Groq llama-3.3 & Gemini 2.5 Flash)
               ↓
-   User can search semantically, chat with it,
-   or follow an AI-generated learning path
+   AI generates full metadata + difficulty score (1-5)
+              ↓
+   Content embedded into vectors (via local Ollama)
+              ↓
+   Stored in Postgres (metadata), Qdrant (vectors), MinIO (files)
+              ↓
+   User can search semantically, chat with it via RAG,
+   or follow an AI-generated learning path in the Next.js UI
 ```
+
+---
+
+## Architecture Stack
+
+BrainVault uses a modern, robust, and AI-native technology stack:
+- **Frontend**: Next.js 16 (App Router), React 19, Tailwind CSS v4, Framer Motion.
+- **Backend**: FastAPI, SQLAlchemy (AsyncPG).
+- **Asynchronous Queues**: Celery & Redis (to process heavy AI extraction without blocking the UI).
+- **AI Orchestration**: LangGraph.
+- **LLM Engine**: Multi-model approach:
+  - **Groq (llama-3.1 & 3.3)**: High-speed classification, summarization, and taxonomy routing.
+  - **Google Gemini (2.5 Flash)**: Heavy document reasoning and long-context structured extraction.
+  - **Ollama (`nomic-embed-text`)**: 100% local, zero-cost vector embedding generation.
+- **Infrastructure**: Dockerized PostgreSQL (relational), Qdrant (vector DB), and MinIO (S3-compatible object storage).
 
 ---
 
@@ -82,27 +106,26 @@ User pastes anything (URL / text / PDF / code / notes)
 | **YouTube** | Single videos, full playlists — transcribed and summarized |
 | **Courses** | Udemy/Coursera course URLs — extract syllabus and notes |
 | **Certifications** | Certificate links, exam prep notes, credential metadata |
-| **Future** | Images, voice notes, podcast audio |
 
 ---
 
 ## Specialized Agents Inside BrainVault
 
-BrainVault runs **multiple specialized AI agents**, each an expert at a specific content type:
+BrainVault runs **9 specialized AI agent subgraphs**, each an expert at a specific content type:
 
 | Agent | Handles | Key Outputs |
 |---|---|---|
-| **LinkedIn Agent** | LinkedIn posts + attachments + carousels + PDFs | Summary, topics, tags, difficulty, in-app PDF reader |
+| **LinkedIn Agent** | LinkedIn posts + attachments + carousels + PDFs | Summary, topics, tags, difficulty, stitches carousels to PDFs |
 | **Blog Agent** | Medium, Dev.to, Hashnode, personal blogs | Article text, headings, key concepts, clean summary |
 | **Research Paper Agent** | ArXiv, PDF papers | Problem, method, architecture, dataset, results, limitations |
 | **PDF Agent** | Books, cheat sheets, slides, documentation | Section extraction, page summaries, tables, images |
 | **Plain Text Agent** | Pasted notes, code snippets, ChatGPT chats | Context inference, topic detection, auto-classification |
-| **Interview Question Agent** | Q&As from any source | Question, explanation, difficulty, related questions |
-| **Documentation Agent** | LangGraph, FastAPI, OpenAI docs, etc. | Indexed and summarized docs |
 | **GitHub Agent** | GitHub repositories | README, architecture, tech stack, use cases |
-| **YouTube Agent** | Single videos + full playlists | Transcript, chapter summaries, key concepts, difficulty |
-| **Course Agent** | Udemy, Coursera, fast.ai, DeepLearning.AI | Syllabus, module summaries, notes, progress tracking |
-| **Certification Agent** | Certificate links, exam prep material | Credential metadata, related resources, study notes |
+| **YouTube Agent** | Single videos + full playlists | Transcript, chapter summaries, overall summary, key concepts |
+| **Course Agent** (Future) | Udemy, Coursera, fast.ai, DeepLearning.AI | Syllabus, module summaries, notes, progress tracking |
+| **Certification Agent** (Future) | Certificate links, exam prep material | Credential metadata, related resources, study notes |
+
+*(Note: Interview Q&A detection is built directly into multiple agents, extracting hidden questions and writing high-quality answers).*
 
 ---
 
@@ -144,7 +167,7 @@ Category               Subcategory         Topic
 Difficulty (1–5)       Reading Time        Importance Score
 Tags                   Keywords            Key Concepts
 Summary                Technologies        Learning Path Position
-Embedding ID           Date Added          Attachment Type
+Embedding ID           Date Added          Attachment Type (MinIO URI)
 ```
 
 ---
@@ -158,42 +181,24 @@ Each knowledge type lives in its own curated space:
 | **LinkedIn Knowledge** | Cards with thumbnail, summary, difficulty, tags, attachments |
 | **Blog Library** | Article cards with image, author, reading time, key concepts |
 | **Research Papers** | Papers grouped by domain with method/results summaries |
-| **Interview Questions** | Q&As grouped by domain (AI, ML, Python, System Design, SQL, RAG…) |
+| **Interview Questions** | Auto-extracted Q&As grouped by domain |
 | **AI Notes** | Quick pasted text, auto-classified hierarchically |
-| **Prompt Library** | Prompts categorized by use case |
-| **Documentation** | Official docs summarized and indexed |
 | **GitHub Repos** | Repo cards with architecture, tech stack, language, stars |
 | **PDF Library** | Books and documents with reader + AI summary |
 | **YouTube** | Saved videos and full playlists, transcribed and summarized |
-| **Course Websites** | Structured course content from Udemy, Coursera, fast.ai, etc. |
-| **Certifications** | Credentials earned, exam notes, prep resources |
-| **Bookmarks** | Pinned favorites and recently read |
-| **Learning Paths** | AI-generated progressive study plans |
 
 ---
 
 ## AI-Powered Features
 
 ### 🔍 Semantic Search
-Search using natural language — not keywords. Ask "show everything about prompt engineering" and get results across LinkedIn posts, blogs, papers, notes, and interview questions.
+Search using natural language — not keywords. Ask "show everything about prompt engineering" and get results across LinkedIn posts, blogs, papers, notes, and interview questions via Qdrant vector search.
 
 ### 💬 AI Chat (RAG over your Knowledge)
 Ask BrainVault anything. It searches your entire personal knowledge base and answers using only what *you* have stored — your own curated second brain.
 
 ### 📚 Learning Mode
 Select any topic (e.g., "LLMs") and BrainVault generates a **personalized progressive learning path** from your own stored content — ordered from foundational to advanced.
-
-**Example path auto-generated from your knowledge:**
-```
-Introduction to LLMs
-    → Inference & Sampling Parameters
-        → Prompt Engineering Basics
-            → Chain of Thought
-                → RAG
-                    → Agents
-                        → Multi-Agent Systems
-                            → Evaluation
-```
 
 ---
 
