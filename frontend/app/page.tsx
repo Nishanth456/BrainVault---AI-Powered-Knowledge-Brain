@@ -1,11 +1,5 @@
 import { UniversalInput } from "@/components/dashboard/UniversalInput"
-import { Brain, Zap, Database, BookOpen, Sparkles } from "lucide-react"
-
-const stats = [
-  { label: "Knowledge Items", value: "0", icon: Database, color: "text-violet-400", bg: "bg-violet-500/10" },
-  { label: "Domains Covered", value: "0",  icon: Brain,    color: "text-cyan-400",   bg: "bg-cyan-500/10"   },
-  { label: "Agents Ready",    value: "8",  icon: Zap,      color: "text-emerald-400", bg: "bg-emerald-500/10" },
-]
+import { BookOpen, Sparkles } from "lucide-react"
 
 export default function DashboardPage() {
   return (
@@ -31,22 +25,6 @@ export default function DashboardPage() {
 
         {/* Universal Input */}
         <UniversalInput />
-      </div>
-
-      {/* ── Stats ──────────────────────────────────────────────────────────── */}
-      <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10">
-        {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="bg-card border border-border rounded-xl p-5 text-center hover:border-violet-500/20 transition-all duration-200"
-          >
-            <div className={`w-10 h-10 rounded-xl ${stat.bg} flex items-center justify-center mx-auto mb-3`}>
-              <stat.icon size={18} className={stat.color} />
-            </div>
-            <p className="text-3xl font-bold text-foreground">{stat.value}</p>
-            <p className="text-xs text-muted-foreground mt-1 font-medium">{stat.label}</p>
-          </div>
-        ))}
       </div>
 
       {/* ── How it works ───────────────────────────────────────────────────── */}

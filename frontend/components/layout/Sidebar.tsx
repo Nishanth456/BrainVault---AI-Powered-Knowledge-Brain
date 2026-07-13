@@ -87,7 +87,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto p-3 space-y-4">
+      <nav className="flex-1 overflow-y-auto p-3 space-y-4 [scrollbar-gutter:stable] bg-gradient-to-b from-sidebar/30 via-sidebar-accent/20 to-sidebar/30">
         {navGroups.map((group) => (
           <div key={group.label}>
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-3 mb-1.5">
@@ -130,7 +130,7 @@ export function Sidebar() {
       </nav>
 
       {/* Settings & Theme */}
-      <div className="p-3 border-t border-sidebar-border space-y-1">
+      <div className="p-3 border-t border-sidebar-border space-y-1 bg-sidebar backdrop-blur-xl shadow-[0_-6px_24px_rgba(0,0,0,0.12)] dark:shadow-[0_-6px_24px_rgba(0,0,0,0.35)]">
         <button
           type="button"
           onClick={toggleTheme}
