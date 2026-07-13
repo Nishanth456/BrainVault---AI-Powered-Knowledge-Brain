@@ -33,6 +33,35 @@ export interface KnowledgeItem {
   created_at: string
 }
 
+export interface SearchFilters {
+  types?: string[]
+  difficulty_max?: number
+  knowledge_tree?: string
+}
+
+export interface SearchResultItem {
+  id: string
+  type: "linkedin" | "blog" | "research" | "note" | "interview_qna" | string
+  title: string
+  summary: string
+  source_url?: string
+  author?: string
+  key_concepts: string[]
+  tags: string[]
+  difficulty?: number
+  knowledge_tree?: string
+  knowledge_domain?: string | null
+  score: number
+  created_at?: string
+  attachments: {
+    id: string
+    filename: string
+    minio_path: string
+    file_type: string
+    page_count?: number
+  }[]
+}
+
 // ── Ingest ────────────────────────────────────────────────────────────────────
 
 export async function ingest(rawInput: string): Promise<IngestResponse> {
@@ -90,5 +119,21 @@ export async function getKnowledgeItem(id: string): Promise<KnowledgeItem> {
 export async function checkHealth(): Promise<{ status: string; services: Record<string, unknown> }> {
   const res = await fetch(`${API_BASE}/health`)
   if (!res.ok) throw new Error(`Health check failed: ${res.status}`)
+  return res.json()
+}
+
+// ── Search ────────────────────────────────────────────────────────────────────
+
+export async function searchKnowledge(
+  query: string,
+  filters: SearchFilters = {},
+  limit = 20
+): Promise<{ results: SearchResultItem[]; grouped: Record<string, SearchResultItem[]> }> {
+  const res = await fetch(`${API_BASE}/api/search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query, filters, limit }),
+  })
+  if (!res.ok) throw new Error(`Search failed: ${res.status}`)
   return res.json()
 }
