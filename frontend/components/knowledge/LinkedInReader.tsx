@@ -1,16 +1,25 @@
 "use client"
-import { useState, useCallback, useEffect } from "react"
+import { SourceCitationCard } from "@/components/chat/SourceCitationCard"
+import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Textarea } from "@/components/ui/textarea"
+import { sendChatMessage, type SearchResultItem } from "@/lib/api"
+import {
+    ArrowLeft,
+    Bookmark,
+    BookOpen,
+    ExternalLink,
+    FileText,
+    Loader2,
+    MessageSquare,
+    Send,
+    ZoomIn, ZoomOut
+} from "lucide-react"
+import Link from "next/link"
+import { useCallback, useEffect, useState } from "react"
 import { Document, Page, pdfjs } from "react-pdf"
 import "react-pdf/dist/Page/AnnotationLayer.css"
 import "react-pdf/dist/Page/TextLayer.css"
-import {
-  ChevronLeft, ChevronRight, MessageSquare, Bookmark,
-  ExternalLink, ArrowLeft, FileText, ZoomIn, ZoomOut,
-  BookOpen
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import Link from "next/link"
 
 // Use the CDN worker so we don't need to copy files manually
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
@@ -43,6 +52,9 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
   const [scale, setScale]             = useState<number>(1.0)
   const [aiPanelOpen, setAiPanelOpen] = useState<boolean>(false)
   const [containerHeight, setContainerHeight] = useState<number>(600)
+  const [aiMessages, setAiMessages]   = useState<{ role: "user" | "assistant"; content: string; citations?: SearchResultItem[] }[]>([])
+  const [aiInput, setAiInput]         = useState<string>("")
+  const [aiStreaming, setAiStreaming] = useState<boolean>(false)
 
   // Support multiple PDFs — show first by default
   const [currentPdfIndex] = useState(0)
@@ -70,6 +82,49 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
   const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
     setNumPages(numPages)
   }, [])
+
+  function handleAiSend() {
+    if (!aiInput.trim() || aiStreaming) return
+    const question = aiInput.trim()
+    setAiMessages((prev) => [...prev, { role: "user", content: question }])
+    setAiInput("")
+    setAiStreaming(true)
+
+    let answer = ""
+    let citations: SearchResultItem[] = []
+
+    sendChatMessage(
+      question,
+      {
+        onToken: (token: string) => {
+          answer += token
+          setAiMessages((prev) => {
+            const withoutStreaming = prev.filter((m) => m.role !== "assistant" || m.content !== answer.slice(0, -token.length))
+            return [...withoutStreaming, { role: "assistant", content: answer, citations: [] }]
+          })
+        },
+        onCitations: (cits: SearchResultItem[]) => {
+          citations = cits
+        },
+        onDone: () => {
+          setAiStreaming(false)
+          setAiMessages((prev) => {
+            const withoutStreaming = prev.filter((m) => !(m.role === "assistant" && m.content === answer && m.citations?.length === 0))
+            return [...withoutStreaming, { role: "assistant", content: answer, citations }]
+          })
+        },
+        onError: () => {
+          setAiStreaming(false)
+          setAiMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: "Sorry, I couldn't answer that. Please try again." },
+          ])
+        },
+      },
+      undefined,
+      { types: ["linkedin"] }
+    )
+  }
 
   if (!pdfApiUrl) {
     return (
@@ -208,7 +263,7 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
         </div>
       </div>
 
-      {/* ── Right: AI Panel (stub — Phase 6) ──────────────────────── */}
+      {/* ── Right: AI Panel (Phase 6) ───────────────────────────── */}
       {aiPanelOpen && (
         <div className="w-80 border-l border-white/[0.06] flex flex-col bg-[#0D0D14] flex-shrink-0">
 
@@ -229,7 +284,7 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
               <BookOpen size={11} className="text-violet-400" />
               <span className="text-[11px] text-zinc-500 font-medium">Document context</span>
             </div>
-            <p 
+            <p
               className="text-xs text-zinc-400 line-clamp-1 leading-relaxed"
               title={item.summary}
             >
@@ -247,19 +302,60 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
             )}
           </div>
 
-          {/* Coming soon state */}
-          <div className="flex-1 flex items-center justify-center p-6">
-            <div className="text-center">
-              <div className="w-12 h-12 rounded-2xl bg-violet-600/10 border border-violet-600/15
-                              flex items-center justify-center mx-auto mb-4">
-                <MessageSquare size={20} className="text-violet-600/50" />
-              </div>
-              <p className="text-sm text-zinc-400 font-medium mb-1">
-                RAG Chat — Phase 6
-              </p>
-              <p className="text-xs text-zinc-600 leading-relaxed">
-                Ask questions about this document and get answers from your full knowledge base.
-              </p>
+          {/* Chat messages */}
+          <ScrollArea className="flex-1 px-4">
+            <div className="space-y-4 py-2">
+              {aiMessages.length === 0 && (
+                <p className="text-xs text-zinc-600 text-center py-4">
+                  Ask a question about this document.
+                </p>
+              )}
+              {aiMessages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`text-xs leading-relaxed rounded-lg px-3 py-2 ${
+                    msg.role === "user"
+                      ? "bg-violet-600/20 text-violet-100 ml-4"
+                      : "bg-white/[0.03] text-zinc-300 mr-4"
+                  }`}
+                >
+                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                  {msg.citations && msg.citations.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                      {msg.citations.map((c) => (
+                        <SourceCitationCard key={c.id} citation={c} compact />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+
+          {/* Input */}
+          <div className="p-3 border-t border-white/[0.06]">
+            <div className="flex items-end gap-2">
+              <Textarea
+                value={aiInput}
+                onChange={(e) => setAiInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault()
+                    handleAiSend()
+                  }
+                }}
+                placeholder="Ask anything..."
+                className="min-h-[60px] flex-1 resize-none border-white/[0.08] bg-white/[0.03] text-xs text-zinc-300 placeholder:text-zinc-600 focus-visible:ring-violet-500/30"
+                rows={2}
+              />
+              <Button
+                size="icon"
+                className="h-8 w-8 shrink-0 bg-violet-600 hover:bg-violet-500"
+                disabled={!aiInput.trim() || aiStreaming}
+                onClick={handleAiSend}
+              >
+                {aiStreaming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+              </Button>
             </div>
           </div>
         </div>

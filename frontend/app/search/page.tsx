@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { searchKnowledge, type SearchFilters as SearchFiltersType, type SearchResultItem } from "@/lib/api"
 import { Filter, Loader2, Search, X } from "lucide-react"
 import { useSearchParams } from "next/navigation"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
 
 const TYPE_LABELS: Record<string, string> = {
   linkedin: "LinkedIn",
@@ -20,7 +20,7 @@ const TYPE_LABELS: Record<string, string> = {
 
 const TYPE_ORDER = ["linkedin", "blog", "research", "research_paper", "note", "interview_qna"]
 
-export default function SearchPage() {
+function SearchPageInner() {
   const searchParams = useSearchParams()
   const initialQuery = searchParams.get("q") || ""
 
@@ -76,7 +76,7 @@ export default function SearchPage() {
             <div className="w-8 h-8 rounded-xl bg-indigo-600/15 flex items-center justify-center">
               <Search size={16} className="text-indigo-400" />
             </div>
-            <h1 className="text-2xl font-bold text-white">Semantic Search</h1>
+            <h1 className="text-2xl font-bold text-white">Brain Search</h1>
           </div>
           <p className="text-zinc-500 text-sm">
             Search across everything in your BrainVault — LinkedIn posts, blogs, papers, and notes.
@@ -210,5 +210,13 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="p-6 sm:p-8 text-zinc-500">Loading search…</div>}>
+      <SearchPageInner />
+    </Suspense>
   )
 }

@@ -1,13 +1,25 @@
 "use client"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 import {
-  Brain, Globe, BookOpen, FlaskConical, MessageSquare,
-  Code2, PlayCircle, GraduationCap, Award, Map, MessageCircle,
-  Search, Network, Settings, ChevronRight, Zap,
+    Award,
+    BookOpen,
+    Brain,
+    ChevronRight,
+    Code2,
+    FlaskConical,
+    Globe,
+    GraduationCap,
+    Map, MessageCircle,
+    MessageSquare,
+    Network,
+    PlayCircle,
+    Search,
+    Settings,
+    Zap,
 } from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 const navGroups = [
   {
@@ -35,8 +47,8 @@ const navGroups = [
     label: "AI Tools",
     items: [
       { label: "Learning Paths",    href: "/learning",                 icon: Map },
-      { label: "AI Chat",           href: "/chat",                     icon: Zap },
-      { label: "Search",            href: "/search",                   icon: Search },
+      { label: "Brain Talk",        href: "/chat",                     icon: Zap },
+      { label: "Brain Search",      href: "/search",                   icon: Search },
       { label: "Knowledge Graph",   href: "/graph",                    icon: Network },
     ]
   },

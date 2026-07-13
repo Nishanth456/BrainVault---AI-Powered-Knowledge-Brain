@@ -1,13 +1,13 @@
 "use client"
+import { ExternalLink, HelpCircle, Loader2, MessageCircle, Trash2 } from "lucide-react"
 import { useState } from "react"
-import { Trash2, Loader2, ExternalLink, MessageCircle, HelpCircle } from "lucide-react"
 
 export interface QnAItem {
   id: string
   title: string
   summary: string
-  knowledge_tree: string
-  source_url: string
+  knowledge_tree?: string
+  source_url?: string
 }
 
 interface QnACardProps {

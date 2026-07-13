@@ -16,13 +16,13 @@ export interface NoteItem {
   id: string
   title: string
   summary: string
-  knowledge_tree: string
+  knowledge_tree?: string
   knowledge_domain?: string | null
   key_concepts: string[]
   tags: string[]
-  difficulty: number
+  difficulty?: number
   reading_time: number
-  created_at: string
+  created_at?: string
 }
 
 interface NoteCardProps {

@@ -85,3 +85,41 @@ async def call_llm(
             max_tokens=max_tokens,
         )
         return response.choices[0].message.content.strip()
+
+
+async def stream_rag_response(system: str, prompt: str):
+    """
+    Stream a Groq response token-by-token for RAG.
+    Falls back to Gemini if Groq is unavailable.
+    Yields text chunks as they arrive.
+    """
+    models = [
+        "groq/llama-3.3-70b-versatile",
+        "groq/llama-3.1-8b-instant",
+        "gemini/gemini-2.0-flash",
+    ]
+    last_error = None
+    for model in models:
+        try:
+            response = await acompletion(
+                model=model,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.2,
+                max_tokens=2000,
+                stream=True,
+            )
+            async for chunk in response:
+                delta = chunk.choices[0].delta.content
+                if delta:
+                    yield delta
+            return
+        except Exception as e:
+            last_error = e
+            print(f"⚠️ Streaming model {model} failed: {e}")
+            continue
+
+    print(f"⚠️ All streaming models failed: {last_error}")
+    yield "I'm sorry, I couldn't generate a response right now. Please try again."

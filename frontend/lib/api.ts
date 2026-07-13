@@ -137,3 +137,103 @@ export async function searchKnowledge(
   if (!res.ok) throw new Error(`Search failed: ${res.status}`)
   return res.json()
 }
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
+
+export interface ChatMessage {
+  id: string
+  role: "user" | "assistant" | "system"
+  content: string
+  citations: SearchResultItem[]
+  created_at: string
+}
+
+export interface ChatSession {
+  id: string
+  title: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ChatStreamCallbacks {
+  onToken?: (token: string) => void
+  onCitations?: (citations: SearchResultItem[]) => void
+  onDone?: (sessionId: string) => void
+  onError?: (error: Error) => void
+}
+
+export function sendChatMessage(
+  message: string,
+  callbacks: ChatStreamCallbacks = {},
+  sessionId?: string,
+  filters?: SearchFilters
+): () => void {
+  const abortController = new AbortController()
+  const { onToken, onCitations, onDone, onError } = callbacks
+
+  ;(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, session_id: sessionId, filters }),
+        signal: abortController.signal,
+      })
+
+      if (!response.ok || !response.body) {
+        throw new Error(`Chat failed: ${response.status}`)
+      }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ""
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+
+        const parts = buffer.split("\n\n")
+        buffer = parts.pop() ?? ""
+
+        for (const part of parts) {
+          const lines = part.split("\n")
+          let event = ""
+          let data = ""
+          for (const line of lines) {
+            if (line.startsWith("event: ")) event = line.slice(7)
+            if (line.startsWith("data: ")) data = line.slice(6)
+          }
+          if (!event || !data) continue
+
+          try {
+            const payload = JSON.parse(data)
+            if (event === "token" && onToken) onToken(payload)
+            if (event === "citations" && onCitations) onCitations(payload)
+            if (event === "done" && onDone) onDone(payload.session_id)
+          } catch (e) {
+            console.warn("Failed to parse SSE payload", e)
+          }
+        }
+      }
+    } catch (err) {
+      if ((err as Error).name !== "AbortError" && onError) {
+        onError(err as Error)
+      }
+    }
+  })()
+
+  return () => abortController.abort()
+}
+
+export async function listChatSessions(): Promise<{ sessions: ChatSession[] }> {
+  const res = await fetch(`${API_BASE}/api/chat/sessions`)
+  if (!res.ok) throw new Error(`Sessions list failed: ${res.status}`)
+  return res.json()
+}
+
+export async function getChatSession(sessionId: string): Promise<ChatSession & { messages: ChatMessage[] }> {
+  const res = await fetch(`${API_BASE}/api/chat/sessions/${sessionId}`)
+  if (!res.ok) throw new Error(`Session fetch failed: ${res.status}`)
+  return res.json()
+}

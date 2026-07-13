@@ -24,22 +24,22 @@ export interface PaperItem {
   id: string
   title: string
   summary: string
-  source_url: string
-  author: string
+  source_url?: string
+  author?: string
   key_concepts: string[]
   tags: string[]
-  difficulty: number
+  difficulty?: number
   reading_time_minutes: number
   importance_score: number
-  knowledge_tree: string
+  knowledge_tree?: string
   knowledge_domain?: string | null
-  created_at: string
+  created_at?: string
   attachments?: {
     id: string
     filename: string
     minio_path: string
     file_type: string
-    page_count: number | null
+    page_count?: number | null
   }[]
 }
 

@@ -59,3 +59,30 @@ class IngestionJob(Base):
     error_message: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=datetime.utcnow)
+
+
+class ChatSession(Base):
+    __tablename__ = "chat_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    title: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=datetime.utcnow)
+
+    messages: Mapped[list["ChatMessage"]] = relationship(
+        back_populates="session",
+        order_by="ChatMessage.created_at",
+    )
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("chat_sessions.id"))
+    role: Mapped[str] = mapped_column(String(20), nullable=False)  # user | assistant | system
+    content: Mapped[str | None] = mapped_column(Text)
+    citations: Mapped[list[str] | None] = mapped_column(ARRAY(Text))
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+    session: Mapped["ChatSession"] = relationship(back_populates="messages")

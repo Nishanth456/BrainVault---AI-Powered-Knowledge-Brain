@@ -1,10 +1,16 @@
 "use client"
-import { useState } from "react"
-import Link from "next/link"
 import {
-  FileText, Clock, BookOpen,
-  ExternalLink, User, ChevronRight, Trash2, Loader2
+    BookOpen,
+    ChevronRight,
+    Clock,
+    ExternalLink,
+    FileText,
+    Loader2,
+    Trash2,
+    User
 } from "lucide-react"
+import Link from "next/link"
+import { useState } from "react"
 
 const difficultyLabel = ["", "Beginner", "Basic", "Intermediate", "Advanced", "Expert"]
 const difficultyColor = [
@@ -21,22 +27,22 @@ interface Attachment {
   filename: string
   minio_path: string
   file_type: string
-  page_count: number | null
+  page_count?: number | null
 }
 
 export interface LinkedInItem {
   id: string
   title: string
   summary: string
-  source_url: string
-  author: string
+  source_url?: string
+  author?: string
   key_concepts: string[]
   tags: string[]
-  difficulty: number
+  difficulty?: number
   reading_time: number
-  knowledge_tree: string
+  knowledge_tree?: string
   knowledge_domain?: string | null
-  created_at: string
+  created_at?: string
   attachments: Attachment[]
 }
 
