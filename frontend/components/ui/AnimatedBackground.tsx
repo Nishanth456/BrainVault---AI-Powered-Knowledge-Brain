@@ -1,6 +1,8 @@
 "use client"
 
+import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
+import { useTheme } from "next-themes"
 import { useEffect, useState } from "react"
 
 interface Flake {
@@ -14,6 +16,13 @@ interface Flake {
 
 export function AnimatedBackground() {
   const [flakes, setFlakes] = useState<Flake[]>([])
+  const { theme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  const isDark = mounted ? theme === "dark" : true
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     // Generate flakes only on the client to avoid hydration mismatch
@@ -37,12 +46,15 @@ export function AnimatedBackground() {
       {flakes.map((flake) => (
         <motion.div
           key={flake.id}
-          className="absolute top-[-5%] rounded-full bg-white blur-[1px]"
+          className={cn(
+            "absolute top-[-5%] rounded-full blur-[1px]",
+            isDark ? "bg-white" : "bg-foreground"
+          )}
           style={{
             left: `${flake.x}vw`,
             width: flake.size,
             height: flake.size,
-            opacity: flake.opacity,
+            opacity: isDark ? flake.opacity : flake.opacity * 0.5,
           }}
           animate={{
             y: ["0vh", "110vh"],
@@ -58,7 +70,10 @@ export function AnimatedBackground() {
       
       {/* Orb 1: Primary Violet */}
       <motion.div
-        className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-primary/20 blur-[120px]"
+        className={cn(
+          "absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full blur-[120px]",
+          isDark ? "bg-primary/20" : "bg-primary/10"
+        )}
         animate={{
           x: [0, 100, 0],
           y: [0, 50, 0],
@@ -73,7 +88,10 @@ export function AnimatedBackground() {
 
       {/* Orb 2: Teal/Cyan */}
       <motion.div
-        className="absolute bottom-[-20%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-[oklch(0.65_0.2_195)]/15 blur-[120px]"
+        className={cn(
+          "absolute bottom-[-20%] right-[-10%] w-[60vw] h-[60vw] rounded-full blur-[120px]",
+          isDark ? "bg-[oklch(0.65_0.2_195)]/15" : "bg-[oklch(0.65_0.2_195)]/8"
+        )}
         animate={{
           x: [0, -100, 0],
           y: [0, -50, 0],
@@ -88,7 +106,10 @@ export function AnimatedBackground() {
       
       {/* Orb 3: Deep Blue */}
       <motion.div
-        className="absolute top-[30%] left-[60%] w-[40vw] h-[40vw] rounded-full bg-[oklch(0.55_0.25_265)]/15 blur-[100px]"
+        className={cn(
+          "absolute top-[30%] left-[60%] w-[40vw] h-[40vw] rounded-full blur-[100px]",
+          isDark ? "bg-[oklch(0.55_0.25_265)]/15" : "bg-[oklch(0.55_0.25_265)]/8"
+        )}
         animate={{
           x: [0, -50, 50, 0],
           y: [0, 100, -50, 0],
@@ -103,7 +124,10 @@ export function AnimatedBackground() {
 
       {/* Noise texture overlay for premium feel */}
       <div 
-        className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
+        className={cn(
+          "absolute inset-0 mix-blend-overlay",
+          isDark ? "opacity-[0.03]" : "opacity-[0.02]"
+        )}
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
           backgroundRepeat: 'repeat',

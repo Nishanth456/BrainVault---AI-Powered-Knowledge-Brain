@@ -38,8 +38,18 @@ const TYPE_ICON_MAP: Record<string, string> = {
 
 const ROUTE_MAP: Record<string, string> = {
   linkedin: "/knowledge/linkedin",
+  blog: "/knowledge/blogs",
+  research: "/knowledge/papers",
+  pdf: "/knowledge/pdfs",
+  github: "/knowledge/github",
+  youtube: "/knowledge/youtube",
+  youtube_video: "/knowledge/youtube",
+  youtube_playlist: "/knowledge/youtube",
+  course: "/knowledge/courses",
+  certification: "/knowledge/certifications",
   note: "/knowledge/notes",
   interview_qna: "/knowledge/interviews",
+  plaintext: "/knowledge/notes",
 }
 
 function isLinkedInUrl(input: string): boolean {
@@ -141,7 +151,7 @@ export function UniversalInput() {
           setLoading(false)
           const detectedType = msg.detected_type ?? "note"
           const typeEmoji = TYPE_ICON_MAP[detectedType] ?? "🧠"
-          const route = ROUTE_MAP[detectedType] ?? "/knowledge/notes"
+          const route = ROUTE_MAP[detectedType] ?? "/search"
           toast.success("Saved to your brain!", {
             description: `${typeEmoji} ${msg.title || "Content saved successfully"}`,
             action: {

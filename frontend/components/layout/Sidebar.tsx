@@ -12,14 +12,18 @@ import {
     GraduationCap,
     Map, MessageCircle,
     MessageSquare,
+    Moon,
     Network,
     PlayCircle,
     Search,
     Settings,
+    Sun,
     Zap,
 } from "lucide-react"
+import { useTheme } from "next-themes"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
 
 const navGroups = [
   {
@@ -56,6 +60,16 @@ const navGroups = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark")
+  }
 
   return (
     <aside className="w-64 h-screen bg-sidebar/50 backdrop-blur-3xl border-r border-sidebar-border flex flex-col flex-shrink-0">
@@ -115,11 +129,25 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Settings */}
-      <div className="p-3 border-t border-sidebar-border">
+      {/* Settings & Theme */}
+      <div className="p-3 border-t border-sidebar-border space-y-1">
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
+        >
+          {mounted ? (
+            theme === "dark" ? <Sun size={15} /> : <Moon size={15} />
+          ) : (
+            <Moon size={15} />
+          )}
+          <span className="font-medium">
+            {mounted ? (theme === "dark" ? "Light mode" : "Dark mode") : "Dark mode"}
+          </span>
+        </button>
         <Link
           href="/settings"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all"
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
         >
           <Settings size={15} />
           <span className="font-medium">Settings</span>

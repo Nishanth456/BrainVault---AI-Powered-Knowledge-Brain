@@ -101,9 +101,9 @@ export default function GitHubPage() {
             {[...Array(2)].map((_, si) => (
               <div key={si}>
                 <div className="h-5 w-48 bg-white/[0.05] rounded-lg animate-pulse mb-4" />
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-4">
                   {[...Array(3)].map((_, i) => (
-                    <div key={i} className="h-80 bg-white/[0.03] rounded-2xl animate-pulse border border-white/[0.05]" />
+                    <div key={i} className="h-40 bg-white/[0.03] rounded-2xl animate-pulse border border-white/[0.05]" />
                   ))}
                 </div>
               </div>
@@ -139,27 +139,37 @@ export default function GitHubPage() {
         {!loading && !error && items.length > 0 && (
           <div className="space-y-8">
             {sections.map(section => {
+              const sectionItems = grouped[section]
               const isCollapsed = collapsed[section]
+              const topicLabel = leafTopic(section)
+
               return (
                 <div key={section}>
                   <button
                     onClick={() => toggleSection(section)}
-                    className="flex items-center gap-2 mb-4 group"
+                    className="flex items-center gap-2.5 mb-4 group w-full text-left"
                   >
-                    {isCollapsed ? (
-                      <ChevronRight size={16} className="text-zinc-500 group-hover:text-white transition-colors" />
-                    ) : (
-                      <ChevronDown size={16} className="text-zinc-500 group-hover:text-white transition-colors" />
-                    )}
-                    <h2 className="text-sm font-semibold text-zinc-300 tracking-wide">
-                      {leafTopic(section)}
-                    </h2>
-                    <span className="text-xs text-zinc-600 ml-1">({grouped[section].length})</span>
+                    <div className="w-6 h-6 rounded-lg bg-emerald-600/15 flex items-center justify-center flex-shrink-0">
+                      <FolderOpen size={12} className="text-emerald-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-semibold text-white truncate">{topicLabel}</span>
+                      <span className="text-xs text-zinc-600 ml-2">
+                        {section !== topicLabel ? `· ${section}` : ""}
+                      </span>
+                    </div>
+                    <span className="text-xs text-zinc-600 flex-shrink-0">
+                      {sectionItems.length} {sectionItems.length === 1 ? "repo" : "repos"}
+                    </span>
+                    {isCollapsed
+                      ? <ChevronRight size={14} className="text-zinc-600 flex-shrink-0" />
+                      : <ChevronDown size={14} className="text-zinc-600 flex-shrink-0" />
+                    }
                   </button>
 
                   {!isCollapsed && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {grouped[section].map(item => (
+                    <div className="flex flex-col gap-4">
+                      {sectionItems.map(item => (
                         <RepoCard
                           key={item.id}
                           item={item}
