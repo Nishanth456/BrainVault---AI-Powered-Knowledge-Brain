@@ -18,6 +18,7 @@ import {
   Search,
   Settings,
   Sun,
+  User,
   Zap,
 } from "lucide-react"
 import { useTheme } from "next-themes"
@@ -30,6 +31,7 @@ const navGroups = [
     label: "Overview",
     items: [
       { label: "Dashboard",       href: "/",                        icon: Brain },
+      { label: "Profile",          href: "/profile",                  icon: User },
     ]
   },
   {
@@ -53,7 +55,6 @@ const navGroups = [
       { label: "Learning Paths",    href: "/learning",                 icon: Map },
       { label: "Brain Talk",        href: "/chat",                     icon: Zap },
       { label: "Brain Search",      href: "/search",                   icon: Search },
-      { label: "Knowledge Graph",   href: "/graph",                    icon: Network },
     ]
   },
 ]

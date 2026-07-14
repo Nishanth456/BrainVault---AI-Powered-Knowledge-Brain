@@ -93,3 +93,7 @@ LinkedIn blocks headless / automated logins, so the scraper **cannot log itself 
 - Check `backend/login_dump.html` or `backend/post_dump.html` for debug output if login or scraping fails.
 
 ---
+
+## 👤 Updating the Default Profile
+
+When a new user visits the Profile page, the application automatically seeds the database with a default profile. You can customize this by editing the `DEFAULT_PROFILE` dictionary at the top of `backend/routers/profile.py` with your own details. Once updated, restart the backend server, and the new default profile will be used for any newly initialized users.

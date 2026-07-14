@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from backend.config import settings
-from backend.routers import ingest, health, knowledge, files, search, chat, learning_paths
+from backend.routers import ingest, health, knowledge, files, search, chat, learning_paths, profile
 from backend.services.qdrant import ensure_collection
 from backend.services.minio import ensure_bucket
 
@@ -48,5 +48,6 @@ app.include_router(files.router)          # Phase 1 — serve PDF/image files fr
 app.include_router(search.router)         # Phase 5 — semantic search
 app.include_router(chat.router)           # Phase 6 — RAG chat
 app.include_router(learning_paths.router) # Phase 9 — learning paths
+app.include_router(profile.router)        # Phase 11 — user profile
 
 # Future routers (added in later phases)

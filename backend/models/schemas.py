@@ -129,3 +129,31 @@ class LearningPath(Base):
     completed_stages: Mapped[list[str] | None] = mapped_column(ARRAY(Text)) # titles of completed stages
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=datetime.utcnow)
+
+
+# ── Phase 11: User Profile ────────────────────────────────────────────────────
+
+from sqlalchemy.dialects.postgresql import JSONB as PG_JSONB
+
+class UserProfile(Base):
+    __tablename__ = "user_profile"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    full_name: Mapped[str | None] = mapped_column(Text)
+    email: Mapped[str | None] = mapped_column(Text)
+    phone: Mapped[str | None] = mapped_column(Text)
+    location: Mapped[str | None] = mapped_column(Text)
+    linkedin_url: Mapped[str | None] = mapped_column(Text)
+    github_url: Mapped[str | None] = mapped_column(Text)
+    website_url: Mapped[str | None] = mapped_column(Text)
+    summary: Mapped[str | None] = mapped_column(Text)
+    education: Mapped[list | None] = mapped_column(PG_JSONB)
+    experience: Mapped[list | None] = mapped_column(PG_JSONB)
+    skills: Mapped[dict | None] = mapped_column(PG_JSONB)
+    certifications: Mapped[list | None] = mapped_column(PG_JSONB)
+    projects: Mapped[list | None] = mapped_column(PG_JSONB)
+    publications: Mapped[list | None] = mapped_column(PG_JSONB)
+    achievements: Mapped[list | None] = mapped_column(PG_JSONB)
+    resume_path: Mapped[str | None] = mapped_column(Text)
+    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=datetime.utcnow)
+
