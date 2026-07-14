@@ -283,7 +283,7 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
               <span className="text-[11px] text-zinc-500 font-medium">Document context</span>
             </div>
             <p
-              className="text-xs text-zinc-400 line-clamp-1 leading-relaxed"
+              className="text-xs text-zinc-400 leading-relaxed max-h-32 overflow-y-auto"
               title={item.summary}
             >
               {item.summary}
@@ -301,7 +301,7 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
           </div>
 
           {/* Chat messages */}
-          <ScrollArea className="flex-1 px-4">
+          <div className="flex-1 overflow-y-auto px-4">
             <div className="space-y-4 py-2">
               {aiMessages.length === 0 && (
                 <p className="text-xs text-zinc-600 text-center py-4">
@@ -328,7 +328,7 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
                 </div>
               ))}
             </div>
-          </ScrollArea>
+          </div>
 
           {/* Input */}
           <div className="p-3 border-t border-white/[0.06]">
