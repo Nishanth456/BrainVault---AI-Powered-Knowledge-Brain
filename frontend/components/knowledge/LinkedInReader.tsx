@@ -126,7 +126,7 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
         },
       },
       undefined,
-      { types: ["linkedin"] }
+      { item_id: item.id }
     )
   }
 

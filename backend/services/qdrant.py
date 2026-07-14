@@ -124,6 +124,13 @@ async def search_knowledge(
                     match=MatchAny(any=[filters["knowledge_tree"]]),
                 )
             )
+        if filters.get("item_id"):
+            conditions.append(
+                FieldCondition(
+                    key="knowledge_item_id",
+                    match=MatchValue(value=filters["item_id"]),
+                )
+            )
 
     if conditions:
         qdrant_filter = Filter(must=conditions)
