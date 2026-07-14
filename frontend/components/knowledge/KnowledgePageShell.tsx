@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { FilterBar } from "./FilterBar"
 import { SortDropdown } from "./SortDropdown"
@@ -21,7 +21,7 @@ interface KnowledgePageShellProps<T> {
   filterOptions?: { domains?: string[] }
 }
 
-export function KnowledgePageShell<T>({
+export function KnowledgePageShellInner<T>({
   title,
   subtitle,
   icon,
@@ -114,5 +114,13 @@ export function KnowledgePageShell<T>({
         )}
       </div>
     </div>
+  )
+}
+
+export function KnowledgePageShell<T>(props: KnowledgePageShellProps<T>) {
+  return (
+    <Suspense fallback={<div className="p-6 sm:p-8"><ShimmerSkeleton count={3} /></div>}>
+      <KnowledgePageShellInner {...props} />
+    </Suspense>
   )
 }

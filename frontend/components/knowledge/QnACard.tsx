@@ -17,9 +17,10 @@ export interface QnAItem {
 
 interface QnACardProps {
   item: QnAItem
+  onDelete?: (id: string) => void
 }
 
-export function QnACard({ item }: QnACardProps) {
+export function QnACard({ item, onDelete }: QnACardProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isDeleted, setIsDeleted] = useState(false)
 

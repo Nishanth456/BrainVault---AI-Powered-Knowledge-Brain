@@ -4,7 +4,6 @@ import { getDashboardStats, type DashboardStats } from "@/lib/api"
 import { StatCard } from "@/components/dashboard/StatCard"
 import { RecentActivityList } from "@/components/dashboard/RecentActivityList"
 import { UniversalInput } from "@/components/dashboard/UniversalInput"
-import { AgentProgressStream } from "@/components/dashboard/AgentProgressStream"
 import { AnimatedBackground } from "@/components/ui/AnimatedBackground"
 
 export default function DashboardPage() {
@@ -25,7 +24,6 @@ export default function DashboardPage() {
         </div>
 
         <UniversalInput onSubmitted={() => setRefreshKey(k => k + 1)} />
-        <AgentProgressStream />
 
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">

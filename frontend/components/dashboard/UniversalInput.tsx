@@ -63,7 +63,7 @@ interface Step {
   status: "done" | "active" | "error"
 }
 
-export function UniversalInput() {
+export function UniversalInput({ onSubmitted }: { onSubmitted?: () => void }) {
   const router = useRouter()
   const [input, setInput] = useState("")
   const [concept, setConcept] = useState("")
@@ -159,6 +159,7 @@ export function UniversalInput() {
               onClick: () => router.push(route),
             },
           })
+          onSubmitted?.()
           setTimeout(() => {
             setInput("")
             setConcept("")
@@ -191,6 +192,7 @@ export function UniversalInput() {
               setLoading(false)
               setSteps([{ message: "✅ Saved to your brain!", status: "done" }])
               toast.success("Saved to your brain!")
+              onSubmitted?.()
               setTimeout(() => { setInput(""); setConcept(""); setSteps([]) }, 2000)
             } else if (statusData.status === "failed" || attempts > 60) {
               clearInterval(poll)

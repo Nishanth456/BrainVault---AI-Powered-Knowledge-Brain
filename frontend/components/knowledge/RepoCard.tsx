@@ -6,6 +6,11 @@ import {
     Star,
     Trash2,
 } from "lucide-react"
+import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
+import { DeleteWithUndo } from "@/components/knowledge/DeleteWithUndo"
+import { ExportButton } from "@/components/knowledge/ExportButton"
+import { restoreItem } from "@/lib/api"
+
 import { useState } from "react"
 
 const difficultyLabel = ["", "Beginner", "Basic", "Intermediate", "Advanced", "Expert"]

@@ -7,6 +7,10 @@ import {
     User
 } from "lucide-react"
 import { useState } from "react"
+import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
+import { DeleteWithUndo } from "@/components/knowledge/DeleteWithUndo"
+import { ExportButton } from "@/components/knowledge/ExportButton"
+import { restoreItem } from "@/lib/api"
 
 const difficultyLabel = ["", "Beginner", "Basic", "Intermediate", "Advanced", "Expert"]
 const difficultyColor = [
