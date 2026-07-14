@@ -19,6 +19,7 @@ interface KnowledgePageShellProps<T> {
   renderCard: (item: T, onDelete: (id: string) => void) => React.ReactNode
   getItemId: (item: T) => string
   filterOptions?: { domains?: string[] }
+  singleColumn?: boolean
 }
 
 export function KnowledgePageShellInner<T>({
@@ -33,6 +34,7 @@ export function KnowledgePageShellInner<T>({
   renderCard,
   getItemId,
   filterOptions,
+  singleColumn,
 }: KnowledgePageShellProps<T>) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -108,7 +110,7 @@ export function KnowledgePageShellInner<T>({
         )}
 
         {!loading && items.length > 0 && (
-          <StaggeredCardGrid>
+          <StaggeredCardGrid singleColumn={singleColumn}>
             {items.map(item => renderCard(item, handleDelete))}
           </StaggeredCardGrid>
         )}

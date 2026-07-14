@@ -2,7 +2,7 @@
 import { motion } from "framer-motion"
 import { ReactNode } from "react"
 
-export function StaggeredCardGrid({ children }: { children: ReactNode }) {
+export function StaggeredCardGrid({ children, singleColumn = false }: { children: ReactNode, singleColumn?: boolean }) {
   return (
     <motion.div
       initial="hidden"
@@ -10,7 +10,7 @@ export function StaggeredCardGrid({ children }: { children: ReactNode }) {
       variants={{
         visible: { transition: { staggerChildren: 0.05 } },
       }}
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+      className={singleColumn ? "flex flex-col gap-4" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"}
     >
       {children}
     </motion.div>
