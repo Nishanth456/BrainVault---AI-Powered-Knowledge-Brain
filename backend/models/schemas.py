@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import String, Text, Integer, ARRAY, ForeignKey, BigInteger, func
+from sqlalchemy import String, Text, Integer, ARRAY, ForeignKey, BigInteger, func, Float
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.models.database import Base
@@ -40,6 +40,20 @@ class KnowledgeItem(Base):
     chapters: Mapped[dict | None] = mapped_column(Text)  # JSON string of chapters
     transcript: Mapped[str | None] = mapped_column(Text)
     playlist_id: Mapped[str | None] = mapped_column(Text)
+
+    # Course-specific fields
+    instructor: Mapped[str | None] = mapped_column(Text)
+    rating: Mapped[float | None] = mapped_column(Float)
+    price: Mapped[str | None] = mapped_column(Text)
+    syllabus: Mapped[str | None] = mapped_column(Text) # JSON string of syllabus
+    prerequisites: Mapped[list[str] | None] = mapped_column(ARRAY(Text))
+
+    # Certification-specific fields
+    issuer: Mapped[str | None] = mapped_column(Text)
+    issue_date: Mapped[str | None] = mapped_column(Text) # ISO format string
+    valid_until: Mapped[str | None] = mapped_column(Text)
+    cert_id: Mapped[str | None] = mapped_column(Text)
+    exam_topics: Mapped[list[str] | None] = mapped_column(ARRAY(Text))
 
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=datetime.utcnow)

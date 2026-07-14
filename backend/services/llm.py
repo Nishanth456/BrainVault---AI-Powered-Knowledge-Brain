@@ -14,6 +14,20 @@ async def detect_input_type(raw_input: str) -> str:
     Uses Groq llama-3.1-8b-instant — fast and free.
     Returns: 'linkedin' | 'blog' | 'pdf' | 'research' | 'github' | 'youtube' | 'course' | 'plaintext'
     """
+    raw_input_lower = raw_input.strip().lower()
+    
+    # Fast path for obvious URLs to save LLM calls and avoid rate limits/misclassifications
+    if raw_input_lower.startswith("http://") or raw_input_lower.startswith("https://"):
+        if "linkedin.com" in raw_input_lower: return "linkedin"
+        if "github.com" in raw_input_lower: return "github"
+        if "youtube.com" in raw_input_lower or "youtu.be" in raw_input_lower: return "youtube"
+        if any(domain in raw_input_lower for domain in ["udemy.com", "coursera.org", "deeplearning.ai", "fast.ai"]): return "course"
+        if any(domain in raw_input_lower for domain in ["medium.com", "dev.to", "hashnode.com", "substack.com"]): return "blog"
+        if "arxiv.org" in raw_input_lower or "researchgate.net" in raw_input_lower: return "research"
+        if raw_input_lower.split("?")[0].endswith(".pdf"): return "pdf"
+        
+        # If it's a URL but didn't match the above, let the LLM try to figure out if it's a blog/cert/etc
+
     prompt = f"""Classify this input into exactly one of these categories:
 linkedin, blog, pdf, research, github, youtube, course, certification, plaintext
 
@@ -55,12 +69,17 @@ async def call_llm(
     system: str = "You are a helpful AI assistant.",
     temperature: float = 0.1,
     max_tokens: int = 1000,
-    fallback_model: str = "groq/llama-3.1-8b-instant"
+    fallback_model: str = "groq/llama-3.1-8b-instant",
+    response_format: dict = None
 ) -> str:
     """
     Unified LLM call with automatic fallback.
-    Default: Groq 70B → fallback: Groq 8B
+    Default: Groq 70B
     """
+    kwargs = {}
+    if response_format:
+        kwargs["response_format"] = response_format
+
     try:
         response = await acompletion(
             model=model,
@@ -70,6 +89,8 @@ async def call_llm(
             ],
             temperature=temperature,
             max_tokens=max_tokens,
+            num_retries=3,
+            **kwargs
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -83,6 +104,8 @@ async def call_llm(
             ],
             temperature=temperature,
             max_tokens=max_tokens,
+            num_retries=5,
+            **kwargs
         )
         return response.choices[0].message.content.strip()
 

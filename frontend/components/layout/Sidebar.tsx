@@ -40,7 +40,7 @@ const navGroups = [
       { label: "Research Papers",   href: "/knowledge/papers",         icon: FlaskConical },
       { label: "Interview Q&A",     href: "/knowledge/interviews",     icon: MessageSquare },
       { label: "AI Notes",          href: "/knowledge/notes",          icon: MessageCircle },
-      { label: "PDFs",              href: "/knowledge/pdfs",           icon: BookOpen },
+
       { label: "GitHub Repos",      href: "/knowledge/github",         icon: Code2 },
       { label: "YouTube",           href: "/knowledge/youtube",        icon: PlayCircle },
       { label: "Courses",           href: "/knowledge/courses",        icon: GraduationCap },

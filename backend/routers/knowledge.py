@@ -395,6 +395,107 @@ async def get_youtube_items(
     ]
 
 
+@router.get("/courses")
+async def get_course_items(
+    limit: int = Query(default=20, le=100),
+    offset: int = Query(default=0),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return all Course knowledge items."""
+    result = await db.execute(
+        select(KnowledgeItem)
+        .options(selectinload(KnowledgeItem.attachments))
+        .where(KnowledgeItem.type == "course")
+        .order_by(KnowledgeItem.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    items = result.scalars().all()
+
+    return [
+        {
+            "id":                   str(item.id),
+            "type":                 item.type,
+            "title":                item.title,
+            "summary":              item.summary,
+            "source_url":           item.source_url,
+            "instructor":           item.instructor,
+            "rating":               item.rating,
+            "price":                item.price,
+            "syllabus":             _safe_load_chapters(item.syllabus), # reusing json loader
+            "prerequisites":        item.prerequisites or [],
+            "key_concepts":         item.key_concepts or [],
+            "tags":                 item.tags or [],
+            "difficulty":           item.difficulty,
+            "reading_time":         item.reading_time_minutes,
+            "knowledge_tree":       item.knowledge_tree,
+            "knowledge_domain":     item.knowledge_domain,
+            "created_at":           item.created_at.isoformat(),
+            "attachments": [
+                {
+                    "id":         str(att.id),
+                    "filename":   att.filename,
+                    "minio_path": att.minio_path,
+                    "file_type":  att.file_type,
+                    "page_count": att.page_count,
+                }
+                for att in item.attachments
+            ],
+        }
+        for item in items
+    ]
+
+
+@router.get("/certifications")
+async def get_certification_items(
+    limit: int = Query(default=20, le=100),
+    offset: int = Query(default=0),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return all Certification knowledge items."""
+    result = await db.execute(
+        select(KnowledgeItem)
+        .options(selectinload(KnowledgeItem.attachments))
+        .where(KnowledgeItem.type == "certification")
+        .order_by(KnowledgeItem.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    items = result.scalars().all()
+
+    return [
+        {
+            "id":                   str(item.id),
+            "type":                 item.type,
+            "title":                item.title,
+            "summary":              item.summary,
+            "source_url":           item.source_url,
+            "issuer":               item.issuer,
+            "issue_date":           item.issue_date,
+            "valid_until":          item.valid_until,
+            "cert_id":              item.cert_id,
+            "exam_topics":          item.exam_topics or [],
+            "key_concepts":         item.key_concepts or [],
+            "tags":                 item.tags or [],
+            "difficulty":           item.difficulty,
+            "knowledge_tree":       item.knowledge_tree,
+            "knowledge_domain":     item.knowledge_domain,
+            "created_at":           item.created_at.isoformat(),
+            "attachments": [
+                {
+                    "id":         str(att.id),
+                    "filename":   att.filename,
+                    "minio_path": att.minio_path,
+                    "file_type":  att.file_type,
+                    "page_count": att.page_count,
+                }
+                for att in item.attachments
+            ],
+        }
+        for item in items
+    ]
+
+
 @router.get("/{item_id}")
 async def get_knowledge_item(item_id: str, db: AsyncSession = Depends(get_db)):
     """Get a single knowledge item by ID, including its attachments."""

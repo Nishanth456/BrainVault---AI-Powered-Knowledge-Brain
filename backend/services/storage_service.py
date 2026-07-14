@@ -133,7 +133,9 @@ async def save_knowledge_item(state: BrainVaultState) -> uuid.UUID:
                     reading_time_minutes, importance_score,
                     knowledge_tree, knowledge_domain, embedding_id,
                     repo_stars, repo_language, tech_stack, architecture_summary,
-                    video_duration_seconds, channel_name, thumbnail_path, chapters, transcript, playlist_id
+                    video_duration_seconds, channel_name, thumbnail_path, chapters, transcript, playlist_id,
+                    instructor, rating, price, syllabus, prerequisites,
+                    issuer, issue_date, valid_until, cert_id, exam_topics
                 ) VALUES (
                     :id, :type, :title, :summary, :raw_content,
                     :source_url, :author,
@@ -141,7 +143,9 @@ async def save_knowledge_item(state: BrainVaultState) -> uuid.UUID:
                     :reading_time_minutes, :importance_score,
                     :knowledge_tree, :knowledge_domain, :embedding_id,
                     :repo_stars, :repo_language, :tech_stack, :architecture_summary,
-                    :video_duration_seconds, :channel_name, :thumbnail_path, :chapters, :transcript, :playlist_id
+                    :video_duration_seconds, :channel_name, :thumbnail_path, :chapters, :transcript, :playlist_id,
+                    :instructor, :rating, :price, :syllabus, :prerequisites,
+                    :issuer, :issue_date, :valid_until, :cert_id, :exam_topics
                 )
             """), {
                 "id":                   str(item_id),
@@ -169,6 +173,16 @@ async def save_knowledge_item(state: BrainVaultState) -> uuid.UUID:
                 "chapters":             json.dumps(state.get("chapters") or []) if state.get("chapters") else None,
                 "transcript":           ("\n".join([seg.get("text") or "" for seg in (state.get("transcript") or [])])[:20000]) if state.get("transcript") else None,
                 "playlist_id":          state.get("playlist_id"),
+                "instructor":           state.get("instructor"),
+                "rating":               state.get("rating"),
+                "price":                state.get("price"),
+                "syllabus":             state.get("syllabus"),
+                "prerequisites":        state.get("prerequisites") or [],
+                "issuer":               state.get("issuer"),
+                "issue_date":           state.get("issue_date"),
+                "valid_until":          state.get("valid_until"),
+                "cert_id":              state.get("cert_id"),
+                "exam_topics":          state.get("exam_topics") or [],
             })
             inserted_items.append({
                 "id": str(item_id),

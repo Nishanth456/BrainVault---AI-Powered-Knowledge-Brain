@@ -385,51 +385,113 @@ async def github_agent_node(state: BrainVaultState) -> dict:
     }
 
 
-# ── Phase 7: Real Course agent adapter (stub) ────────────────────────────────
-
+# ── Phase 10: Real Course agent adapter ────────────────────────────────
 async def course_agent_node(state: BrainVaultState) -> dict:
-    """Stub adapter for the Course agent."""
+    from backend.agents.course_agent import course_subgraph, CourseState
+    
+    course_state = CourseState(
+        url=state["raw_input"].strip(),
+        concept=state.get("concept") or "",
+        raw_html=None,
+        clean_text=None,
+        title=None,
+        instructor=None,
+        rating=None,
+        price=None,
+        syllabus=None,
+        prerequisites=None,
+        summary=None,
+        key_concepts=None,
+        tags=None,
+        difficulty=None,
+        knowledge_tree=None,
+        knowledge_domain=None,
+        metadata_payload=None,
+        agent_steps=[],
+        error=None,
+    )
+    
+    compiled = course_subgraph.compile()
+    result = await compiled.ainvoke(course_state)
+    
     return {
         "input_type":       "course",
-        "extracted_text":   "",
-        "title":            "Course (stub)",
-        "summary":          "",
-        "key_concepts":     [],
-        "tags":             [],
-        "difficulty":       3,
-        "knowledge_tree":   "",
-        "knowledge_domain": None,
+        "extracted_text":   result.get("clean_text", ""),
+        "title":            result.get("title", ""),
+        "summary":          result.get("summary", ""),
+        "key_concepts":     result.get("key_concepts") or [],
+        "tags":             result.get("tags") or [],
+        "difficulty":       result.get("difficulty", 3),
+        "knowledge_tree":   result.get("knowledge_tree", ""),
+        "knowledge_domain": result.get("knowledge_domain"),
+        "instructor":       result.get("instructor"),
+        "rating":           result.get("rating"),
+        "price":            result.get("price"),
+        "syllabus":         result.get("syllabus"),
+        "prerequisites":    result.get("prerequisites") or [],
         "qna_pairs":        [],
-        "metadata":         {},
+        "metadata":         {
+            "reading_time_minutes": result.get("duration_minutes")
+        },
         "attachments":      [],
-        "agent_steps":      ["🎓 Course agent stub invoked"],
-        "error":            None,
+        "agent_steps":      result.get("agent_steps") or [],
+        "error":            result.get("error"),
         "source_url":       state["raw_input"].strip(),
-        "author":           None,
+        "author":           result.get("instructor"),
     }
 
 
-# ── Phase 8: Real Certification agent adapter (stub) ─────────────────────────
-
+# ── Phase 10: Real Certification agent adapter ─────────────────────────
 async def certification_agent_node(state: BrainVaultState) -> dict:
-    """Stub adapter for the Certification agent."""
+    from backend.agents.cert_agent import cert_subgraph, CertState
+    
+    cert_state = CertState(
+        url=state["raw_input"].strip(),
+        concept=state.get("concept") or "",
+        raw_html=None,
+        clean_text=None,
+        title=None,
+        issuer=None,
+        issue_date=None,
+        valid_until=None,
+        cert_id=None,
+        exam_topics=None,
+        summary=None,
+        key_concepts=None,
+        tags=None,
+        difficulty=None,
+        knowledge_tree=None,
+        knowledge_domain=None,
+        metadata_payload=None,
+        agent_steps=[],
+        error=None,
+    )
+    
+    compiled = cert_subgraph.compile()
+    result = await compiled.ainvoke(cert_state)
+    
     return {
         "input_type":       "certification",
-        "extracted_text":   "",
-        "title":            "Certification (stub)",
-        "summary":          "",
-        "key_concepts":     [],
-        "tags":             [],
-        "difficulty":       3,
-        "knowledge_tree":   "",
-        "knowledge_domain": None,
+        "extracted_text":   result.get("clean_text", ""),
+        "title":            result.get("title", ""),
+        "summary":          result.get("summary", ""),
+        "key_concepts":     result.get("key_concepts") or [],
+        "tags":             result.get("tags") or [],
+        "difficulty":       result.get("difficulty", 4),
+        "knowledge_tree":   result.get("knowledge_tree", ""),
+        "knowledge_domain": result.get("knowledge_domain"),
+        "issuer":           result.get("issuer"),
+        "issue_date":       result.get("issue_date"),
+        "valid_until":      result.get("valid_until"),
+        "cert_id":          result.get("cert_id"),
+        "exam_topics":      result.get("exam_topics") or [],
         "qna_pairs":        [],
         "metadata":         {},
         "attachments":      [],
-        "agent_steps":      ["🏅 Certification agent stub invoked"],
-        "error":            None,
+        "agent_steps":      result.get("agent_steps") or [],
+        "error":            result.get("error"),
         "source_url":       state["raw_input"].strip(),
-        "author":           None,
+        "author":           result.get("issuer"),
     }
 
 

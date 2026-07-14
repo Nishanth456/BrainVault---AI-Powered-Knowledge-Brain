@@ -34,6 +34,20 @@ CREATE TABLE IF NOT EXISTS knowledge_items (
     transcript TEXT,
     playlist_id TEXT,
 
+    -- Course-specific fields
+    instructor TEXT,
+    rating DOUBLE PRECISION,
+    price TEXT,
+    syllabus TEXT,
+    prerequisites TEXT[],
+
+    -- Certification-specific fields
+    issuer TEXT,
+    issue_date TEXT,
+    valid_until TEXT,
+    cert_id TEXT,
+    exam_topics TEXT[],
+
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
