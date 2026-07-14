@@ -4,7 +4,6 @@ import { getDashboardStats, type DashboardStats } from "@/lib/api"
 import { StatCard } from "@/components/dashboard/StatCard"
 import { RecentActivityList } from "@/components/dashboard/RecentActivityList"
 import { UniversalInput } from "@/components/dashboard/UniversalInput"
-import { AnimatedBackground } from "@/components/ui/AnimatedBackground"
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -16,7 +15,6 @@ export default function DashboardPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      <AnimatedBackground />
       <main className="relative z-10 max-w-6xl mx-auto px-6 py-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-white mb-3">BrainVault</h1>
