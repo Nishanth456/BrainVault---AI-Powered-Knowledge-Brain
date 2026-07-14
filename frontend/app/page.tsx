@@ -39,8 +39,8 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
             <StatCard label="Total Items" value={stats.total} icon="Brain" />
             <StatCard label="Bookmarked" value={stats.bookmarked} icon="Bookmark" />
-            <StatCard label="YouTube" value={(stats.by_type.youtube_video || 0) + (stats.by_type.youtube_playlist || 0)} icon="Play" />
-            <StatCard label="GitHub" value={stats.by_type.github_repo || 0} icon="GitBranch" />
+            <StatCard label="Notes" value={stats.by_type.note || 0} icon="FileText" />
+            <StatCard label="Articles" value={(stats.by_type.blog || 0) + (stats.by_type.linkedin || 0)} icon="BookOpen" />
           </div>
         )}
 
