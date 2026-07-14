@@ -13,6 +13,7 @@ import {
     ZoomIn, ZoomOut
 } from "lucide-react"
 import Link from "next/link"
+import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
 import { useCallback, useEffect, useState } from "react"
 import { Document, Page, pdfjs } from "react-pdf"
 import "react-pdf/dist/Page/AnnotationLayer.css"
@@ -39,6 +40,7 @@ interface PaperReaderProps {
     author?: string
     raw_content?: string
     structured?: Record<string, string>
+    is_bookmarked?: boolean
   }
   pdfMinioPaths: string[]
 }
@@ -204,13 +206,7 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
               <MessageSquare size={12} />
               Structure
             </Button>
-            <Button
-              variant="ghost" size="sm"
-              className="text-zinc-400 hover:text-white p-1.5 h-8 w-8"
-              title="Bookmark"
-            >
-              <Bookmark size={14} />
-            </Button>
+            <BookmarkButton itemId={item.id} initial={item.is_bookmarked || false} />
             {item.source_url && (
               <a href={item.source_url} target="_blank" rel="noopener noreferrer">
                 <Button

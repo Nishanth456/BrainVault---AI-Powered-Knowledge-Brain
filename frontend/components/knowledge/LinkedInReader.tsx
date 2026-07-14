@@ -16,7 +16,8 @@ import {
     ZoomIn, ZoomOut
 } from "lucide-react"
 import Link from "next/link"
-import { useCallback, useEffect, useState } from "react"
+import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
+import { useCallback, useEffect, useState, useRef } from "react"
 import { Document, Page, pdfjs } from "react-pdf"
 import "react-pdf/dist/Page/AnnotationLayer.css"
 import "react-pdf/dist/Page/TextLayer.css"
@@ -41,6 +42,9 @@ interface LinkedInReaderProps {
     tags: string[]
     difficulty: number
     author?: string
+    raw_content?: string
+    structured?: Record<string, string>
+    is_bookmarked?: boolean
   }
   pdfMinioPaths: string[]  // e.g. ["brainvault-files/linkedin_abc.pdf"]
 }
@@ -205,13 +209,7 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
               <MessageSquare size={12} />
               Ask AI
             </Button>
-            <Button
-              variant="ghost" size="sm"
-              className="text-zinc-400 hover:text-white p-1.5 h-8 w-8"
-              title="Bookmark"
-            >
-              <Bookmark size={14} />
-            </Button>
+            <BookmarkButton itemId={item.id} initial={item.is_bookmarked || false} />
             {item.source_url && (
               <a href={item.source_url} target="_blank" rel="noopener noreferrer">
                 <Button
