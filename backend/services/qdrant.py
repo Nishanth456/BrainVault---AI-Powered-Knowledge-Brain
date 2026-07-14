@@ -219,6 +219,8 @@ async def search_knowledge(
     # When keyword matches exist, only keep semantic results that are clearly
     # related (score >= 0.68). Otherwise fall back to the base threshold.
     semantic_threshold = 0.68 if merged else SEMANTIC_THRESHOLD
+    if filters and filters.get("item_id"):
+        semantic_threshold = 0.0
     semantic_limit = limit if not merged else max(0, limit - len(merged))
 
     semantic_added = 0
