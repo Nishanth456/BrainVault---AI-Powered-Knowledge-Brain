@@ -101,3 +101,17 @@ class ChatMessage(Base):
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
     session: Mapped["ChatSession"] = relationship(back_populates="messages")
+
+
+class LearningPath(Base):
+    __tablename__ = "learning_paths"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name: Mapped[str | None] = mapped_column(Text)
+    topic: Mapped[str] = mapped_column(Text, nullable=False)
+    stages: Mapped[str | None] = mapped_column(Text)                        # JSON string of stage dicts
+    gaps: Mapped[list[str] | None] = mapped_column(ARRAY(Text))             # detected knowledge gap topics
+    total_items: Mapped[int | None] = mapped_column(Integer, default=0)
+    completed_stages: Mapped[list[str] | None] = mapped_column(ARRAY(Text)) # titles of completed stages
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=datetime.utcnow)

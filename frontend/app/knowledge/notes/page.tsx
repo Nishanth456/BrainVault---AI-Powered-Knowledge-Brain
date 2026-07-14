@@ -71,6 +71,19 @@ export default function NotesPage() {
     return cleanup
   }, [loadNotes])
 
+  // Auto-scroll to target if navigating with a hash (e.g. from learning paths)
+  useEffect(() => {
+    if (items.length > 0 && window.location.hash) {
+      setTimeout(() => {
+        const el = document.getElementById(window.location.hash.substring(1))
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" })
+          el.classList.add("js-glow")
+        }
+      }, 100)
+    }
+  }, [items])
+
   const filteredItems = useMemo(() => {
     if (!query.trim()) return items
     const q = query.toLowerCase()

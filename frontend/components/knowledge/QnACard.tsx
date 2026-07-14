@@ -45,9 +45,10 @@ export function QnACard({ item }: QnACardProps) {
 
   return (
     <div
+      id={`item-${item.id}`}
       className="group relative flex flex-col w-full bg-[#111111]/80 rounded-xl
                  border border-white/[0.05] hover:border-white/[0.1]
-                 overflow-hidden transition-all duration-300 shadow-xl"
+                 overflow-hidden transition-all duration-300 shadow-xl target-glow-yellow"
     >
       {/* Top right actions */}
       <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-2">

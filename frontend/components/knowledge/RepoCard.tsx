@@ -66,10 +66,11 @@ export function RepoCard({ item, onDelete }: { item: RepoItem; onDelete?: (id: s
 
   return (
     <a
+      id={`item-${item.id}`}
       href={item.source_url || "#"}
       target={item.source_url ? "_blank" : undefined}
       rel={item.source_url ? "noopener noreferrer" : undefined}
-      className="group block relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 hover:border-emerald-500/30 hover:bg-white/[0.05] transition-all duration-300 overflow-hidden"
+      className="group block relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 hover:border-emerald-500/30 hover:bg-white/[0.05] transition-all duration-300 overflow-hidden target-glow-emerald"
     >
       {/* Subtle gradient on hover */}
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-emerald-600/5 via-transparent to-transparent rounded-2xl pointer-events-none" />

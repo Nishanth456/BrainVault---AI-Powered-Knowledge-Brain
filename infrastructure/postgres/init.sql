@@ -67,3 +67,19 @@ CREATE INDEX IF NOT EXISTS idx_knowledge_items_domain ON knowledge_items(knowled
 CREATE INDEX IF NOT EXISTS idx_knowledge_items_created_at ON knowledge_items(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_attachments_knowledge_item_id ON attachments(knowledge_item_id);
 CREATE INDEX IF NOT EXISTS idx_ingestion_jobs_status ON ingestion_jobs(status);
+
+-- Phase 9: Learning Paths
+CREATE TABLE IF NOT EXISTS learning_paths (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT,
+    topic TEXT NOT NULL,
+    stages TEXT,                            -- JSON string of stage objects
+    gaps TEXT[],                            -- detected knowledge gap topics
+    total_items INTEGER DEFAULT 0,
+    completed_stages TEXT[],                -- titles of completed stages
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_learning_paths_created_at ON learning_paths(created_at DESC);
+

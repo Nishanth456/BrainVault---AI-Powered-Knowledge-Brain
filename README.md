@@ -34,6 +34,8 @@ Run Uvicorn from the **project root** so Python can resolve the `backend` packag
 ```bash
 cd C:\Users\nisha\Projects\BrainVault
 # activate your virtual environment first, e.g. .venv\Scripts\activate on Windows
+# powershell - .\backend\venv\Scripts\Activate.ps1
+# cmd - .\backend\venv\Scripts\activate.bat  
 uvicorn backend.main:app --reload --port 8000
 ```
 

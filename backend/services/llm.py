@@ -124,3 +124,35 @@ async def stream_rag_response(system: str, prompt: str):
 
     print(f"All streaming models failed: {last_error}")
     yield "I'm sorry, I couldn't generate a response right now. Please try again."
+
+
+async def call_llm_json(
+    prompt: str,
+    model: str = "groq/llama-3.3-70b-versatile",
+    max_tokens: int = 1500,
+) -> dict:
+    """
+    Call an LLM and parse the response as JSON.
+    Strips markdown fences (```json ... ```) if present.
+    Returns {} on any failure so callers never hard-crash.
+    """
+    import re as _re
+    import json as _json
+
+    raw = await call_llm(
+        prompt=prompt,
+        model=model,
+        system="You are a helpful AI assistant. Always respond with valid JSON only. Do not add any commentary outside the JSON.",
+        max_tokens=max_tokens,
+    )
+    # Strip ```json ... ``` or ``` ... ``` fences
+    raw = raw.strip()
+    raw = _re.sub(r"^```(?:json)?\s*", "", raw, flags=_re.MULTILINE)
+    raw = _re.sub(r"\s*```\s*$", "", raw, flags=_re.MULTILINE)
+    raw = raw.strip()
+    try:
+        return _json.loads(raw)
+    except Exception as e:
+        print(f"⚠️ call_llm_json parse failed: {e}\nRaw output (first 500 chars): {raw[:500]}")
+        return {}
+
