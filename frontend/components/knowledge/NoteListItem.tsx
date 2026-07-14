@@ -26,6 +26,7 @@ const difficultyColor = [
 ]
 
 export interface NoteItem {
+  is_bookmarked?: boolean
   id: string
   title: string
   summary: string

@@ -37,6 +37,7 @@ class SearchResult(BaseModel):
     matched_by: Optional[str] = "semantic"
     created_at: Optional[str] = None
     attachments: list[dict] = []
+    is_bookmarked: bool = False
 
 
 @router.post("")
@@ -63,7 +64,7 @@ async def search(request: SearchRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(KnowledgeItem)
         .options(selectinload(KnowledgeItem.attachments))
-        .where(KnowledgeItem.id.in_(ids))
+        .where(KnowledgeItem.id.in_(ids), KnowledgeItem.deleted_at.is_(None))
     )
     items = result.scalars().all()
     item_map = {str(item.id): item for item in items}
@@ -87,7 +88,7 @@ async def search(request: SearchRequest, db: AsyncSession = Depends(get_db)):
             difficulty=item.difficulty,
             knowledge_tree=item.knowledge_tree,
             knowledge_domain=item.knowledge_domain,
-            score=r.get("score", 0.0),
+            score=r.get("score", 0.0) + (0.05 if item.is_bookmarked else 0.0),
             matched_by=r.get("matched_by", "semantic"),
             created_at=item.created_at.isoformat() if item.created_at else None,
             attachments=[
@@ -100,14 +101,16 @@ async def search(request: SearchRequest, db: AsyncSession = Depends(get_db)):
                 }
                 for att in item.attachments
             ],
+            is_bookmarked=item.is_bookmarked,
         ))
 
-    # 4. Group by type for frontend rendering
-    grouped: dict[str, list[SearchResult]] = {}
-    for result in enriched:
-        grouped.setdefault(result.type, []).append(result)
+    # 4. Group results for frontend
+    grouped = {}
+    for r in enriched:
+        grouped.setdefault(r.type, []).append(r)
 
     return {
-        "results": [r.model_dump() for r in enriched],
-        "grouped": {k: [r.model_dump() for r in v] for k, v in grouped.items()},
+        "results": enriched,
+        "grouped": grouped,
+        "filters_applied": request.filters or {},
     }

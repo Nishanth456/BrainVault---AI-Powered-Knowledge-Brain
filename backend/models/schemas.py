@@ -58,6 +58,10 @@ class KnowledgeItem(Base):
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=datetime.utcnow)
 
+    # Phase 12 fields
+    is_bookmarked: Mapped[bool] = mapped_column(default=False, nullable=False, server_default="false")
+    deleted_at: Mapped[datetime | None] = mapped_column(nullable=True)
+
     attachments: Mapped[list["Attachment"]] = relationship(back_populates="knowledge_item")
 
 

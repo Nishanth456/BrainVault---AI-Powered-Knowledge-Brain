@@ -63,6 +63,10 @@ def run_ingestion_pipeline(self, job_id: str, raw_input: str, concept: str = "")
                     if "agent_steps" in output and output["agent_steps"]:
                         for step in output["agent_steps"]:
                             await r.publish(f"job:{job_id}:steps", step)
+            
+            # Publish stats refresh event when done
+            import json
+            await r.publish("brainvault:events", json.dumps({"type": "stats_refresh"}))
         finally:
             await r.aclose()
 

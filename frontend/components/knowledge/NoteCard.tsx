@@ -1,5 +1,9 @@
 "use client"
 import { ChevronRight, Clock, Loader2, Tag, Trash2 } from "lucide-react"
+import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
+import { DeleteWithUndo } from "@/components/knowledge/DeleteWithUndo"
+import { restoreItem } from "@/lib/api"
+import { ExportButton } from "@/components/knowledge/ExportButton"
 import { useState } from "react"
 
 const difficultyLabel = ["", "Beginner", "Basic", "Intermediate", "Advanced", "Expert"]
@@ -13,6 +17,7 @@ const difficultyColor = [
 ]
 
 export interface NoteItem {
+  is_bookmarked?: boolean
   id: string
   title: string
   summary: string
@@ -73,14 +78,18 @@ export function NoteCard({ item, onDelete }: NoteCardProps) {
               {difficultyLabel[diff]}
             </span>
           )}
-          <button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="text-zinc-500 hover:text-red-400 p-1 rounded-md hover:bg-red-400/10 transition-colors disabled:opacity-50"
-            title="Delete note"
-          >
-            {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-          </button>
+          <div className="flex items-center gap-2">
+              <BookmarkButton itemId={item.id} initial={item.is_bookmarked || false} />
+              <ExportButton itemId={item.id} title={item.title || "Export"} />
+              <DeleteWithUndo
+                itemId={item.id}
+                itemTitle={item.title || ""}
+                onDelete={onDelete!}
+                onUndo={async (id) => {
+                  await restoreItem(id)
+                }}
+              />
+            </div>
         </div>
       </div>
 

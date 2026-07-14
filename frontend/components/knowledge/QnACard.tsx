@@ -1,8 +1,13 @@
 "use client"
 import { ExternalLink, HelpCircle, Loader2, MessageCircle, Trash2 } from "lucide-react"
+import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
+import { DeleteWithUndo } from "@/components/knowledge/DeleteWithUndo"
+import { restoreItem } from "@/lib/api"
+import { ExportButton } from "@/components/knowledge/ExportButton"
 import { useState } from "react"
 
 export interface QnAItem {
+  is_bookmarked?: boolean
   id: string
   title: string
   summary: string
@@ -64,15 +69,18 @@ export function QnACard({ item }: QnACardProps) {
             <ExternalLink size={14} />
           </a>
         )}
-        <button
-          onClick={handleDelete}
-          disabled={isDeleting}
-          className="p-1.5 rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20 
-                     border border-red-500/20 transition-colors disabled:opacity-50"
-          title="Delete Q&A"
-        >
-          {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-        </button>
+        <div className="flex items-center gap-2">
+              <BookmarkButton itemId={item.id} initial={item.is_bookmarked || false} />
+              <ExportButton itemId={item.id} title={item.title || "Export"} />
+              <DeleteWithUndo
+                itemId={item.id}
+                itemTitle={item.title || ""}
+                onDelete={onDelete!}
+                onUndo={async (id) => {
+                  await restoreItem(id)
+                }}
+              />
+            </div>
       </div>
 
       {/* Question section */}

@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/EmptyState"
 import { Input } from "@/components/ui/input"
 import { searchKnowledge, type SearchFilters as SearchFiltersType, type SearchResultItem } from "@/lib/api"
 import { Filter, Loader2, Search, X } from "lucide-react"
+import { RecentSearches } from "@/components/search/RecentSearches"
 import { useSearchParams } from "next/navigation"
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
 
@@ -32,6 +33,11 @@ function SearchPageInner() {
   const [error, setError] = useState(false)
   const [filters, setFilters] = useState<SearchFiltersType>({})
   const [showFilters, setShowFilters] = useState(false)
+  const [recentSearches, setRecentSearches] = useState<string[]>([])
+  useEffect(() => {
+    const saved = localStorage.getItem('recent_searches')
+    if (saved) setRecentSearches(JSON.parse(saved))
+  }, [])
 
   const performSearch = useCallback(async (q: string) => {
     if (!q.trim()) {
@@ -39,7 +45,13 @@ function SearchPageInner() {
       setGrouped({})
       return
     }
-    setLoading(true)
+        setLoading(true)
+    // Save recent search
+    setRecentSearches(prev => {
+      const next = [q, ...prev.filter(s => s !== q)].slice(0, 5)
+      localStorage.setItem('recent_searches', JSON.stringify(next))
+      return next
+    })
     setError(false)
     try {
       const data = await searchKnowledge(q, filters, 20)
@@ -121,6 +133,21 @@ function SearchPageInner() {
             </Button>
           </div>
         </form>
+
+        {!query && (
+          <RecentSearches
+            searches={recentSearches}
+            onSelect={(s) => {
+              setInputValue(s)
+              setQuery(s)
+              performSearch(s)
+            }}
+            onClear={() => {
+              setRecentSearches([])
+              localStorage.removeItem('recent_searches')
+            }}
+          />
+        )}
 
         {/* Filters */}
         {showFilters && (

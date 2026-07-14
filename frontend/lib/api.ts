@@ -167,6 +167,51 @@ export interface ChatSession {
   updated_at: string
 }
 
+// ── Phase 12 Additions ───────────────────────────────────────────────────────
+
+export interface DashboardStats {
+  total: number
+  by_type: Record<string, number>
+  bookmarked: number
+  recent: { id: string; type: string; title: string | null; created_at: string }[]
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  const res = await fetch(`${API_BASE}/api/knowledge/stats`)
+  if (!res.ok) throw new Error("Failed to load stats")
+  return res.json()
+}
+
+export async function toggleBookmark(itemId: string): Promise<{ is_bookmarked: boolean }> {
+  const res = await fetch(`${API_BASE}/api/knowledge/${itemId}/bookmark`, { method: "PATCH" })
+  if (!res.ok) throw new Error("Failed to toggle bookmark")
+  return res.json()
+}
+
+export async function softDeleteItem(itemId: string): Promise<{ deleted: boolean }> {
+  const res = await fetch(`${API_BASE}/api/knowledge/${itemId}`, { method: "DELETE" })
+  if (!res.ok) throw new Error("Failed to delete")
+  return res.json()
+}
+
+export async function restoreItem(itemId: string): Promise<{ restored: boolean }> {
+  const res = await fetch(`${API_BASE}/api/knowledge/${itemId}/restore`, { method: "POST" })
+  if (!res.ok) throw new Error("Failed to restore")
+  return res.json()
+}
+
+export async function getTrashItems(): Promise<SearchResultItem[]> {
+  const res = await fetch(`${API_BASE}/api/knowledge/trash`)
+  if (!res.ok) throw new Error("Failed to load trash")
+  return res.json()
+}
+
+export async function exportItem(itemId: string, format: "markdown" | "json"): Promise<string> {
+  const res = await fetch(`${API_BASE}/api/knowledge/${itemId}/export?format=${format}`)
+  if (!res.ok) throw new Error("Failed to export")
+  return res.text()
+}
+
 export interface ChatStreamCallbacks {
   onToken?: (token: string) => void
   onCitations?: (citations: SearchResultItem[]) => void
