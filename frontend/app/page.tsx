@@ -4,6 +4,7 @@ import { getDashboardStats, type DashboardStats } from "@/lib/api"
 import { StatCard } from "@/components/dashboard/StatCard"
 import { RecentActivityList } from "@/components/dashboard/RecentActivityList"
 import { UniversalInput } from "@/components/dashboard/UniversalInput"
+import { Sparkles } from "lucide-react"
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -16,9 +17,21 @@ export default function DashboardPage() {
   return (
     <div className="relative min-h-screen overflow-hidden">
       <main className="relative z-10 max-w-6xl mx-auto px-6 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-white mb-3">BrainVault</h1>
-          <p className="text-zinc-400">Your AI-powered knowledge brain</p>
+        <div className="max-w-4xl mx-auto text-center pt-8 pb-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-600/10 border border-violet-600/20 text-violet-300 text-xs font-semibold mb-8">
+            <Sparkles size={12} />
+            <span>AI-Powered Knowledge Brain</span>
+          </div>
+
+          <h1 className="text-5xl font-bold text-foreground mb-5 leading-tight tracking-tight">
+            Capture anything.{" "}
+            <span className="gradient-text">Understand everything.</span>
+          </h1>
+
+          <p className="text-muted-foreground text-lg mb-12 max-w-xl mx-auto leading-relaxed">
+            Paste any URL, text, or file. BrainVault&apos;s AI agents automatically
+            extract, classify, and organise it into your personal knowledge brain.
+          </p>
         </div>
 
         <UniversalInput onSubmitted={() => setRefreshKey(k => k + 1)} />
