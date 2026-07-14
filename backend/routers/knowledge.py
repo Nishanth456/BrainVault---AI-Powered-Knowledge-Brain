@@ -721,7 +721,7 @@ async def soft_delete_knowledge(item_id: str, db: AsyncSession = Depends(get_db)
     item = result.scalar_one_or_none()
     if not item:
         raise HTTPException(status_code=404, detail="Not found")
-    item.deleted_at = datetime.now(timezone.utc)
+    item.deleted_at = datetime.utcnow()
     await db.commit()
     return {"id": item_id, "deleted": True}
 
@@ -800,35 +800,7 @@ async def get_knowledge_item(item_id: str, db: AsyncSession = Depends(get_db)):
 
 
 
-@router.patch("/{item_id}/bookmark")
-async def toggle_bookmark(item_id: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(KnowledgeItem).where(KnowledgeItem.id == item_id))
-    item = result.scalar_one_or_none()
-    if not item:
-        raise HTTPException(status_code=404, detail="Not found")
-    item.is_bookmarked = not item.is_bookmarked
-    await db.commit()
-    return {"id": item_id, "is_bookmarked": item.is_bookmarked}
 
-@router.delete("/{item_id}")
-async def soft_delete_knowledge(item_id: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(KnowledgeItem).where(KnowledgeItem.id == item_id))
-    item = result.scalar_one_or_none()
-    if not item:
-        raise HTTPException(status_code=404, detail="Not found")
-    item.deleted_at = datetime.now(timezone.utc)
-    await db.commit()
-    return {"id": item_id, "deleted": True}
-
-@router.post("/{item_id}/restore")
-async def restore_knowledge(item_id: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(KnowledgeItem).where(KnowledgeItem.id == item_id))
-    item = result.scalar_one_or_none()
-    if not item:
-        raise HTTPException(status_code=404, detail="Not found")
-    item.deleted_at = None
-    await db.commit()
-    return {"id": item_id, "restored": True}
 
 @router.get("/{item_id}/export")
 async def export_knowledge(item_id: str, format: str = Query("markdown"), db: AsyncSession = Depends(get_db)):
