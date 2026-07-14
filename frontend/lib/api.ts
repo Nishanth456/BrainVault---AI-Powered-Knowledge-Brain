@@ -37,6 +37,7 @@ export interface SearchFilters {
   types?: string[]
   difficulty_max?: number
   knowledge_tree?: string
+  item_id?: string
 }
 
 export interface SearchResultItem {

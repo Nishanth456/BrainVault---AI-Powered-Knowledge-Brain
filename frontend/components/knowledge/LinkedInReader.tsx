@@ -56,7 +56,7 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
   const [scale, setScale]             = useState<number>(1.0)
   const [aiPanelOpen, setAiPanelOpen] = useState<boolean>(false)
   const [containerHeight, setContainerHeight] = useState<number>(600)
-  const [aiMessages, setAiMessages]   = useState<{ role: "user" | "assistant"; content: string; citations?: SearchResultItem[] }[]>([])
+  const [aiMessages, setAiMessages]   = useState<{ id?: string; role: "user" | "assistant"; content: string; citations?: SearchResultItem[] }[]>([])
   const [aiInput, setAiInput]         = useState<string>("")
   const [aiStreaming, setAiStreaming] = useState<boolean>(false)
 
@@ -103,8 +103,8 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
         onToken: (token: string) => {
           answer += token
           setAiMessages((prev) => {
-            const withoutStreaming = prev.filter((m) => m.role !== "assistant" || m.content !== answer.slice(0, -token.length))
-            return [...withoutStreaming, { role: "assistant", content: answer, citations: [] }]
+            const withoutStreaming = prev.filter((m) => m.id !== "streaming")
+            return [...withoutStreaming, { id: "streaming", role: "assistant", content: answer, citations: [] }]
           })
         },
         onCitations: (cits: SearchResultItem[]) => {
@@ -113,14 +113,14 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
         onDone: () => {
           setAiStreaming(false)
           setAiMessages((prev) => {
-            const withoutStreaming = prev.filter((m) => !(m.role === "assistant" && m.content === answer && m.citations?.length === 0))
+            const withoutStreaming = prev.filter((m) => m.id !== "streaming")
             return [...withoutStreaming, { role: "assistant", content: answer, citations }]
           })
         },
         onError: () => {
           setAiStreaming(false)
           setAiMessages((prev) => [
-            ...prev,
+            ...prev.filter((m) => m.id !== "streaming"),
             { role: "assistant", content: "Sorry, I couldn't answer that. Please try again." },
           ])
         },
