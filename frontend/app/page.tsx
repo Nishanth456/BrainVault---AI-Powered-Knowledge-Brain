@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react"
 import { getDashboardStats, type DashboardStats } from "@/lib/api"
 import { StatCard } from "@/components/dashboard/StatCard"
-import { RecentActivityList } from "@/components/dashboard/RecentActivityList"
 import { UniversalInput } from "@/components/dashboard/UniversalInput"
 import { Sparkles } from "lucide-react"
 
@@ -45,7 +44,26 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {stats && <RecentActivityList items={stats.recent} className="mt-10" />}
+        {/* ── How it works ───────────────────────────────────────────────────── */}
+        <div className="max-w-4xl mx-auto mt-16">
+          <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest text-center mb-6">
+            How it works
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { step: "01", title: "Paste Anything", desc: "Drop a URL, text, PDF path, or GitHub link into the input above.", icon: "📥" },
+              { step: "02", title: "AI Analyses It", desc: "Agents detect the type, extract key concepts, and generate metadata.", icon: "🤖" },
+              { step: "03", title: "Knowledge Organised", desc: "Content is stored in the right Knowledge Space — searchable forever.", icon: "🧠" },
+            ].map((item) => (
+              <div key={item.step} className="relative bg-white/[0.02] border border-white/10 rounded-xl p-5 group hover:border-violet-500/30 transition-all duration-200">
+                <div className="text-3xl mb-3">{item.icon}</div>
+                <div className="text-xs font-mono text-zinc-500 mb-1">{item.step}</div>
+                <h3 className="font-semibold text-white text-sm mb-1">{item.title}</h3>
+                <p className="text-xs text-zinc-400 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </main>
     </div>
   )
