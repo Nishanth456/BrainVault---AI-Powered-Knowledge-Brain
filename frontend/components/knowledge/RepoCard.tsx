@@ -89,42 +89,45 @@ export function RepoCard({ item, onDelete }: { item: RepoItem; onDelete?: (id: s
 
         {/* Main content */}
         <div className="flex-1 min-w-0 flex flex-col gap-3">
-          {/* Header row: language + stars + difficulty + delete */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium">
-              {item.repo_language && <span>{item.repo_language}</span>}
-              {typeof item.repo_stars === "number" && (
-                <span className="flex items-center gap-1 text-yellow-400/80">
-                  <Star size={11} className="fill-yellow-400/80" />
-                  {item.repo_stars.toLocaleString()}
-                </span>
+          {/* Header row: Title + Actions */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-col gap-1.5">
+              <h3 className="text-base font-semibold text-white leading-snug line-clamp-2">
+                {item.title || "Untitled Repository"}
+              </h3>
+              {(item.repo_language || typeof item.repo_stars === "number") && (
+                <div className="flex items-center gap-3 text-xs text-zinc-500 font-medium">
+                  {item.repo_language && <span>{item.repo_language}</span>}
+                  {typeof item.repo_stars === "number" && (
+                    <span className="flex items-center gap-1 text-yellow-400/80">
+                      <Star size={11} className="fill-yellow-400/80" />
+                      {item.repo_stars.toLocaleString()}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
+
+            <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
               {diff > 0 && (
                 <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${difficultyColor[diff]}`}>
                   {difficultyLabel[diff]}
                 </span>
               )}
               <div className="flex items-center gap-2">
-              <BookmarkButton itemId={item.id} initial={item.is_bookmarked || false} />
-              <ExportButton itemId={item.id} title={item.title || "Export"} />
-              <DeleteWithUndo
-                itemId={item.id}
-                itemTitle={item.title || ""}
-                onDelete={onDelete!}
-                onUndo={async (id) => {
-                  await restoreItem(id)
-                }}
-              />
-            </div>
+                <BookmarkButton itemId={item.id} initial={item.is_bookmarked || false} />
+                <ExportButton itemId={item.id} title={item.title || "Export"} />
+                <DeleteWithUndo
+                  itemId={item.id}
+                  itemTitle={item.title || ""}
+                  onDelete={onDelete!}
+                  onUndo={async (id) => {
+                    await restoreItem(id)
+                  }}
+                />
+              </div>
             </div>
           </div>
-
-          {/* Title */}
-          <h3 className="text-base font-semibold text-white leading-snug line-clamp-2">
-            {item.title || "Untitled Repository"}
-          </h3>
 
           {/* Summary */}
           <p className="text-sm text-zinc-400 leading-relaxed line-clamp-3">

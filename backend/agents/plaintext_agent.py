@@ -200,14 +200,16 @@ async def generate_summary(state: PlainTextState) -> dict:
 
 {cleaned[:4000]}
 
-Write 3-5 sentences that ADD value beyond what the note says:
-- Explain WHY this concept matters in practice, or how it fits into a larger picture
-- Mention a real-world use-case, trade-off, or common pitfall
-- Do NOT restate, paraphrase, or summarise the note
-- Do NOT start with "This note", "The note", "These parameters", or any meta-reference
-- Be direct, dense, and technically sharp""",
+Please provide a highly concise explanation that expands on this concept.
+Your task is to:
+- Explain why it matters or how it fits into the broader tech ecosystem.
+- Provide a real-world use-case or limitation.
+- Make the explanation dense and technically sharp.
+- Do NOT restate or simply summarise the note. Add value.
+- Do NOT start with "This note", "The note", or any meta-reference.
+- Keep it extremely short: ONE paragraph, maximum 4 sentences.""",
         model="groq/llama-3.1-8b-instant",
-        system="You are a senior engineer adding practical insight to a colleague's notes. Never restate the note itself.",
+        system="You are a senior engineer providing very brief, high-value insights based on short notes.",
         temperature=0.3,
         max_tokens=150,
     )
@@ -227,8 +229,14 @@ async def extract_concepts(state: PlainTextState) -> dict:
 
     response = await call_llm(
         prompt=f"""Extract key concepts and tags from this text.
+Use a multi-layered extraction strategy:
+1. Domain (e.g. "Generative AI", "Data Engineering")
+2. Concept (e.g. "RAG", "Agent Orchestration")
+3. Method/Algorithm (e.g. "Cosine Similarity", "ReAct")
+4. Synonyms (e.g. "Retrieval-Augmented Generation")
+
 Return a JSON object with two lists:
-- "concepts": 3-8 specific technical concepts
+- "concepts": 4-8 specific technical concepts covering the layers above
 - "tags": 3-6 short tags
 
 {f'Primary concept (must be included): {concept}' if concept else ''}
@@ -294,28 +302,6 @@ def _estimate_importance(raw: str, concepts: list[str], tags: list[str], concept
     return max(1, min(10, score))
 
 
-def _generate_title(raw: str, summary: str, concept_hint: str | None) -> str:
-    """Generate a concise title from the first meaningful line or summary."""
-    # Try first non-empty line
-    for line in raw.splitlines():
-        stripped = line.strip()
-        if stripped and not stripped.startswith("#"):
-            # Use first line if it's a reasonable title length
-            if 10 <= len(stripped) <= 100:
-                return stripped[:100]
-            break
-
-    # Fallback to summary first sentence
-    if summary:
-        first_sentence = summary.split(".")[0].strip()
-        if len(first_sentence) >= 10:
-            return (first_sentence[:97] + "...") if len(first_sentence) > 100 else first_sentence
-
-    # Last fallback
-    hint = concept_hint or "Note"
-    return f"{hint[:80]} — Smart Note"[:100]
-
-
 async def generate_metadata(state: PlainTextState) -> dict:
     """Generate title, reading time, and importance score deterministically."""
     raw = state["raw_input"]
@@ -324,8 +310,19 @@ async def generate_metadata(state: PlainTextState) -> dict:
     tags = state.get("tags", []) or []
     concept_hint = state.get("concept") or None
 
+    title_response = await call_llm(
+        prompt=f"Generate a concise 3-5 word title for this text. Respond with ONLY the title, no quotes or prefix.\n\nText:\n{raw[:1000]}",
+        model="groq/llama-3.1-8b-instant",
+        system="You are a title generator. Be concise.",
+        max_tokens=15,
+        temperature=0
+    )
+    title = title_response.strip().strip('"').strip("'")
+    if not title:
+        title = concept_hint or "AI Note"
+
     metadata = {
-        "title": _generate_title(raw, summary, concept_hint),
+        "title": title,
         "reading_time_minutes": _estimate_reading_time(raw),
         "importance_score": _estimate_importance(raw, concepts, tags, concept_hint),
     }
@@ -347,19 +344,27 @@ async def score_difficulty(state: PlainTextState) -> dict:
     summary = state.get("summary", "")
 
     response = await call_llm(
-        prompt=f"""Rate the technical difficulty of this content on a scale of 1-5:
-1 = Beginner
-2 = Basic
-3 = Intermediate
-4 = Advanced
-5 = Expert
+        prompt=f"""You are rating technical difficulty FOR AN AI PRACTITIONER audience (developers, data scientists, ML engineers).
+Judge difficulty WITHIN this field, not against the general public.
 
-Summary: {summary}
-Concepts: {state.get('key_concepts', [])}
+Scale:
+1 = Beginner  — No prior ML/AI knowledge needed. (e.g. "What is AI?", "How to use ChatGPT", introductory overviews)
+2 = Basic     — Requires general programming/tech background. (e.g. "What is a neural network?", API usage tutorials, basic Python ML)
+3 = Intermediate — Requires working ML/AI knowledge. (e.g. "How does attention work?", RAG basics, fine-tuning intro, common agent patterns)
+4 = Advanced  — Requires deep expertise in specific sub-domain. (e.g. RLHF internals, custom training loops, complex multi-agent orchestration, model distillation)
+5 = Expert    — Cutting-edge research or highly specialized systems. (e.g. novel architectures, frontier model alignment, production-scale LLMOps at thousands of QPS)
+
+Content summary: {summary}
+Concepts covered: {state.get('key_concepts', [])}
+
+Think step by step:
+- Who is the intended reader?
+- What prerequisite knowledge is assumed?
+- Is this introductory, practical, or research-level?
 
 Reply with ONLY the number (1, 2, 3, 4, or 5). Nothing else.""",
         model="groq/llama-3.3-70b-versatile",
-        system="You are a technical difficulty assessor.",
+        system="You are a technical difficulty assessor for AI practitioners. Be calibrated — most practical tutorials are 2-3, most application guides are 3, only truly deep internals are 4-5.",
         max_tokens=10,
         temperature=0,
     )
@@ -429,13 +434,20 @@ Extract EVERY SINGLE QUESTION from the text. For each question:
 2. Put the best available answer in the "a" field. If the answer is missing or weak, write a strong senior-level answer yourself.
 3. Map the question to EXACTLY ONE topic from this list:
 {chr(10).join([f"- {t}" for t in AI_CONCEPTS_LIST])}
+4. Generate 4-8 searchable keywords for this specific question. Think in layers:
+   a) DOMAIN/CONTEXT: broad topic area (e.g. "multi-agent systems", "LangGraph", "transformer architecture")
+   b) CONCEPT: the core subject (e.g. "deadlock", "attention mechanism", "backpropagation")
+   c) METHODS/TECHNIQUES: specific approaches mentioned (e.g. "circular wait prevention", "resource ordering")
+   d) SYNONYMS/VARIANTS: alternate search terms someone might use (e.g. "agent coordination", "livelock")
+   Include keywords from all relevant layers. Do NOT repeat the full question text as a keyword.
 
 Return ONLY a valid JSON array of objects:
 [
   {{
     "q": "The question",
     "a": "The high-quality technical answer",
-    "topic": "The exact topic from the list above"
+    "topic": "The exact topic from the list above",
+    "keywords": ["multi-agent systems", "deadlock", "circular wait", "resource ordering", "agent coordination"]
   }}
 ]
 

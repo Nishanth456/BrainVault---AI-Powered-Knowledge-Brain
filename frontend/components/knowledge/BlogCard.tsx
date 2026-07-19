@@ -133,10 +133,12 @@ export function BlogCard({ item, onDelete }: { item: BlogItem; onDelete?: (id: s
             Article
           </a>
         )}
-        <div className={`flex items-center gap-1.5 text-xs text-zinc-600 ${item.source_url ? "ml-auto" : ""}`}>
-          <Clock size={11} />
-          {item.reading_time_minutes ? `${item.reading_time_minutes} min read` : "Saved"}
-        </div>
+        {!!item.reading_time_minutes && (
+          <div className={`flex items-center gap-1.5 text-xs text-zinc-600 ${item.source_url ? "ml-auto" : ""}`}>
+            <Clock size={11} />
+            {item.reading_time_minutes} min read
+          </div>
+        )}
       </div>
     </div>
   )

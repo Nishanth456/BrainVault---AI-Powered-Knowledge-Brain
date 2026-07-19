@@ -54,8 +54,8 @@ async def save_knowledge_item(state: BrainVaultState) -> uuid.UUID:
                     "raw_content":          pair.get("a", ""),
                     "source_url":           state.get("source_url") or state.get("url") or state.get("raw_input", ""),
                     "author":               state.get("author") or "",
-                    "key_concepts":         state.get("key_concepts") or [],
-                    "tags":                 state.get("tags") or [],
+                    "key_concepts":         pair.get("keywords") or state.get("key_concepts") or [],
+                    "tags":                 pair.get("keywords") or state.get("tags") or [],
                     "difficulty":           state.get("difficulty"),
                     "reading_time_minutes": metadata.get("reading_time_minutes"),
                     "importance_score":     metadata.get("importance_score"),
@@ -66,7 +66,8 @@ async def save_knowledge_item(state: BrainVaultState) -> uuid.UUID:
                 inserted_items.append({
                     "id": str(q_id),
                     "text": f"Q: {pair.get('q')}\nA: {pair.get('a')}",
-                    "topic": pair.get("topic", state.get("knowledge_tree"))
+                    "topic": pair.get("topic", state.get("knowledge_tree")),
+                    "keywords": pair.get("keywords") or [],
                 })
 
         # ── YouTube playlist: single redirect item only ─────────────────────
@@ -239,10 +240,12 @@ async def save_knowledge_item(state: BrainVaultState) -> uuid.UUID:
         from backend.services.qdrant import upsert_knowledge_item
 
         for item in inserted_items:
+            # For QnA pairs use per-pair keywords; for all other types fall back to state-level
+            item_keywords = item.get("keywords") or state.get("key_concepts") or []
             embed_text = " ".join(filter(None, [
                 state.get("title") or metadata.get("title", ""),
                 item["text"],
-                " ".join([c for c in (state.get("key_concepts") or []) if c]),
+                " ".join([c for c in item_keywords if c]),
             ]))
             
             if embed_text.strip():
@@ -254,8 +257,8 @@ async def save_knowledge_item(state: BrainVaultState) -> uuid.UUID:
                         "type":           "interview_qna" if state.get("qna_pairs") else input_type,
                         "title":          state.get("title") or metadata.get("title", ""),
                         "summary":        item["text"][:500],
-                        "tags":           state.get("tags") or [],
-                        "key_concepts":   state.get("key_concepts") or [],
+                        "tags":           item_keywords,
+                        "key_concepts":   item_keywords,
                         "difficulty":     state.get("difficulty", 3),
                         "knowledge_tree": item["topic"] or "",
                         "source_url":     state.get("source_url") or state.get("raw_input", ""),

@@ -103,7 +103,6 @@ export function LinkedInCard({ item, onDelete }: { item: LinkedInItem; onDelete?
           <div className="w-7 h-7 rounded-lg bg-[#0077B5]/15 flex items-center justify-center flex-shrink-0">
             <LinkedInLogo size={13} className="text-[#0077B5]" />
           </div>
-          <span className="text-xs text-zinc-500 font-medium">LinkedIn</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -218,10 +217,10 @@ export function LinkedInCard({ item, onDelete }: { item: LinkedInItem; onDelete?
             Post
           </a>
         )}
-        {!hasPdf && !item.source_url && (
+        {!hasPdf && !item.source_url && !!item.reading_time && (
           <div className="flex items-center gap-1.5 text-xs text-zinc-600">
             <Clock size={11} />
-            {item.reading_time ? `${item.reading_time} min read` : "Saved"}
+            {item.reading_time} min read
           </div>
         )}
       </div>

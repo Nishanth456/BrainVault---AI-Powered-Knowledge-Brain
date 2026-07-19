@@ -203,9 +203,58 @@ async def map_knowledge_tree_node(state: CourseState) -> dict:
     return {
         "knowledge_tree": tree_path,
         "knowledge_domain": domain,
-        "difficulty": 3, # hardcoded or could be inferred
         "tags": ["course", domain.lower()],
         "agent_steps": [f"✅ Placed in tree: {tree_path}"]
+    }
+
+
+async def score_course_difficulty_node(state: CourseState) -> dict:
+    if state.get("error"): return {}
+    
+    summary = state.get("summary", "")
+    concepts = state.get("key_concepts", [])
+
+    prompt = f"""You are rating technical difficulty FOR AN AI PRACTITIONER audience (developers, data scientists, ML engineers).
+Judge difficulty WITHIN this field, not against the general public.
+
+Scale:
+1 = Beginner  — No prior ML/AI knowledge needed. (e.g. "What is AI?", "How to use ChatGPT", introductory overviews)
+2 = Basic     — Requires general programming/tech background. (e.g. "What is a neural network?", API usage tutorials, basic Python ML)
+3 = Intermediate — Requires working ML/AI knowledge. (e.g. "How does attention work?", RAG basics, fine-tuning intro, common agent patterns)
+4 = Advanced  — Requires deep expertise in specific sub-domain. (e.g. RLHF internals, custom training loops, complex multi-agent orchestration, model distillation)
+5 = Expert    — Cutting-edge research or highly specialized systems. (e.g. novel architectures, frontier model alignment, production-scale LLMOps at thousands of QPS)
+
+Content summary: {summary}
+Concepts covered: {', '.join(concepts)}
+
+Think step by step:
+- Who is the intended student?
+- What prerequisite knowledge is assumed?
+- Is this introductory, practical, or research-level?
+
+Reply with ONLY the number (1, 2, 3, 4, or 5). Nothing else."""
+
+    response = await call_llm(
+        prompt=prompt,
+        model="groq/llama-3.3-70b-versatile",
+        system="You are a technical difficulty assessor for AI practitioners. Be calibrated — most practical tutorials are 2-3, most application guides are 3, only truly deep internals are 4-5.",
+        max_tokens=10,
+        temperature=0,
+    )
+
+    try:
+        clean = response.strip()
+        difficulty = 3
+        for char in clean:
+            if char.isdigit():
+                difficulty = max(1, min(5, int(char)))
+                break
+    except Exception:
+        difficulty = 3
+
+    return {
+        "difficulty": difficulty,
+        "agent_steps": [f"✅ Difficulty scored: {difficulty}/5"]
     }
 
 
@@ -218,6 +267,7 @@ course_subgraph.add_node("extract_info", extract_course_info_node)
 course_subgraph.add_node("extract_syllabus", extract_syllabus_node)
 course_subgraph.add_node("summarize", summarize_course_node)
 course_subgraph.add_node("concepts", extract_concepts_node)
+course_subgraph.add_node("score_difficulty", score_course_difficulty_node)
 course_subgraph.add_node("map_tree", map_knowledge_tree_node)
 
 course_subgraph.set_entry_point("fetch_course")
@@ -226,5 +276,6 @@ course_subgraph.add_edge("fetch_course", "extract_info")
 course_subgraph.add_edge("extract_info", "extract_syllabus")
 course_subgraph.add_edge("extract_syllabus", "summarize")
 course_subgraph.add_edge("summarize", "concepts")
-course_subgraph.add_edge("concepts", "map_tree")
+course_subgraph.add_edge("concepts", "score_difficulty")
+course_subgraph.add_edge("score_difficulty", "map_tree")
 course_subgraph.add_edge("map_tree", END)

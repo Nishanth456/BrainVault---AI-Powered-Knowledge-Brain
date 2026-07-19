@@ -432,19 +432,27 @@ async def score_difficulty(state: LinkedInState) -> dict:
     summary = state.get("summary", "")
 
     response = await call_llm(
-        prompt=f"""Rate the technical difficulty of this content on a scale of 1-5:
-1 = Beginner (anyone can understand)
-2 = Basic (some tech background needed)
-3 = Intermediate (solid tech knowledge needed)
-4 = Advanced (expert knowledge needed)
-5 = Expert (cutting-edge research/deep expertise)
+        prompt=f"""You are rating technical difficulty FOR AN AI PRACTITIONER audience (developers, data scientists, ML engineers).
+Judge difficulty WITHIN this field, not against the general public.
+
+Scale:
+1 = Beginner  — No prior ML/AI knowledge needed. (e.g. "What is AI?", "How to use ChatGPT", introductory overviews)
+2 = Basic     — Requires general programming/tech background. (e.g. "What is a neural network?", API usage tutorials, basic Python ML)
+3 = Intermediate — Requires working ML/AI knowledge. (e.g. "How does attention work?", RAG basics, fine-tuning intro, common agent patterns)
+4 = Advanced  — Requires deep expertise in specific sub-domain. (e.g. RLHF internals, custom training loops, complex multi-agent orchestration, model distillation)
+5 = Expert    — Cutting-edge research or highly specialized systems. (e.g. novel architectures, frontier model alignment, production-scale LLMOps at thousands of QPS)
 
 Content summary: {summary}
 Concepts covered: {state.get("key_concepts", [])}
 
+Think step by step:
+- Who is the intended reader?
+- What prerequisite knowledge is assumed?
+- Is this introductory, practical, or research-level?
+
 Reply with ONLY the number (1, 2, 3, 4, or 5). Nothing else.""",
         model="groq/llama-3.3-70b-versatile",
-        system="You are a technical difficulty assessor.",
+        system="You are a technical difficulty assessor for AI practitioners. Be calibrated — most practical tutorials are 2-3, most application guides are 3, only truly deep internals are 4-5.",
         max_tokens=10,
         temperature=0,
     )
@@ -571,11 +579,16 @@ Return ONLY valid JSON.""",
     except Exception:
         is_qna = False
         
+    if "interview" in state.get("url", "").lower():
+        is_qna = True
+        
     steps = [f"✅ Classified as Interview QnA"] if is_qna else []
     
     qna_pairs = []
     
-    if is_qna:
+    has_attachment = bool(state.get("downloaded_files"))
+    
+    if is_qna and not has_attachment:
         steps.append("🤖 Extracting QnA and answering missing questions...")
         qna_prompt = f"""You are an expert Principal AI Engineer conducting a senior technical interview.
 The following text contains a list of multiple interview questions.
@@ -589,13 +602,20 @@ For each question:
    - Provide a direct, insightful, and technically accurate explanation.
 4. Map the question to EXACTLY ONE of the following AI topics:
 {chr(10).join([f"- {t}" for t in AI_CONCEPTS_LIST])}
+5. Generate 4-8 searchable keywords for this specific question. Think in layers:
+   a) DOMAIN/CONTEXT: broad topic area (e.g. "multi-agent systems", "LangGraph", "transformer architecture")
+   b) CONCEPT: the core subject (e.g. "deadlock", "attention mechanism", "backpropagation")
+   c) METHODS/TECHNIQUES: specific approaches mentioned (e.g. "circular wait prevention", "resource ordering")
+   d) SYNONYMS/VARIANTS: alternate search terms someone might use (e.g. "agent coordination", "livelock")
+   Include keywords from all relevant layers. Do NOT repeat the full question text as a keyword.
 
 Return ONLY a valid JSON array of objects:
 [
   {{
     "q": "The question",
     "a": "The high-quality technical answer",
-    "topic": "The exact topic from the list above"
+    "topic": "The exact topic from the list above",
+    "keywords": ["multi-agent systems", "deadlock", "circular wait", "resource ordering", "agent coordination"]
   }}
 ]
 

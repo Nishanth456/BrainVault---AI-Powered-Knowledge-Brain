@@ -135,10 +135,12 @@ export function PaperCard({
                 <span className="truncate max-w-[200px]">{item.author}</span>
               </span>
             )}
-            <span className="flex items-center gap-1.5">
-              <BookOpen size={11} />
-              {item.reading_time_minutes ? `${item.reading_time_minutes} min read` : "Saved"}
-            </span>
+            {!!item.reading_time_minutes && (
+              <span className="flex items-center gap-1.5">
+                <BookOpen size={11} />
+                {item.reading_time_minutes} min read
+              </span>
+            )}
             {attachment?.page_count && (
               <span className="flex items-center gap-1.5">
                 <FileText size={11} />

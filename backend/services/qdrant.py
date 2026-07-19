@@ -150,9 +150,12 @@ async def search_knowledge(
     # variants and also run a client-side regex fallback over payloads so
     # lowercase queries like "fastapi" still find "FastAPI".
     query_tokens = {query, query.lower(), query.capitalize(), query.upper()}
+    # Only match against title, tags and key_concepts — NOT summary.
+    # Answers often mention related concepts (e.g. an answer about "mutex" may mention
+    # "deadlock"), so matching summary causes false positives across interview Q&A items.
     keyword_conditions = [
         FieldCondition(key=field, match=MatchText(text=variant))
-        for field in ["title", "tags", "key_concepts", "summary"]
+        for field in ["title", "tags", "key_concepts"]
         for variant in query_tokens
     ]
     keyword_filter = Filter(should=keyword_conditions)
@@ -182,13 +185,14 @@ async def search_knowledge(
         if str(r.id) in keyword_ids:
             continue
         p = r.payload or {}
+        # Only match against title/tags/key_concepts to avoid false positives
+        # where an answer merely *mentions* the query term while discussing it.
         text_blob = " ".join(
             str(v)
             for v in [
                 p.get("title", ""),
                 " ".join(p.get("tags") or []),
                 " ".join(p.get("key_concepts") or []),
-                p.get("summary", ""),
             ]
         )
         if pattern.search(text_blob):

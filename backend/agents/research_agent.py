@@ -498,19 +498,27 @@ async def score_research_difficulty_node(state: ResearchState) -> dict:
     concepts = state.get("key_concepts", [])
 
     response = await call_llm(
-        prompt=f"""Rate the technical difficulty of this research paper on a scale of 1-5:
-1 = Beginner
-2 = Basic
-3 = Intermediate
-4 = Advanced
-5 = Expert
+        prompt=f"""You are rating technical difficulty FOR AN AI PRACTITIONER audience (developers, data scientists, ML engineers).
+Judge difficulty WITHIN this field, not against the general public.
 
-Summary: {summary}
-Concepts: {concepts}
+Scale:
+1 = Beginner  — No prior ML/AI knowledge needed. (e.g. "What is AI?", "How to use ChatGPT", introductory overviews)
+2 = Basic     — Requires general programming/tech background. (e.g. "What is a neural network?", API usage tutorials, basic Python ML)
+3 = Intermediate — Requires working ML/AI knowledge. (e.g. "How does attention work?", RAG basics, fine-tuning intro, common agent patterns)
+4 = Advanced  — Requires deep expertise in specific sub-domain. (e.g. RLHF internals, custom training loops, complex multi-agent orchestration, model distillation)
+5 = Expert    — Cutting-edge research or highly specialized systems. (e.g. novel architectures, frontier model alignment, production-scale LLMOps at thousands of QPS)
+
+Content summary: {summary}
+Concepts covered: {concepts}
+
+Think step by step:
+- Who is the intended reader?
+- What prerequisite knowledge is assumed?
+- Is this introductory, practical, or research-level?
 
 Reply with ONLY the number (1, 2, 3, 4, or 5). Nothing else.""",
         model="groq/llama-3.3-70b-versatile",
-        system="You are a technical difficulty assessor.",
+        system="You are a technical difficulty assessor for AI practitioners. Be calibrated — most practical tutorials are 2-3, most application guides are 3, only truly deep internals are 4-5.",
         max_tokens=10,
         temperature=0,
     )

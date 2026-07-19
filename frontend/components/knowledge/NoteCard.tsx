@@ -178,10 +178,12 @@ export function NoteCard({ item, onDelete }: NoteCardProps) {
       )}
 
       {/* Footer */}
-      <div className="flex items-center gap-1.5 text-xs text-zinc-600 mt-auto pt-2 border-t border-white/[0.05]">
-        <Clock size={11} />
-        {item.reading_time ? `${item.reading_time} min read` : "Saved"}
-      </div>
+      {!!item.reading_time && (
+        <div className="flex items-center gap-1.5 text-xs text-zinc-600 mt-auto pt-2 border-t border-white/[0.05]">
+          <Clock size={11} />
+          {item.reading_time} min read
+        </div>
+      )}
     </div>
   )
 }

@@ -173,9 +173,58 @@ async def map_knowledge_tree_node(state: CertState) -> dict:
     return {
         "knowledge_tree": tree_path,
         "knowledge_domain": domain,
-        "difficulty": 4, # hardcoded
         "tags": ["certification", domain.lower()],
         "agent_steps": [f"✅ Placed in tree: {tree_path}"]
+    }
+
+
+async def score_cert_difficulty_node(state: CertState) -> dict:
+    if state.get("error"): return {}
+    
+    summary = state.get("summary", "")
+    concepts = state.get("key_concepts", [])
+
+    prompt = f"""You are rating technical difficulty FOR AN AI PRACTITIONER audience (developers, data scientists, ML engineers).
+Judge difficulty WITHIN this field, not against the general public.
+
+Scale:
+1 = Beginner  — No prior ML/AI knowledge needed. (e.g. "What is AI?", "How to use ChatGPT", introductory overviews)
+2 = Basic     — Requires general programming/tech background. (e.g. "What is a neural network?", API usage tutorials, basic Python ML)
+3 = Intermediate — Requires working ML/AI knowledge. (e.g. "How does attention work?", RAG basics, fine-tuning intro, common agent patterns)
+4 = Advanced  — Requires deep expertise in specific sub-domain. (e.g. RLHF internals, custom training loops, complex multi-agent orchestration, model distillation)
+5 = Expert    — Cutting-edge research or highly specialized systems. (e.g. novel architectures, frontier model alignment, production-scale LLMOps at thousands of QPS)
+
+Content summary: {summary}
+Concepts covered: {', '.join(concepts)}
+
+Think step by step:
+- Who is the intended student?
+- What prerequisite knowledge is assumed?
+- Is this introductory, practical, or research-level?
+
+Reply with ONLY the number (1, 2, 3, 4, or 5). Nothing else."""
+
+    response = await call_llm(
+        prompt=prompt,
+        model="groq/llama-3.3-70b-versatile",
+        system="You are a technical difficulty assessor for AI practitioners. Be calibrated — most practical tutorials are 2-3, most application guides are 3, only truly deep internals are 4-5.",
+        max_tokens=10,
+        temperature=0,
+    )
+
+    try:
+        clean = response.strip()
+        difficulty = 3
+        for char in clean:
+            if char.isdigit():
+                difficulty = max(1, min(5, int(char)))
+                break
+    except Exception:
+        difficulty = 3
+
+    return {
+        "difficulty": difficulty,
+        "agent_steps": [f"✅ Difficulty scored: {difficulty}/5"]
     }
 
 
@@ -187,6 +236,7 @@ cert_subgraph.add_node("fetch_cert", fetch_cert_page_node)
 cert_subgraph.add_node("extract_info", extract_cert_info_node)
 cert_subgraph.add_node("summarize", summarize_cert_node)
 cert_subgraph.add_node("concepts", extract_concepts_node)
+cert_subgraph.add_node("score_difficulty", score_cert_difficulty_node)
 cert_subgraph.add_node("map_tree", map_knowledge_tree_node)
 
 cert_subgraph.set_entry_point("fetch_cert")
@@ -194,5 +244,6 @@ cert_subgraph.set_entry_point("fetch_cert")
 cert_subgraph.add_edge("fetch_cert", "extract_info")
 cert_subgraph.add_edge("extract_info", "summarize")
 cert_subgraph.add_edge("summarize", "concepts")
-cert_subgraph.add_edge("concepts", "map_tree")
+cert_subgraph.add_edge("concepts", "score_difficulty")
+cert_subgraph.add_edge("score_difficulty", "map_tree")
 cert_subgraph.add_edge("map_tree", END)

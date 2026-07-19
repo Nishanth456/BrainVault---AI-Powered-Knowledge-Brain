@@ -1,6 +1,7 @@
 "use client"
 import { KnowledgePageShell } from "@/components/knowledge/KnowledgePageShell"
 import { QnACard, type QnAItem } from "@/components/knowledge/QnACard"
+import { LinkedInCard } from "@/components/knowledge/LinkedInCard"
 import { MessageSquare } from "lucide-react"
 
 export default function InterviewsPage() {
@@ -14,7 +15,7 @@ export default function InterviewsPage() {
   }
 
   return (
-    <KnowledgePageShell<QnAItem>
+    <KnowledgePageShell<any>
       title="Interview Q&A"
       subtitle="Saved interview questions and discussions."
       icon={
@@ -27,7 +28,16 @@ export default function InterviewsPage() {
       emptyDescription="You haven't saved any interview questions yet."
       emptyHint="Paste Q&A text in the dashboard."
       fetchItems={fetchItems}
-      renderCard={(item, onDelete) => <QnACard key={item.id} item={item} onDelete={onDelete} />}
+      renderCard={(item, onDelete) => {
+        if (item.attachments && item.attachments.length > 0) {
+          return <LinkedInCard key={item.id} item={item} onDelete={onDelete} />
+        }
+        return (
+          <div key={item.id} className="col-span-1 md:col-span-2 lg:col-span-3">
+            <QnACard item={item} onDelete={onDelete} />
+          </div>
+        )
+      }}
       getItemId={(item) => item.id}
       
     />

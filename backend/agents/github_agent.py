@@ -329,20 +329,28 @@ async def score_github_difficulty(state: GitHubState) -> dict:
     tech_stack = state.get("tech_stack") or []
 
     response = await call_llm(
-        prompt=f"""Rate the complexity of this GitHub repository on a scale of 1-5:
-1 = Beginner / simple demo
-2 = Basic utility
-3 = Intermediate tool/library
-4 = Advanced framework/system
-5 = Expert-level infrastructure
+        prompt=f"""You are rating technical difficulty FOR AN AI PRACTITIONER audience (developers, data scientists, ML engineers).
+Judge difficulty WITHIN this field, not against the general public.
 
-Summary: {summary}
+Scale:
+1 = Beginner  — No prior ML/AI knowledge needed. (e.g. "What is AI?", "How to use ChatGPT", introductory overviews)
+2 = Basic     — Requires general programming/tech background. (e.g. "What is a neural network?", API usage tutorials, basic Python ML)
+3 = Intermediate — Requires working ML/AI knowledge. (e.g. "How does attention work?", RAG basics, fine-tuning intro, common agent patterns)
+4 = Advanced  — Requires deep expertise in specific sub-domain. (e.g. RLHF internals, custom training loops, complex multi-agent orchestration, model distillation)
+5 = Expert    — Cutting-edge research or highly specialized systems. (e.g. novel architectures, frontier model alignment, production-scale LLMOps at thousands of QPS)
+
+Content summary: {summary}
 Architecture: {architecture}
 Tech stack: {', '.join([t for t in tech_stack if t])}
 
+Think step by step:
+- Who is the intended user of this repo?
+- What prerequisite knowledge is assumed?
+- Is this introductory, practical, or research-level?
+
 Reply with ONLY the number (1, 2, 3, 4, or 5). Nothing else.""",
         model="groq/llama-3.3-70b-versatile",
-        system="You are a technical complexity assessor.",
+        system="You are a technical difficulty assessor for AI practitioners. Be calibrated — most practical tutorials are 2-3, most application guides are 3, only truly deep internals are 4-5.",
         max_tokens=10,
         temperature=0,
     )
