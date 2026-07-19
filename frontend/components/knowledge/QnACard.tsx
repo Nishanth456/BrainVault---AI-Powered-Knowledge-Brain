@@ -1,10 +1,18 @@
 "use client"
-import { ExternalLink, HelpCircle, Loader2, MessageCircle, Trash2 } from "lucide-react"
+import { ExternalLink, FileText, HelpCircle, Loader2, MessageCircle, Trash2 } from "lucide-react"
 import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
 import { DeleteWithUndo } from "@/components/knowledge/DeleteWithUndo"
 import { restoreItem } from "@/lib/api"
 import { ExportButton } from "@/components/knowledge/ExportButton"
 import { useState } from "react"
+
+interface Attachment {
+  id: string
+  filename: string
+  minio_path: string
+  file_type: string
+  page_count?: number | null
+}
 
 export interface QnAItem {
   is_bookmarked?: boolean
@@ -13,6 +21,7 @@ export interface QnAItem {
   summary: string
   knowledge_tree?: string
   source_url?: string
+  attachments?: Attachment[]
 }
 
 interface QnACardProps {
@@ -109,6 +118,36 @@ export function QnACard({ item, onDelete }: QnACardProps) {
           </div>
         </div>
       </div>
+
+      {/* Attachment section */}
+      {item.attachments && item.attachments.length > 0 && (() => {
+        const att = item.attachments[0]
+        return (
+          <div className="px-5 pb-4">
+            <a
+              href={`http://localhost:8000/api/files/${encodeURIComponent(att.minio_path)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg
+                         bg-violet-500/10 border border-violet-500/20
+                         text-violet-300 hover:text-violet-100 hover:bg-violet-500/20
+                         transition-colors group/att"
+              title="View attached document"
+            >
+              <FileText size={14} className="flex-shrink-0" />
+              <span className="text-xs font-medium truncate flex-1">
+                {att.filename || "Attached Document"}
+              </span>
+              {att.page_count && (
+                <span className="text-[10px] text-violet-400/70 flex-shrink-0">
+                  {att.page_count}p
+                </span>
+              )}
+              <ExternalLink size={11} className="flex-shrink-0 opacity-60 group-hover/att:opacity-100" />
+            </a>
+          </div>
+        )
+      })()}
 
     </div>
   )

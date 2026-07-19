@@ -191,6 +191,8 @@ async def save_knowledge_item(state: BrainVaultState) -> uuid.UUID:
             })
 
         # Save attachments (Phase 1: PDFs and carousel images)
+        # In QnA branch, item_id was never inserted — use the first Q&A item's id instead.
+        attachment_owner_id = inserted_items[0]["id"] if inserted_items else str(item_id)
         for att in (state.get("attachments") or []):
             if att.get("minio_path"):
                 att_id = str(uuid.uuid4())
@@ -204,7 +206,7 @@ async def save_knowledge_item(state: BrainVaultState) -> uuid.UUID:
                     )
                 """), {
                     "id":                str(att_id),
-                    "knowledge_item_id": str(item_id),
+                    "knowledge_item_id": attachment_owner_id,
                     "filename":          att.get("filename", "unknown"),
                     "minio_path":        att["minio_path"],
                     "file_type":         att.get("file_type", "pdf"),

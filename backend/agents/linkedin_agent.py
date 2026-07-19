@@ -575,7 +575,7 @@ Return ONLY valid JSON.""",
     
     qna_pairs = []
     
-    if is_qna and not state.get("has_attachment"):
+    if is_qna:
         steps.append("🤖 Extracting QnA and answering missing questions...")
         qna_prompt = f"""You are an expert Principal AI Engineer conducting a senior technical interview.
 The following text contains a list of multiple interview questions.
