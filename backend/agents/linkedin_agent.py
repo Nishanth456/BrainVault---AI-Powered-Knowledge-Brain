@@ -41,6 +41,7 @@ class LinkedInState(TypedDict):
     key_concepts: Optional[list[str]]
     tags: Optional[list[str]]
     metadata: Optional[dict]
+    knowledge_domain: Optional[str]
     difficulty: Optional[int]
     knowledge_tree: Optional[str]
     is_interview_qna: Optional[bool]
@@ -389,7 +390,42 @@ Return ONLY valid JSON.""",
     }
 
 
-# ── Node 8: Score difficulty ──────────────────────────────────────────────────
+# ── Node 8: Infer Knowledge Domain ────────────────────────────────────────────
+
+async def infer_domain(state: LinkedInState) -> dict:
+    """Pick the broad knowledge domain for the post."""
+    content = state.get("combined_text") or state.get("post_text") or ""
+    raw = content[:3000]
+    concept = state.get("concept") or ""
+
+    response = await call_llm(
+        prompt=f"""Determine the broad knowledge domain for this text.
+Choose exactly ONE from this list:
+Artificial Intelligence, Machine Learning, Python, System Design, SQL, Cloud Computing, DevOps, Mathematics, General
+
+{f'User-provided concept: {concept}' if concept else ''}
+
+Text:
+{raw}
+
+Respond with ONLY the domain name, nothing else.""",
+        model="groq/llama-3.1-8b-instant",
+        system="You are a knowledge domain classifier.",
+        max_tokens=30,
+        temperature=0,
+    )
+
+    domain = response.strip()
+    valid_domains = {"Artificial Intelligence", "Machine Learning", "Python", "System Design", "SQL", "Cloud Computing", "DevOps", "Mathematics", "General"}
+    if domain not in valid_domains:
+        domain = "General"
+
+    return {
+        "knowledge_domain": domain,
+        "agent_steps": [f"📁 Domain inferred: {domain}"],
+    }
+
+# ── Node 9: Score difficulty ──────────────────────────────────────────────────
 
 async def score_difficulty(state: LinkedInState) -> dict:
     """LLM Call — Groq llama-3.3-70b-versatile — score difficulty 1-5."""
@@ -614,6 +650,7 @@ def build_linkedin_subgraph() -> StateGraph:
     graph.add_node("summarize",            summarize_content)
     graph.add_node("extract_concepts",     extract_key_concepts)
     graph.add_node("generate_metadata",    generate_metadata)
+    graph.add_node("infer_domain",         infer_domain)
     graph.add_node("score_difficulty",     score_difficulty)
     graph.add_node("place_in_tree",        place_in_knowledge_tree)
     graph.add_node("detect_qna",           detect_interview_qna)
@@ -625,7 +662,8 @@ def build_linkedin_subgraph() -> StateGraph:
     graph.add_edge("build_combined_text",  "summarize")
     graph.add_edge("summarize",            "extract_concepts")
     graph.add_edge("extract_concepts",     "generate_metadata")
-    graph.add_edge("generate_metadata",    "score_difficulty")
+    graph.add_edge("generate_metadata",    "infer_domain")
+    graph.add_edge("infer_domain",         "score_difficulty")
     graph.add_edge("score_difficulty",     "place_in_tree")
     graph.add_edge("place_in_tree",        "detect_qna")
     graph.add_edge("detect_qna",           END)

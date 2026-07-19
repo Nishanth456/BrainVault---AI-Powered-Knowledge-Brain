@@ -8,7 +8,7 @@ interface DeleteWithUndoProps {
   itemId: string
   itemTitle?: string
   onDelete: (id: string) => void
-  onUndo?: (id: string) => void
+  onUndo?: (id: string) => void | Promise<void>
 }
 
 export function DeleteWithUndo({ itemId, itemTitle, onDelete, onUndo }: DeleteWithUndoProps) {
@@ -25,7 +25,12 @@ export function DeleteWithUndo({ itemId, itemTitle, onDelete, onUndo }: DeleteWi
         description: itemTitle || "Item moved to trash",
         action: {
           label: "Undo",
-          onClick: () => onUndo?.(itemId),
+          onClick: async () => {
+            if (onUndo) {
+              await onUndo(itemId)
+              window.dispatchEvent(new Event("knowledge-item-restored"))
+            }
+          },
         },
         duration: 5000,
       })

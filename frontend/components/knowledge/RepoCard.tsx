@@ -140,7 +140,7 @@ export function RepoCard({ item, onDelete }: { item: RepoItem; onDelete?: (id: s
 
           {/* Tech stack chips */}
           {stack.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-0.5">
               {stack.slice(0, 8).map((tech) => (
                 <span
                   key={tech}
@@ -154,7 +154,7 @@ export function RepoCard({ item, onDelete }: { item: RepoItem; onDelete?: (id: s
 
           {/* Footer: concepts + open link */}
           <div className="flex items-center justify-between gap-3 pt-1">
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-0.5">
               {item.key_concepts?.slice(0, 4).map((concept) => (
                 <span
                   key={concept}

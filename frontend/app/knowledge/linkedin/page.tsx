@@ -29,7 +29,7 @@ export default function LinkedinPage() {
       fetchItems={fetchItems}
       renderCard={(item, onDelete) => <LinkedInCard key={item.id} item={item} onDelete={onDelete} />}
       getItemId={(item) => item.id}
-      filterOptions={{ domains: ["Engineering", "Data Science", "Design", "Management", "General"] }}
+      
     />
   )
 }

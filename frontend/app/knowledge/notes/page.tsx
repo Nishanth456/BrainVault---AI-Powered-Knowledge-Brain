@@ -29,7 +29,7 @@ export default function NotesPage() {
       fetchItems={fetchItems}
       renderCard={(item, onDelete) => <NoteCard key={item.id} item={item} onDelete={onDelete} />}
       getItemId={(item) => item.id}
-      filterOptions={{ domains: ["Engineering", "Data Science", "Design", "Management", "General"] }}
+      singleColumn
     />
   )
 }

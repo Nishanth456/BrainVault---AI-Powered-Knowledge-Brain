@@ -361,8 +361,7 @@ ALLOWED_CONCEPTS:
 
 Return ONLY a JSON object:
 {{
-  "tree_path": "The EXACT concept string you chose from the ALLOWED_CONCEPTS list",
-  "domain": "One of: Artificial Intelligence, Machine Learning, Python, System Design, SQL, Cloud Computing, DevOps, Mathematics, General"
+  "tree_path": "The EXACT concept string you chose from the ALLOWED_CONCEPTS list"
 }}
 
 Article:
@@ -379,16 +378,13 @@ Return ONLY valid JSON.""",
         clean = response.strip().strip("```json").strip("```").strip()
         tree_data = json.loads(clean)
         chosen_path = tree_data.get("tree_path")
-        domain = tree_data.get("domain", "General")
         if chosen_path not in AI_CONCEPTS_LIST:
             chosen_path = "Artificial Intelligence (AI)"
     except Exception:
         chosen_path = "Artificial Intelligence (AI)"
-        domain = "General"
 
     return {
         "knowledge_tree": chosen_path,
-        "knowledge_domain": domain,
         "agent_steps": [f"🌳 Placed in taxonomy: {chosen_path}"],
     }
 

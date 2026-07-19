@@ -167,7 +167,7 @@ export function VideoCard({
           </h3>
 
           {/* Summary */}
-          <p className="text-sm text-zinc-400 leading-relaxed line-clamp-2">
+          <p className="text-sm text-zinc-400 leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all duration-300">
             {item.summary || "No summary available."}
           </p>
 

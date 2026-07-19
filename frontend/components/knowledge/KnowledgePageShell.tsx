@@ -20,6 +20,7 @@ interface KnowledgePageShellProps<T> {
   getItemId: (item: T) => string
   filterOptions?: { domains?: string[] }
   singleColumn?: boolean
+  groupBy?: (item: T) => string | undefined | null
 }
 
 export function KnowledgePageShellInner<T>({
@@ -35,6 +36,7 @@ export function KnowledgePageShellInner<T>({
   getItemId,
   filterOptions,
   singleColumn,
+  groupBy = (item: T) => (item as any).knowledge_tree || "Uncategorized",
 }: KnowledgePageShellProps<T>) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -59,6 +61,18 @@ export function KnowledgePageShellInner<T>({
       .then(setItems)
       .catch(console.error)
       .finally(() => setLoading(false))
+  }, [filters, sort, fetchItems])
+
+  useEffect(() => {
+    const handleRestoreEvent = () => {
+      setLoading(true)
+      fetchItems(filters, sort)
+        .then(setItems)
+        .catch(console.error)
+        .finally(() => setLoading(false))
+    }
+    window.addEventListener("knowledge-item-restored", handleRestoreEvent)
+    return () => window.removeEventListener("knowledge-item-restored", handleRestoreEvent)
   }, [filters, sort, fetchItems])
 
   const updateFilters = (next: Record<string, string>) => {
@@ -99,21 +113,53 @@ export function KnowledgePageShellInner<T>({
 
         {loading && <ShimmerSkeleton count={6} />}
 
-        {!loading && items.length === 0 && (
-          <EmptyState
-            icon={emptyIcon}
-            title={emptyTitle}
-            description={emptyDescription}
-            hint={emptyHint}
-            action={{ label: "Paste a link", href: "/" }}
-          />
-        )}
+        {!loading && (() => {
+          const filteredItems = items.filter(item => {
+            if (filters.q) {
+              const q = filters.q.toLowerCase()
+              const title = (item as any).title?.toLowerCase() || ""
+              const summary = (item as any).summary?.toLowerCase() || ""
+              const concepts = (item as any).key_concepts?.join(" ").toLowerCase() || ""
+              if (!title.includes(q) && !summary.includes(q) && !concepts.includes(q)) return false
+            }
+            return true
+          })
 
-        {!loading && items.length > 0 && (
-          <StaggeredCardGrid singleColumn={singleColumn}>
-            {items.map(item => renderCard(item, handleDelete))}
-          </StaggeredCardGrid>
-        )}
+          if (filteredItems.length === 0) {
+            return (
+              <EmptyState
+                icon={emptyIcon}
+                title={emptyTitle}
+                description={filters.q ? "No items match your search filter." : emptyDescription}
+                hint={filters.q ? "Try adjusting your search keywords." : emptyHint}
+                action={filters.q ? { label: "Clear search", href: "", onClick: (e) => { e.preventDefault(); const next = {...filters}; delete next.q; updateFilters(next) } } : { label: "Paste a link", href: "/" }}
+              />
+            )
+          }
+
+          const grouped = filteredItems.reduce((acc, item) => {
+            const key = groupBy(item) || "Uncategorized"
+            if (!acc[key]) acc[key] = []
+            acc[key].push(item)
+            return acc
+          }, {} as Record<string, T[]>)
+
+          return (
+            <div className="space-y-12">
+              {Object.entries(grouped).map(([group, groupItems]) => (
+                <div key={group}>
+                  <div className="flex items-center gap-2 mb-4">
+                    <h2 className="text-lg font-semibold text-white/90">{group}</h2>
+                    <span className="text-xs text-white/20 bg-white/5 px-2 py-0.5 rounded-full border border-white/10">{groupItems.length}</span>
+                  </div>
+                  <StaggeredCardGrid singleColumn={singleColumn}>
+                    {groupItems.map(item => renderCard(item, handleDelete))}
+                  </StaggeredCardGrid>
+                </div>
+              ))}
+            </div>
+          )
+        })()}
       </div>
     </div>
   )

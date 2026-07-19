@@ -13,7 +13,30 @@ from sqlalchemy.orm import selectinload
 from backend.models.database import get_db
 from backend.models.schemas import KnowledgeItem
 
+from pydantic import BaseModel
+
 router = APIRouter(prefix="/api/knowledge", tags=["knowledge"])
+
+
+class PatchItemBody(BaseModel):
+    raw_content: Optional[str] = None
+    title: Optional[str] = None
+
+
+@router.patch("/{item_id}")
+async def patch_knowledge_item(item_id: str, body: PatchItemBody, db: AsyncSession = Depends(get_db)):
+    """Partially update a knowledge item (e.g. inline edit of raw_content)."""
+    result = await db.execute(select(KnowledgeItem).where(KnowledgeItem.id == item_id))
+    item = result.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Not found")
+    if body.raw_content is not None:
+        item.raw_content = body.raw_content
+    if body.title is not None:
+        item.title = body.title
+    await db.commit()
+    return {"ok": True}
+
 
 
 
@@ -342,7 +365,7 @@ async def get_blog_items(
             "reading_time_minutes": item.reading_time_minutes,
             "importance_score":     item.importance_score,
             "knowledge_tree":       item.knowledge_tree,
-            "knowledge_domain":     item.knowledge_domain,
+            "knowledge_domain":     None,
             "is_bookmarked": item.is_bookmarked,
             "created_at":           item.created_at.isoformat(),
             "attachments": [

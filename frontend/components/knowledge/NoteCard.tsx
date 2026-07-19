@@ -1,5 +1,5 @@
 "use client"
-import { ChevronRight, Clock, Loader2, Tag, Trash2 } from "lucide-react"
+import { Clock, Edit2, Tag, Check, X } from "lucide-react"
 import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
 import { DeleteWithUndo } from "@/components/knowledge/DeleteWithUndo"
 import { restoreItem } from "@/lib/api"
@@ -21,6 +21,7 @@ export interface NoteItem {
   id: string
   title: string
   summary: string
+  raw_content?: string
   knowledge_tree?: string
   knowledge_domain?: string | null
   key_concepts: string[]
@@ -36,20 +37,31 @@ interface NoteCardProps {
 }
 
 export function NoteCard({ item, onDelete }: NoteCardProps) {
-  const [isDeleting, setIsDeleting] = useState(false)
   const diff = item.difficulty || 0
+  const [editing, setEditing] = useState(false)
+  const [editValue, setEditValue] = useState(item.raw_content || "")
+  const [saving, setSaving] = useState(false)
 
-  const handleDelete = async () => {
-    if (!window.confirm("Delete this note?")) return
-    setIsDeleting(true)
+  const handleSave = async () => {
+    setSaving(true)
     try {
-      const res = await fetch(`http://localhost:8000/api/knowledge/${item.id}`, { method: "DELETE" })
-      if (res.ok) onDelete?.(item.id)
-      else setIsDeleting(false)
+      await fetch(`http://localhost:8000/api/knowledge/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ raw_content: editValue }),
+      })
+      item.raw_content = editValue
+      setEditing(false)
     } catch (e) {
       console.error(e)
-      setIsDeleting(false)
+    } finally {
+      setSaving(false)
     }
+  }
+
+  const handleCancel = () => {
+    setEditValue(item.raw_content || "")
+    setEditing(false)
   }
 
   return (
@@ -59,7 +71,6 @@ export function NoteCard({ item, onDelete }: NoteCardProps) {
                  hover:border-cyan-500/30 hover:bg-white/[0.05] transition-all duration-300
                  flex flex-col gap-3.5 overflow-hidden target-glow-cyan"
     >
-
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300
                       bg-gradient-to-br from-cyan-600/5 via-transparent to-transparent rounded-2xl pointer-events-none" />
 
@@ -79,17 +90,17 @@ export function NoteCard({ item, onDelete }: NoteCardProps) {
             </span>
           )}
           <div className="flex items-center gap-2">
-              <BookmarkButton itemId={item.id} initial={item.is_bookmarked || false} />
-              <ExportButton itemId={item.id} title={item.title || "Export"} />
-              <DeleteWithUndo
-                itemId={item.id}
-                itemTitle={item.title || ""}
-                onDelete={onDelete!}
-                onUndo={async (id) => {
-                  await restoreItem(id)
-                }}
-              />
-            </div>
+            <BookmarkButton itemId={item.id} initial={item.is_bookmarked || false} />
+            <ExportButton itemId={item.id} title={item.title || "Export"} />
+            <DeleteWithUndo
+              itemId={item.id}
+              itemTitle={item.title || ""}
+              onDelete={onDelete!}
+              onUndo={async (id) => {
+                await restoreItem(id)
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -98,31 +109,71 @@ export function NoteCard({ item, onDelete }: NoteCardProps) {
         {item.title || "Untitled Note"}
       </h3>
 
-      {/* Summary */}
-      <p className="text-xs text-zinc-400 leading-relaxed line-clamp-3">
-        {item.summary}
-      </p>
+      {/* Raw content — what the user pasted, with inline edit */}
+      <div className="relative">
+        {editing ? (
+          <div className="flex flex-col gap-2">
+            <textarea
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              className="w-full text-xs text-zinc-300 bg-white/[0.04] border border-white/[0.12] rounded-lg p-3 leading-relaxed resize-none focus:outline-none focus:border-cyan-500/50 min-h-[100px] font-mono"
+              rows={6}
+              autoFocus
+            />
+            <div className="flex items-center gap-2 justify-end">
+              <button
+                onClick={handleCancel}
+                className="flex items-center gap-1 px-2.5 py-1 text-xs text-zinc-400 hover:text-white border border-white/[0.08] rounded-lg transition-colors"
+              >
+                <X size={11} /> Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center gap-1 px-2.5 py-1 text-xs text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <Check size={11} /> {saving ? "Saving…" : "Save"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="group/raw relative">
+            <pre className="text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap font-mono bg-white/[0.02] rounded-lg p-3 border border-white/[0.05]">
+              {item.raw_content || item.summary}
+            </pre>
+            <button
+              onClick={() => setEditing(true)}
+              className="absolute top-2 right-2 opacity-0 group-hover/raw:opacity-100 transition-opacity p-1 rounded-md bg-white/5 border border-white/10 text-zinc-500 hover:text-zinc-300"
+              title="Edit content"
+            >
+              <Edit2 size={11} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* AI Insight */}
+      {item.summary && item.summary !== item.raw_content && (
+        <div className="flex gap-2 pt-1 border-t border-white/[0.05]">
+          <span className="text-[10px] font-semibold text-cyan-400/70 uppercase tracking-wider mt-0.5 flex-shrink-0">AI</span>
+          <p className="text-xs text-zinc-500 leading-relaxed italic">
+            {item.summary}
+          </p>
+        </div>
+      )}
 
       {/* Tags */}
       {item.tags?.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {item.tags.slice(0, 5).map(tag => (
+        <div className="flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-0.5">
+          {item.tags?.map(tag => (
             <span
               key={tag}
               className="px-2 py-0.5 text-[11px] bg-cyan-600/10 text-cyan-300
-                         rounded-full border border-cyan-600/15"
+                         whitespace-nowrap flex-shrink-0 rounded-full border border-cyan-600/15"
             >
               {tag}
             </span>
           ))}
-        </div>
-      )}
-
-      {/* Tree path */}
-      {item.knowledge_tree && (
-        <div className="flex items-center gap-1 text-[11px] text-zinc-600 truncate">
-          <ChevronRight size={10} className="flex-shrink-0" />
-          <span className="truncate">{item.knowledge_tree}</span>
         </div>
       )}
 

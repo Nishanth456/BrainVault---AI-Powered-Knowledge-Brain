@@ -51,7 +51,7 @@ async def linkedin_agent_node(state: BrainVaultState) -> dict:
     # If the agent detected this is an interview QnA, override its type and mark its source.
     is_qna = result.get("is_interview_qna")
     final_type = "interview_qna" if is_qna else "linkedin"
-    knowledge_domain = "LinkedIn" if is_qna else None
+    knowledge_domain = result.get("knowledge_domain")
 
     return {
         "input_type":     final_type,
@@ -177,7 +177,7 @@ async def blog_agent_node(state: BrainVaultState) -> dict:
         "tags":             result.get("tags") or [],
         "difficulty":       result.get("difficulty", 3),
         "knowledge_tree":   result.get("knowledge_tree", ""),
-        "knowledge_domain": result.get("knowledge_domain"),
+        "knowledge_domain": None,
         "qna_pairs":        result.get("qna_pairs") or [],
         "metadata":         metadata,
         "attachments":      [],

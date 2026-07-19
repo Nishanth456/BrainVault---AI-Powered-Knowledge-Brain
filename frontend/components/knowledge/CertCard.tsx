@@ -166,7 +166,7 @@ export function CertCard({ item, onDelete }: { item: CertItem; onDelete?: (id: s
           {item.exam_topics && item.exam_topics.length > 0 && (
             <div className="mt-3">
               <h4 className="text-xs font-semibold text-zinc-300 mb-2 uppercase tracking-wider">Exam Topics</h4>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-0.5">
                 {item.exam_topics.map((topic, i) => (
                   <span key={i} className="px-2 py-1 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 rounded-md text-[10px] font-medium">
                     {topic}

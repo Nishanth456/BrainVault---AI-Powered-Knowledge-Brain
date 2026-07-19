@@ -135,18 +135,7 @@ export function NoteListItem({ item, onDelete }: NoteListItemProps) {
             <div className="flex items-center gap-1.5">
               <Sparkles size={12} className="text-cyan-400" />
               <span className="text-zinc-300">{item.knowledge_domain}</span>
-              {item.knowledge_tree && (
-                <>
-                  <ChevronRight size={10} className="text-zinc-600" />
-                  <span>{item.knowledge_tree}</span>
-                </>
-              )}
-              {item.knowledge_subdomain && (
-                <>
-                  <ChevronRight size={10} className="text-zinc-600" />
-                  <span>{item.knowledge_subdomain}</span>
-                </>
-              )}
+
             </div>
           )}
 
@@ -170,7 +159,7 @@ export function NoteListItem({ item, onDelete }: NoteListItemProps) {
         {item.tags?.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 mt-3">
             <Hash size={11} className="text-zinc-600 mr-0.5" />
-            {item.tags.slice(0, 6).map((tag) => (
+            {item.tags?.map((tag) => (
               <Badge
                 key={tag}
                 variant="secondary"
@@ -194,7 +183,7 @@ export function NoteListItem({ item, onDelete }: NoteListItemProps) {
                   <Brain size={12} className="text-purple-400" />
                   Key concepts
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-0.5">
                   {item.key_concepts.map((concept) => (
                     <Badge
                       key={concept}

@@ -12,6 +12,7 @@ import {
 import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
 import { DeleteWithUndo } from "@/components/knowledge/DeleteWithUndo"
 import { ExportButton } from "@/components/knowledge/ExportButton"
+import { Download } from "lucide-react"
 import { restoreItem } from "@/lib/api"
 
 import Link from "next/link"
@@ -106,6 +107,11 @@ export function LinkedInCard({ item, onDelete }: { item: LinkedInItem; onDelete?
         </div>
 
         <div className="flex items-center gap-2">
+          {item.knowledge_domain && (
+            <span className="text-[11px] font-medium px-2 py-0.5 whitespace-nowrap flex-shrink-0 rounded-full border border-violet-500/20 bg-violet-500/10 text-violet-300">
+              {item.knowledge_domain}
+            </span>
+          )}
           {diff > 0 && (
             <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${difficultyColor[diff]}`}>
               {difficultyLabel[diff]}
@@ -114,7 +120,20 @@ export function LinkedInCard({ item, onDelete }: { item: LinkedInItem; onDelete?
           
           <div className="flex items-center gap-2">
               <BookmarkButton itemId={item.id} initial={item.is_bookmarked || false} />
-              <ExportButton itemId={item.id} title={item.title || "Export"} />
+              {hasPdf ? (
+                <a 
+                  href={`http://localhost:8000/api/files/${encodeURIComponent(pdfAtt.minio_path)}`}
+                  download={pdfAtt.filename || "document.pdf"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 rounded-md border border-white/10 text-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-colors flex items-center justify-center"
+                  title="Download Document"
+                >
+                  <Download size={14} />
+                </a>
+              ) : (
+                <ExportButton itemId={item.id} title={item.title || "Export"} />
+              )}
               <DeleteWithUndo
                 itemId={item.id}
                 itemTitle={item.title || ""}
@@ -141,21 +160,18 @@ export function LinkedInCard({ item, onDelete }: { item: LinkedInItem; onDelete?
       )}
 
       {/* Summary */}
-      <p 
-        className="text-xs text-zinc-400 leading-relaxed line-clamp-1"
-        title={item.summary}
-      >
+      <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all duration-300">
         {item.summary}
       </p>
 
       {/* Tags */}
       {item.tags?.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {item.tags.slice(0, 4).map(tag => (
+        <div className="tag-scroll flex gap-1.5 overflow-x-auto pb-1">
+          {item.tags?.map(tag => (
             <span
               key={tag}
               className="px-2 py-0.5 text-[11px] bg-violet-600/10 text-violet-300
-                         rounded-full border border-violet-600/15"
+                         whitespace-nowrap flex-shrink-0 rounded-full border border-violet-600/15"
             >
               {tag}
             </span>
@@ -163,13 +179,6 @@ export function LinkedInCard({ item, onDelete }: { item: LinkedInItem; onDelete?
         </div>
       )}
 
-      {/* Knowledge tree */}
-      {item.knowledge_tree && (
-        <div className="flex items-center gap-1 text-[11px] text-zinc-600 truncate">
-          <ChevronRight size={10} className="flex-shrink-0" />
-          <span className="truncate">{item.knowledge_tree}</span>
-        </div>
-      )}
 
       {/* PDF attachment badge */}
       {hasPdf && (

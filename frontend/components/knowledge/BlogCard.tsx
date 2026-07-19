@@ -1,12 +1,10 @@
 "use client"
 import {
-    Clock, ExternalLink,
-    Globe,
-    Loader2,
-    Trash2,
-    User
+  Clock,
+  ExternalLink,
+  Globe,
+  User,
 } from "lucide-react"
-import { useState } from "react"
 import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
 import { DeleteWithUndo } from "@/components/knowledge/DeleteWithUndo"
 import { ExportButton } from "@/components/knowledge/ExportButton"
@@ -42,125 +40,104 @@ export interface BlogItem {
 
 export function BlogCard({ item, onDelete }: { item: BlogItem; onDelete?: (id: string) => void }) {
   const diff = item.difficulty || 0
-  const [isDeleting, setIsDeleting] = useState(false)
-
-  const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this blog?")) return
-
-    setIsDeleting(true)
-    try {
-      const res = await fetch(`http://localhost:8000/api/knowledge/${item.id}`, {
-        method: "DELETE"
-      })
-      if (res.ok) {
-        onDelete?.(item.id)
-      } else {
-        console.error("Failed to delete blog")
-        setIsDeleting(false)
-      }
-    } catch (e) {
-      console.error(e)
-      setIsDeleting(false)
-    }
-  }
 
   return (
-    <a
+    <div
       id={`item-${item.id}`}
-      href={item.source_url || "#"}
-      target={item.source_url ? "_blank" : undefined}
-      rel={item.source_url ? "noopener noreferrer" : undefined}
-      className="group block relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 hover:border-orange-500/30 hover:bg-white/[0.05] transition-all duration-300 overflow-hidden target-glow-orange"
+      className="group relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-5
+                 hover:border-orange-500/30 hover:bg-white/[0.05] transition-all duration-300
+                 flex flex-col gap-3.5 overflow-hidden"
     >
       {/* Subtle gradient on hover */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-orange-600/5 via-transparent to-transparent rounded-2xl pointer-events-none" />
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                      bg-gradient-to-br from-orange-600/5 via-transparent to-transparent rounded-2xl pointer-events-none" />
 
-      <div className="relative flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
-        {/* Site icon */}
-        <div className="w-10 h-10 rounded-xl bg-orange-500/15 flex items-center justify-center flex-shrink-0">
-          <Globe size={18} className="text-orange-400" />
+      {/* Header row */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-7 h-7 rounded-lg bg-orange-500/15 flex items-center justify-center flex-shrink-0">
+            <Globe size={13} className="text-orange-400" />
+          </div>
+          <span className="text-xs text-zinc-500 font-medium truncate">{item.site || "Blog"}</span>
         </div>
 
-        {/* Main content */}
-        <div className="flex-1 min-w-0 flex flex-col gap-3">
-          {/* Header row: site + difficulty + delete */}
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-zinc-500 font-medium">{item.site || "Blog"}</span>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {diff > 0 && (
-                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${difficultyColor[diff]}`}>
-                  {difficultyLabel[diff]}
-                </span>
-              )}
-              <div className="flex items-center gap-2">
-              <BookmarkButton itemId={item.id} initial={item.is_bookmarked || false} />
-              <ExportButton itemId={item.id} title={item.title || "Export"} />
-              <DeleteWithUndo
-                itemId={item.id}
-                itemTitle={item.title || ""}
-                onDelete={onDelete!}
-                onUndo={async (id) => {
-                  await restoreItem(id)
-                }}
-              />
-            </div>
-            </div>
-          </div>
-
-          {/* Title */}
-          <h3 className="text-base font-semibold text-white leading-snug line-clamp-2">
-            {item.title || "Untitled Blog Post"}
-          </h3>
-
-          {/* Author + reading time */}
-          <div className="flex items-center gap-3 text-xs text-zinc-500 flex-wrap">
-            {item.author && (
-              <span className="flex items-center gap-1.5">
-                <User size={11} />
-                <span className="truncate max-w-[200px]">{item.author}</span>
-              </span>
-            )}
-            <span className="flex items-center gap-1.5">
-              <Clock size={11} />
-              {item.reading_time_minutes ? `${item.reading_time_minutes} min read` : "Saved"}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {diff > 0 && (
+            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${difficultyColor[diff]}`}>
+              {difficultyLabel[diff]}
             </span>
+          )}
+
+          <div className="flex items-center gap-2">
+            <BookmarkButton itemId={item.id} initial={item.is_bookmarked || false} />
+            <ExportButton itemId={item.id} title={item.title || "Export"} />
+            <DeleteWithUndo
+              itemId={item.id}
+              itemTitle={item.title || ""}
+              onDelete={onDelete!}
+              onUndo={async (id) => {
+                await restoreItem(id)
+              }}
+            />
           </div>
-
-          {/* Summary */}
-          {item.summary && (
-            <p
-              className="text-sm text-zinc-400 leading-relaxed line-clamp-2"
-              title={item.summary}
-            >
-              {item.summary}
-            </p>
-          )}
-
-          {/* Tags */}
-          {item.tags?.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {item.tags.slice(0, 6).map(tag => (
-                <span
-                  key={tag}
-                  className="px-2 py-0.5 text-[11px] bg-orange-600/10 text-orange-300
-                             rounded-full border border-orange-600/15"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
-
-        {/* External link arrow */}
-        {item.source_url && (
-          <div className="hidden sm:flex items-center justify-center w-9 h-9 rounded-lg border border-white/[0.08]
-                          text-zinc-500 group-hover:text-orange-300 group-hover:border-orange-500/30
-                          transition-colors flex-shrink-0 self-center">
-            <ExternalLink size={15} />
-          </div>
-        )}
       </div>
-    </a>
+
+      {/* Title */}
+      <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2 -mb-1">
+        {item.title || "Untitled Blog Post"}
+      </h3>
+
+      {/* Author */}
+      {item.author && (
+        <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+          <User size={11} />
+          <span className="truncate">{item.author}</span>
+        </div>
+      )}
+
+      {/* Summary */}
+      {item.summary && (
+        <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all duration-300">
+          {item.summary}
+        </p>
+      )}
+
+      {/* Tags */}
+      {item.tags?.length > 0 && (
+        <div className="tag-scroll flex gap-1.5 overflow-x-auto pb-1">
+          {item.tags.map(tag => (
+            <span
+              key={tag}
+              className="px-2 py-0.5 text-[11px] bg-orange-600/10 text-orange-300
+                         whitespace-nowrap flex-shrink-0 rounded-full border border-orange-600/15"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Footer actions */}
+      <div className="flex items-center gap-2 mt-auto pt-2 border-t border-white/[0.05]">
+        {item.source_url && (
+          <a
+            href={item.source_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-1.5 text-xs text-zinc-500
+                       hover:text-zinc-300 rounded-lg py-2 px-3 border border-white/[0.06]
+                       hover:border-white/15 transition-all duration-200"
+          >
+            <ExternalLink size={11} />
+            Article
+          </a>
+        )}
+        <div className={`flex items-center gap-1.5 text-xs text-zinc-600 ${item.source_url ? "ml-auto" : ""}`}>
+          <Clock size={11} />
+          {item.reading_time_minutes ? `${item.reading_time_minutes} min read` : "Saved"}
+        </div>
+      </div>
+    </div>
   )
 }

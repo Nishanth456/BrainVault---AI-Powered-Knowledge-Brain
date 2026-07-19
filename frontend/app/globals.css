@@ -140,6 +140,26 @@
 .dark ::-webkit-scrollbar-thumb { background: oklch(1 0 0 / 12%); }
 .dark ::-webkit-scrollbar-thumb:hover { background: oklch(1 0 0 / 20%); }
 
+/* Thin horizontal scrollbar for inline tag rows */
+.tag-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(1 0 0 / 20%) transparent;
+}
+.tag-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.tag-scroll::-webkit-scrollbar-track {
+  background: oklch(1 0 0 / 4%);
+  border-radius: 9999px;
+}
+.tag-scroll::-webkit-scrollbar-thumb {
+  background: oklch(1 0 0 / 20%);
+  border-radius: 9999px;
+}
+.tag-scroll::-webkit-scrollbar-thumb:hover {
+  background: oklch(1 0 0 / 32%);
+}
+
 /* ── Glassmorphism ─────────────────────────────────────────────────────────── */
 .glass {
   background: oklch(1 0 0 / 4%);

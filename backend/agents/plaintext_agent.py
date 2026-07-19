@@ -181,13 +181,13 @@ Return ONLY valid JSON.""",
     }
 
 
-# ── Node 4: Generate summary ─────────────────────────────────────────────────
+# ── Node 4: Generate AI insight (extends the note, does not summarise it) ────────────────────────────────────────────────────────────────────────────────
 
 async def generate_summary(state: PlainTextState) -> dict:
     """
-    Preserve the user's pasted content almost exactly.
-    Only light cleanup: strip leading/trailing whitespace and collapse excessive blank lines.
-    Also generate a short AI summary for search/display context.
+    Store the user's pasted text as-is (raw_content).
+    Generate a short AI *insight* that extends the note with real-world context,
+    use-cases, or gotchas — NOT a paraphrase or summary of it.
     """
     raw = state["raw_input"]
 
@@ -196,39 +196,25 @@ async def generate_summary(state: PlainTextState) -> dict:
     cleaned = re.sub(r'\n{4,}', '\n\n\n', cleaned)
 
     ai_summary = await call_llm(
-        prompt = f"""
-You are a senior software engineer rewriting your own technical notes for future revision.
+        prompt=f"""The user saved this technical note:
 
-Your objective is to convert the raw note into a concise, high-value explanation that teaches the concept instead of paraphrasing it.
+{cleaned[:4000]}
 
-Instructions:
-- Begin with exactly one sentence that captures the core idea.
-- Then explain:
-    - what it means,
-    - why it matters,
-    - when to use it,
-    - how it works (if relevant).
-- Add practical engineering insight beyond the note, including common use cases, trade-offs, limitations, best practices, and pitfalls whenever they are relevant.
-- If the note contains APIs, commands, parameters, configuration values, algorithms, or examples, explain their purpose, when to choose each option, and any important caveats instead of simply repeating them.
-- Fill in missing context that an experienced engineer would naturally know, but do not invent unsupported facts.
-- Focus on the most important ideas rather than covering every small detail.
-- Be technically accurate, practical, and easy to revise later.
-- Use clear paragraphs, with bullet points only if they improve readability.
-- Avoid introductions, conclusions, headings, markdown, JSON, or phrases like "This note explains..." or "In summary...".
-- Target approximately 400–600 tokens.
-
-Raw Note:
-{cleaned[:6000]}
-""",
-        model="groq/llama-3.3-70b-versatile",
-        system="You are a senior engineer writing concise, insight-dense revision notes. Explain, don't just repeat.",
-        temperature=0.4,
-        max_tokens=800,
+Write 3-5 sentences that ADD value beyond what the note says:
+- Explain WHY this concept matters in practice, or how it fits into a larger picture
+- Mention a real-world use-case, trade-off, or common pitfall
+- Do NOT restate, paraphrase, or summarise the note
+- Do NOT start with "This note", "The note", "These parameters", or any meta-reference
+- Be direct, dense, and technically sharp""",
+        model="groq/llama-3.1-8b-instant",
+        system="You are a senior engineer adding practical insight to a colleague's notes. Never restate the note itself.",
+        temperature=0.3,
+        max_tokens=150,
     )
 
     return {
-        "summary": ai_summary,
-        "agent_steps": ["✅ Original text preserved; AI summary generated"],
+        "summary": ai_summary.strip(),
+        "agent_steps": ["✅ AI insight generated"],
     }
 
 

@@ -150,8 +150,7 @@ export function PaperCard({
           {/* Summary */}
           {item.summary && (
             <p
-              className="text-sm text-zinc-400 leading-relaxed line-clamp-2"
-              title={item.summary}
+              className="text-sm text-zinc-400 leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all duration-300"
             >
               {item.summary}
             </p>
@@ -159,12 +158,12 @@ export function PaperCard({
 
           {/* Tags */}
           {item.tags?.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {item.tags.slice(0, 6).map(tag => (
+            <div className="flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-0.5">
+              {item.tags?.map(tag => (
                 <span
                   key={tag}
                   className="px-2 py-0.5 text-[11px] bg-indigo-600/10 text-indigo-300
-                             rounded-full border border-indigo-600/15"
+                             whitespace-nowrap flex-shrink-0 rounded-full border border-indigo-600/15"
                 >
                   {tag}
                 </span>
