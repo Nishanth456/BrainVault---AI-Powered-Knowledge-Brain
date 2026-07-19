@@ -17,9 +17,13 @@ const TYPE_LABELS: Record<string, string> = {
   research_paper: "Research Papers",
   note: "Notes",
   interview_qna: "Interview Q&A",
+  github: "GitHub Repositories",
+  youtube: "YouTube Videos",
+  certification: "Certifications",
+  course: "Courses",
 }
 
-const TYPE_ORDER = ["linkedin", "blog", "research", "research_paper", "note", "interview_qna"]
+const TYPE_ORDER = ["linkedin", "blog", "research", "research_paper", "note", "interview_qna", "github", "youtube", "certification", "course"]
 
 function SearchPageInner() {
   const searchParams = useSearchParams()
@@ -76,7 +80,9 @@ function SearchPageInner() {
   }
 
   const groupedKeys = useMemo(() => {
-    return TYPE_ORDER.filter(k => grouped[k]?.length > 0)
+    const knownKeys = TYPE_ORDER.filter(k => grouped[k]?.length > 0)
+    const unknownKeys = Object.keys(grouped).filter(k => !TYPE_ORDER.includes(k) && grouped[k]?.length > 0)
+    return [...knownKeys, ...unknownKeys]
   }, [grouped])
 
   return (

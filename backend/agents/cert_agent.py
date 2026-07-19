@@ -138,8 +138,11 @@ async def extract_concepts_node(state: CertState) -> dict:
     if state.get("error"): return {}
     
     prompt = f"""Extract 5 to 10 key technical concepts tested in this certification.
+    CRITICAL: You MUST include the issuing vendor (e.g., "AWS", "Microsoft", "Google") and key terms from the certification name as concepts.
     Return ONLY a comma-separated list of strings.
     
+    Cert Title: {state.get('title')}
+    Issuer: {state.get('issuer')}
     Text: {state['clean_text'][:5000]}
     """
     

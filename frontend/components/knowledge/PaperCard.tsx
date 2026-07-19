@@ -98,34 +98,32 @@ export function PaperCard({
 
         {/* Main content */}
         <div className="flex-1 min-w-0 flex flex-col gap-3">
-          {/* Header row: source + difficulty + actions */}
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-zinc-500 font-medium">Research Paper</span>
-            <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Header row: Title + Actions */}
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="text-base font-semibold text-white leading-snug line-clamp-2">
+              {item.title || "Untitled Research Paper"}
+            </h3>
+
+            <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
               {diff > 0 && (
                 <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${difficultyColor[diff]}`}>
                   {difficultyLabel[diff]}
                 </span>
               )}
               <div className="flex items-center gap-2">
-              <BookmarkButton itemId={item.id} initial={item.is_bookmarked || false} />
-              <ExportButton itemId={item.id} title={item.title || "Export"} />
-              <DeleteWithUndo
-                itemId={item.id}
-                itemTitle={item.title || ""}
-                onDelete={onDelete!}
-                onUndo={async (id) => {
-                  await restoreItem(id)
-                }}
-              />
-            </div>
+                <BookmarkButton itemId={item.id} initial={item.is_bookmarked || false} />
+                <ExportButton itemId={item.id} title={item.title || "Export"} />
+                <DeleteWithUndo
+                  itemId={item.id}
+                  itemTitle={item.title || ""}
+                  onDelete={onDelete!}
+                  onUndo={async (id) => {
+                    await restoreItem(id)
+                  }}
+                />
+              </div>
             </div>
           </div>
-
-          {/* Title */}
-          <h3 className="text-base font-semibold text-white leading-snug line-clamp-2">
-            {item.title || "Untitled Research Paper"}
-          </h3>
 
           {/* Author + reading time + pages */}
           <div className="flex items-center gap-3 text-xs text-zinc-500 flex-wrap">

@@ -175,6 +175,17 @@ export function CertCard({ item, onDelete }: { item: CertItem; onDelete?: (id: s
               </div>
             </div>
           )}
+
+          {/* Tags / Key Concepts */}
+          {item.key_concepts && item.key_concepts.length > 0 && (
+            <div className="flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden pt-2 mt-auto">
+              {item.key_concepts.slice(0, 6).map((concept, i) => (
+                <span key={i} className="px-2 py-0.5 text-[11px] bg-yellow-500/10 text-yellow-300/80 whitespace-nowrap flex-shrink-0 rounded-full border border-yellow-500/15">
+                  {concept}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
