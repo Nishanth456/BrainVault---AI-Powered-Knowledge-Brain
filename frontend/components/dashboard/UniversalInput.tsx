@@ -22,12 +22,12 @@ import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
 const EXAMPLE_TYPES = [
-  { label: "LinkedIn URL", icon: Globe, color: "text-blue-400", example: "https://linkedin.com/posts/..." },
-  { label: "Medium Article", icon: BookOpen, color: "text-green-400", example: "https://medium.com/..." },
-  { label: "Research Paper", icon: FlaskConical, color: "text-purple-400", example: "https://arxiv.org/..." },
-  { label: "GitHub Repo", icon: GitFork, color: "text-orange-400", example: "https://github.com/..." },
-  { label: "YouTube Video", icon: PlayCircle, color: "text-red-400", example: "https://youtube.com/watch?v=..." },
-  { label: "Plain Text / Notes", icon: FileText, color: "text-cyan-400", example: "Paste any notes or text..." },
+  { label: "LinkedIn URL", icon: Globe, color: "text-blue-500 dark:text-blue-400", example: "https://linkedin.com/posts/..." },
+  { label: "Medium Article", icon: BookOpen, color: "text-emerald-500 dark:text-emerald-400", example: "https://medium.com/..." },
+  { label: "Research Paper", icon: FlaskConical, color: "text-violet-500 dark:text-violet-400", example: "https://arxiv.org/..." },
+  { label: "GitHub Repo", icon: GitFork, color: "text-orange-500 dark:text-orange-400", example: "https://github.com/..." },
+  { label: "YouTube Video", icon: PlayCircle, color: "text-red-500 dark:text-red-400", example: "https://youtube.com/watch?v=..." },
+  { label: "Plain Text / Notes", icon: FileText, color: "text-cyan-600 dark:text-cyan-400", example: "Paste any notes or text..." },
 ]
 
 const TYPE_ICON_MAP: Record<string, string> = {

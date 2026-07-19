@@ -75,16 +75,28 @@ export function Sidebar() {
   return (
     <aside className="w-64 h-screen bg-sidebar/50 backdrop-blur-3xl border-r border-sidebar-border flex flex-col flex-shrink-0">
       {/* Logo */}
-      <div className="p-5 border-b border-sidebar-border">
-        <Link href="/" className="flex items-center gap-3 group">
+      <div className="p-5 border-b border-sidebar-border flex items-center justify-between gap-2">
+        <Link href="/" className="flex items-center gap-3 group flex-1 min-w-0">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-cyan-500 flex items-center justify-center shadow-lg glow-violet flex-shrink-0 group-hover:scale-105 transition-transform">
             <Brain size={18} className="text-white" />
           </div>
-          <div>
-            <p className="font-bold text-white text-sm leading-none tracking-tight">BrainVault</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">AI Knowledge Brain</p>
+          <div className="min-w-0">
+            <p className="font-bold text-sidebar-foreground text-sm leading-none tracking-tight truncate">BrainVault</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5 font-medium truncate">AI Knowledge Brain</p>
           </div>
         </Link>
+        <button
+          type="button"
+          onClick={toggleTheme}
+          title={mounted ? (theme === "dark" ? "Light mode" : "Dark mode") : "Dark mode"}
+          className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all flex-shrink-0"
+        >
+          {mounted ? (
+            theme === "dark" ? <Sun size={16} /> : <Moon size={16} />
+          ) : (
+            <Moon size={16} />
+          )}
+        </button>
       </div>
 
       {/* Navigation */}
@@ -130,30 +142,7 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Settings & Theme */}
-      <div className="p-3 border-t border-sidebar-border space-y-1 bg-sidebar backdrop-blur-xl shadow-[0_-6px_24px_rgba(0,0,0,0.12)] dark:shadow-[0_-6px_24px_rgba(0,0,0,0.35)]">
-        <button
-          type="button"
-          onClick={toggleTheme}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
-        >
-          {mounted ? (
-            theme === "dark" ? <Sun size={15} /> : <Moon size={15} />
-          ) : (
-            <Moon size={15} />
-          )}
-          <span className="font-medium">
-            {mounted ? (theme === "dark" ? "Light mode" : "Dark mode") : "Dark mode"}
-          </span>
-        </button>
-        <Link
-          href="/settings"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
-        >
-          <Settings size={15} />
-          <span className="font-medium">Settings</span>
-        </Link>
-      </div>
+
     </aside>
   )
 }

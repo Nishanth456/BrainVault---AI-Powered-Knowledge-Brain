@@ -40,7 +40,10 @@ export function AnimatedBackground() {
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
       {/* Background base color */}
-      <div className="absolute inset-0 bg-background" />
+      <div className={cn(
+        "absolute inset-0",
+        isDark ? "bg-background" : "bg-gradient-to-br from-slate-100 via-white to-violet-50"
+      )} />
 
       {/* Falling Flakes (Data Rain) */}
       {flakes.map((flake) => (
@@ -54,7 +57,7 @@ export function AnimatedBackground() {
             left: `${flake.x}vw`,
             width: flake.size,
             height: flake.size,
-            opacity: isDark ? flake.opacity : flake.opacity * 0.5,
+            opacity: isDark ? flake.opacity : flake.opacity * 1.5, // Make dark flakes much more visible
           }}
           animate={{
             y: ["0vh", "110vh"],
