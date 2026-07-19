@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
+
 import { cn } from "@/lib/utils"
 import { MessageSquare, Plus } from "lucide-react"
 
@@ -19,13 +19,13 @@ export function ChatHistorySidebar({
   onNewChat,
 }: ChatHistorySidebarProps) {
   return (
-    <div className="hidden w-64 flex-col gap-3 rounded-xl border bg-card p-3 md:flex">
+    <div className="hidden w-64 flex-col gap-3 rounded-xl border bg-card p-3 md:flex overflow-hidden min-h-0 h-full">
       <Button variant="outline" className="w-full justify-start gap-2" onClick={onNewChat}>
         <Plus className="h-4 w-4" />
         New chat
       </Button>
 
-      <ScrollArea className="flex-1">
+      <div className="flex-1 overflow-y-auto pr-2">
         <div className="space-y-1">
           {sessions.map((session) => (
             <button
@@ -47,7 +47,7 @@ export function ChatHistorySidebar({
             <p className="px-3 py-2 text-xs text-muted-foreground">No chat history yet.</p>
           )}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   )
 }

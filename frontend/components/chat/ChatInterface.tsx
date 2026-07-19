@@ -154,7 +154,7 @@ export function ChatInterface({ initialSessionId, initialFilters }: ChatInterfac
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] gap-4 p-4">
+    <div className="flex h-full gap-4 p-4">
       <ChatHistorySidebar
         sessions={sessions}
         activeSessionId={sessionId}

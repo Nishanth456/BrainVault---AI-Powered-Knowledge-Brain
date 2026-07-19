@@ -489,10 +489,24 @@ export default function LearningPage() {
     }
   }
 
-  const handleToggleStage = (title: string) => {
-    setCompletedStages(prev =>
-      prev.includes(title) ? prev.filter(t => t !== title) : [...prev, title]
-    )
+  const handleToggleStage = async (title: string) => {
+    const next = completedStages.includes(title) 
+      ? completedStages.filter(t => t !== title) 
+      : [...completedStages, title];
+      
+    setCompletedStages(next);
+
+    if (currentPath?.id) {
+      try {
+        await fetch(`http://localhost:8000/api/learning-path/${currentPath.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ completed_stages: next }),
+        });
+      } catch (e) {
+        console.error("Failed to save progress:", e);
+      }
+    }
   }
 
   const handleDeleteSaved = async (id: string) => {
