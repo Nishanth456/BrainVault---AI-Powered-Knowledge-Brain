@@ -31,6 +31,14 @@ class BrainVaultState(TypedDict):
     qna_pairs: Optional[list[dict]]
     metadata: Optional[dict]             # Full metadata object
 
+    # YouTube-specific fields
+    video_duration_seconds: Optional[int]
+    channel_name: Optional[str]
+    thumbnail_path: Optional[str]
+    chapters: Optional[list]
+    transcript: Optional[list]
+    playlist_id: Optional[str]
+
     # Storage references
     knowledge_item_id: Optional[str]    # PostgreSQL UUID
     embedding_id: Optional[str]         # Qdrant point ID

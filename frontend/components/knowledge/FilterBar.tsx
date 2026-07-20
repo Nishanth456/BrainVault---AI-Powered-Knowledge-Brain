@@ -1,6 +1,6 @@
 "use client"
 import { Badge } from "@/components/ui/badge"
-import { Bookmark, Calendar, Hash, SlidersHorizontal, Star, X, Search } from "lucide-react"
+import { Bookmark, Calendar,  SlidersHorizontal,  X, Search } from "lucide-react"
 import { useState, useEffect } from "react"
 
 interface FilterBarProps {

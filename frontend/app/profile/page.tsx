@@ -5,12 +5,12 @@ import {
   User, Mail, Phone, MapPin, Link2, GitBranch, Globe,
   Edit3, Check, X, Plus, Trash2, Upload, Download,
   GraduationCap, Briefcase, Code2, Award, FolderGit2,
-  BookOpen, Trophy, FileText, ChevronDown, ChevronUp,
-  Save, ExternalLink
+  BookOpen, Trophy, FileText,
+  ExternalLink
 } from "lucide-react"
 import { toast } from "sonner"
 
-const API = "http://localhost:8000/api/profile"
+const API = "http://127.0.0.1:8000/api/profile"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -103,9 +103,8 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [editSection, setEditSection] = useState<string | null>(null)
-  const [draft, setDraft] = useState<any>(null)
-  const [resumeFile, setResumeFile] = useState<File | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [draft, setDraft] = useState<Partial<Profile> | null>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetch(API).then(r => r.json()).then(data => { setProfile(data); setLoading(false) })
@@ -113,7 +112,7 @@ export default function ProfilePage() {
 
   const startEdit = (section: string) => {
     if (!profile) return
-    const sectionData: Record<string, any> = {
+    const sectionData: Record<string, unknown> = {
       personal: {
         full_name: profile.full_name, email: profile.email,
         phone: profile.phone, location: profile.location,
@@ -355,7 +354,7 @@ export default function ProfilePage() {
                         }}
                         className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500" />
                     ))}
-                    <button onClick={() => setDraft(draft.filter((_: any, j: number) => j !== i))}
+                    <button onClick={() => setDraft(draft.filter((_: unknown, j: number) => j !== i))}
                       className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors">
                       <Trash2 size={11} /> Remove
                     </button>
@@ -409,7 +408,7 @@ export default function ProfilePage() {
                         onChange={e => { const u = [...draft]; u[i] = { ...u[i], responsibilities: e.target.value.split("\n") }; setDraft(u) }}
                         className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-violet-500 resize-none" />
                     </div>
-                    <button onClick={() => setDraft(draft.filter((_: any, j: number) => j !== i))}
+                    <button onClick={() => setDraft(draft.filter((_: unknown, j: number) => j !== i))}
                       className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors">
                       <Trash2 size={11} /> Remove
                     </button>
@@ -472,7 +471,7 @@ export default function ProfilePage() {
                     <textarea rows={2} value={proj.description} placeholder="Description"
                       onChange={e => { const u = [...draft]; u[i] = { ...u[i], description: e.target.value }; setDraft(u) }}
                       className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500 resize-none" />
-                    <button onClick={() => setDraft(draft.filter((_: any, j: number) => j !== i))}
+                    <button onClick={() => setDraft(draft.filter((_: unknown, j: number) => j !== i))}
                       className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors">
                       <Trash2 size={11} /> Remove
                     </button>
@@ -515,11 +514,11 @@ export default function ProfilePage() {
                 {(draft as Certification[]).map((cert, i) => (
                   <div key={i} className="bg-zinc-800 rounded-xl p-4 border border-white/10 space-y-2">
                     {(["name", "issuer", "year", "credential_url"] as const).map(field => (
-                      <input key={field} value={(cert as any)[field] || ""} placeholder={field === "credential_url" ? "Credential URL (optional)" : field.charAt(0).toUpperCase() + field.slice(1)}
+                      <input key={field} value={(cert as Record<string, unknown>)[field] as string || ""} placeholder={field === "credential_url" ? "Credential URL (optional)" : field.charAt(0).toUpperCase() + field.slice(1)}
                         onChange={e => { const u = [...draft]; u[i] = { ...u[i], [field]: e.target.value }; setDraft(u) }}
                         className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500" />
                     ))}
-                    <button onClick={() => setDraft(draft.filter((_: any, j: number) => j !== i))}
+                    <button onClick={() => setDraft(draft.filter((_: unknown, j: number) => j !== i))}
                       className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors">
                       <Trash2 size={11} /> Remove
                     </button>
@@ -581,7 +580,7 @@ export default function ProfilePage() {
                         onChange={e => { const u = [...draft]; u[i] = { ...u[i], [field]: e.target.value }; setDraft(u) }}
                         className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500" />
                     ))}
-                    <button onClick={() => setDraft(draft.filter((_: any, j: number) => j !== i))}
+                    <button onClick={() => setDraft(draft.filter((_: unknown, j: number) => j !== i))}
                       className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors">
                       <Trash2 size={11} /> Remove
                     </button>
@@ -622,7 +621,7 @@ export default function ProfilePage() {
                   <div key={i} className="flex gap-2">
                     <input value={ach} onChange={e => { const u = [...draft]; u[i] = e.target.value; setDraft(u) }}
                       className="flex-1 bg-zinc-800 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500" />
-                    <button onClick={() => setDraft(draft.filter((_: any, j: number) => j !== i))}
+                    <button onClick={() => setDraft(draft.filter((_: unknown, j: number) => j !== i))}
                       className="text-zinc-500 hover:text-red-400 transition-colors">
                       <Trash2 size={14} />
                     </button>

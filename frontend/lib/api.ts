@@ -2,7 +2,7 @@
  * api.ts — Typed fetch wrappers for the BrainVault backend API.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000"
 
 export interface IngestResponse {
   job_id: string
@@ -42,6 +42,7 @@ export interface SearchFilters {
 
 export interface SearchResultItem {
   id: string
+  index?: number
   type: "linkedin" | "blog" | "research" | "note" | "interview_qna" | string
   title: string
   summary: string

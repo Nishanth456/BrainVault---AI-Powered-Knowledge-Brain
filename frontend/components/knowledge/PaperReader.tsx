@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
     ArrowLeft,
-    Bookmark,
-    BookOpen, ChevronDown,
+        BookOpen, ChevronDown,
     ChevronLeft, ChevronRight,
     ChevronRight as ChevronRightIcon,
     ExternalLink,
@@ -21,12 +20,6 @@ import "react-pdf/dist/Page/TextLayer.css"
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 
-const difficultyLabel = ["", "Beginner", "Basic", "Intermediate", "Advanced", "Expert"]
-const difficultyColor = [
-  "",
-  "text-emerald-400", "text-blue-400", "text-yellow-400",
-  "text-orange-400",  "text-red-400",
-]
 
 interface PaperReaderProps {
   item: {
@@ -69,7 +62,7 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
 
   const currentPdfPath = pdfMinioPaths[0]
   const pdfApiUrl = currentPdfPath
-    ? `http://localhost:8000/api/files/${currentPdfPath}`
+    ? `http://127.0.0.1:8000/api/files/${currentPdfPath}`
     : null
 
   useEffect(() => {

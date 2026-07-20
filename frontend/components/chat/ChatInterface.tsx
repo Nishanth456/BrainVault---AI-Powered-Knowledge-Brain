@@ -18,6 +18,8 @@ import { SourceCitationCard } from "./SourceCitationCard"
 import { StreamingMessage } from "./StreamingMessage"
 import { SuggestedQuestions } from "./SuggestedQuestions"
 
+import { MarkdownRenderer } from "./MarkdownRenderer"
+
 interface ChatInterfaceProps {
   initialSessionId?: string
   initialFilters?: { types?: string[] }
@@ -201,7 +203,7 @@ export function ChatInterface({ initialSessionId, initialFilters }: ChatInterfac
                   {message.id === "streaming" ? (
                     <StreamingMessage content={message.content} />
                   ) : (
-                    <div className="whitespace-pre-wrap">{message.content}</div>
+                    <MarkdownRenderer content={message.content} />
                   )}
 
                   {message.citations && message.citations.length > 0 && (

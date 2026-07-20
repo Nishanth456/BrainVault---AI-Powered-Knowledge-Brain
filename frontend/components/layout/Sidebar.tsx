@@ -13,11 +13,9 @@ import {
   Map, MessageCircle,
   MessageSquare,
   Moon,
-  Network,
-  PlayCircle,
+    PlayCircle,
   Search,
-  Settings,
-  Sun,
+    Sun,
   User,
   Zap,
 } from "lucide-react"
@@ -41,8 +39,7 @@ const navGroups = [
       { label: "Blogs",             href: "/knowledge/blogs",          icon: BookOpen },
       { label: "Research Papers",   href: "/knowledge/papers",         icon: FlaskConical },
       { label: "Interview Q&A",     href: "/knowledge/interviews",     icon: MessageSquare },
-      { label: "AI Notes",          href: "/knowledge/notes",          icon: MessageCircle },
-
+      { label: "Notes",             href: "/knowledge/notes",          icon: MessageCircle },
       { label: "GitHub Repos",      href: "/knowledge/github",         icon: Code2 },
       { label: "YouTube",           href: "/knowledge/youtube",        icon: PlayCircle },
       { label: "Courses",           href: "/knowledge/courses",        icon: GraduationCap },

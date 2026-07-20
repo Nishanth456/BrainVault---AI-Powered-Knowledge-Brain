@@ -6,8 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { sendChatMessage, type SearchResultItem } from "@/lib/api"
 import {
     ArrowLeft,
-    Bookmark,
-    BookOpen,
+        BookOpen,
     ExternalLink,
     FileText,
     Loader2,
@@ -15,6 +14,8 @@ import {
     Send,
     ZoomIn, ZoomOut
 } from "lucide-react"
+import { MarkdownRenderer } from "@/components/chat/MarkdownRenderer"
+import { StreamingMessage } from "@/components/chat/StreamingMessage"
 import Link from "next/link"
 import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
 import { useCallback, useEffect, useState, useRef } from "react"
@@ -25,12 +26,6 @@ import "react-pdf/dist/Page/TextLayer.css"
 // Use the CDN worker so we don't need to copy files manually
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 
-const difficultyLabel = ["", "Beginner", "Basic", "Intermediate", "Advanced", "Expert"]
-const difficultyColor = [
-  "",
-  "text-emerald-400", "text-blue-400", "text-yellow-400",
-  "text-orange-400",  "text-red-400",
-]
 
 interface LinkedInReaderProps {
   item: {
@@ -66,7 +61,7 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
 
   // Backend proxies the PDF — MinIO URL is never exposed to the frontend
   const pdfApiUrl = currentPdfPath
-    ? `http://localhost:8000/api/files/${currentPdfPath}`
+    ? `http://127.0.0.1:8000/api/files/${currentPdfPath}`
     : null
 
   // Measure container height for horizontal PDF scale
@@ -317,7 +312,11 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
                       : "bg-white/[0.03] text-zinc-300 mr-4"
                   }`}
                 >
-                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                  {msg.id === "streaming" ? (
+                    <StreamingMessage content={msg.content} />
+                  ) : (
+                    <MarkdownRenderer content={msg.content} />
+                  )}
                   {msg.citations && msg.citations.length > 0 && (
                     <div className="mt-2 space-y-2">
                       {msg.citations.map((c) => (

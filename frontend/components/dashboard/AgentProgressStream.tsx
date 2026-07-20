@@ -29,7 +29,7 @@ export function AgentProgressStream({ jobId, isActive, onComplete }: AgentProgre
       { message: "🔗 Connecting to agent pipeline...", status: "active", timestamp: Date.now() }
     ])
 
-    const eventSource = new EventSource(`http://localhost:8000/api/ingest/${jobId}/stream`)
+    const eventSource = new EventSource(`http://127.0.0.1:8000/api/ingest/${jobId}/stream`)
 
     eventSource.onmessage = (event) => {
       try {

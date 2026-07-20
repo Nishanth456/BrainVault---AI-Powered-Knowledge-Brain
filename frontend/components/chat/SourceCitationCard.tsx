@@ -23,7 +23,12 @@ export function SourceCitationCard({ citation, compact }: SourceCitationCardProp
         }
       }}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start gap-2">
+        {citation.index && (
+          <Badge variant="outline" className="shrink-0 font-mono text-xs">
+            [{citation.index}]
+          </Badge>
+        )}
         <div className="min-w-0 flex-1">
           <p className={cn("font-medium leading-tight", compact ? "text-xs" : "text-sm")}>
             {citation.title || "Untitled"}

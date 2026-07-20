@@ -1,8 +1,10 @@
 "use client"
 import * as LucideIcons from "lucide-react"
 
+import React from "react"
+
 export function StatCard({ label, value, icon }: { label: string; value: number; icon: string }) {
-  const Icon = (LucideIcons as any)[icon] || LucideIcons.Circle
+  const Icon = (LucideIcons as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[icon] || LucideIcons.Circle
 
   return (
     <div className="bg-card border border-border rounded-2xl p-5 flex items-center gap-4 hover:bg-accent transition-colors group shadow-sm">

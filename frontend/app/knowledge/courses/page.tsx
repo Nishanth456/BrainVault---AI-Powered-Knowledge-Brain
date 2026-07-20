@@ -29,7 +29,7 @@ export default function CoursesPage() {
   const fetchItems = () => {
     setLoading(true)
     setError(false)
-    fetch("http://localhost:8000/api/knowledge/courses")
+    fetch("http://127.0.0.1:8000/api/knowledge/courses")
       .then(r => {
         if (!r.ok) throw new Error("API error")
         return r.json()

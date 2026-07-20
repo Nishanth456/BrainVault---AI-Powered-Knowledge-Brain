@@ -256,7 +256,7 @@ async def get_note_items(
     offset: int = Query(default=0),
     db: AsyncSession = Depends(get_db),
 ):
-    """Return all AI Notes items."""
+    """Return all Notes items."""
     query = select(KnowledgeItem).options(selectinload(KnowledgeItem.attachments)).where(
         KnowledgeItem.type == "note",
         KnowledgeItem.deleted_at.is_(None)

@@ -21,7 +21,7 @@ export function ExportButton({ itemId, title }: { itemId: string; title?: string
       a.click()
       URL.revokeObjectURL(url)
       toast.success("Exported successfully")
-    } catch (err) {
+    } catch (_) {
       toast.error("Failed to export")
     } finally {
       setLoading(false)

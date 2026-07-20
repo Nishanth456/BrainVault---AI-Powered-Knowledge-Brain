@@ -2,10 +2,8 @@
 import {
     Code2,
     ExternalLink,
-    Loader2,
-    Star,
-    Trash2,
-} from "lucide-react"
+        Star,
+    } from "lucide-react"
 import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
 import { DeleteWithUndo } from "@/components/knowledge/DeleteWithUndo"
 import { ExportButton } from "@/components/knowledge/ExportButton"
@@ -44,8 +42,7 @@ export interface RepoItem {
 
 export function RepoCard({ item, onDelete }: { item: RepoItem; onDelete?: (id: string) => void }) {
   const diff = item.difficulty || 0
-  const [isDeleting, setIsDeleting] = useState(false)
-
+  
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -53,7 +50,7 @@ export function RepoCard({ item, onDelete }: { item: RepoItem; onDelete?: (id: s
 
     setIsDeleting(true)
     try {
-      const res = await fetch(`http://localhost:8000/api/knowledge/${item.id}`, {
+      const res = await fetch(`http://127.0.0.1:8000/api/knowledge/${item.id}`, {
         method: "DELETE"
       })
       if (res.ok) {

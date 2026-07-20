@@ -23,8 +23,8 @@ export function EmptyState({ icon, title, description, hint, action }: EmptyStat
       {action && (
         <div className="mt-5">
           {action && typeof action === 'object' && 'label' in action && 'href' in action ? (
-            <Link href={(action as any).href} className="text-sm bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-              {(action as any).label}
+            <Link href={(action as { href: string }).href} className="text-sm bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+              {(action as { label: string }).label}
             </Link>
           ) : (
             action as ReactNode

@@ -3,9 +3,7 @@ import {
     Award, ExternalLink,
     Calendar,
     ShieldCheck,
-    Loader2,
-    Trash2,
-    AlertCircle
+            AlertCircle
 } from "lucide-react"
 import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
 import { DeleteWithUndo } from "@/components/knowledge/DeleteWithUndo"
@@ -45,8 +43,7 @@ export interface CertItem {
 
 export function CertCard({ item, onDelete }: { item: CertItem; onDelete?: (id: string) => void }) {
   const diff = item.difficulty || 0
-  const [isDeleting, setIsDeleting] = useState(false)
-
+  
   let displaySource = 'Certification'
   if (item.source_url) {
     try {
@@ -57,26 +54,6 @@ export function CertCard({ item, onDelete }: { item: CertItem; onDelete?: (id: s
       }
     } catch (e) {
       // ignore
-    }
-  }
-
-  const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this certification?")) return
-
-    setIsDeleting(true)
-    try {
-      const res = await fetch(`http://localhost:8000/api/knowledge/${item.id}`, {
-        method: "DELETE"
-      })
-      if (res.ok) {
-        onDelete?.(item.id)
-      } else {
-        console.error("Failed to delete certification")
-        setIsDeleting(false)
-      }
-    } catch (e) {
-      console.error(e)
-      setIsDeleting(false)
     }
   }
 

@@ -88,7 +88,7 @@ export function UniversalInput({ onSubmitted }: { onSubmitted?: () => void }) {
     } else {
       timer = setTimeout(async () => {
         try {
-          const res = await fetch("http://localhost:8000/api/ingest/preview", {
+          const res = await fetch("http://127.0.0.1:8000/api/ingest/preview", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ raw_input: trimmed }),
@@ -120,7 +120,7 @@ export function UniversalInput({ onSubmitted }: { onSubmitted?: () => void }) {
     setSteps([{ message: "Sending to agent pipeline...", status: "active" }])
 
     try {
-      const res = await fetch("http://localhost:8000/api/ingest", {
+      const res = await fetch("http://127.0.0.1:8000/api/ingest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ raw_input: input.trim(), concept: concept.trim() }),
@@ -130,7 +130,7 @@ export function UniversalInput({ onSubmitted }: { onSubmitted?: () => void }) {
       const data = await res.json()
 
       // Open SSE stream for real-time progress
-      const es = new EventSource(`http://localhost:8000/api/ingest/${data.job_id}/stream`)
+      const es = new EventSource(`http://127.0.0.1:8000/api/ingest/${data.job_id}/stream`)
       esRef.current = es
 
       es.onmessage = (event) => {
@@ -185,7 +185,7 @@ export function UniversalInput({ onSubmitted }: { onSubmitted?: () => void }) {
         const poll = setInterval(async () => {
           attempts++
           try {
-            const statusRes = await fetch(`http://localhost:8000/api/ingest/${data.job_id}/status`)
+            const statusRes = await fetch(`http://127.0.0.1:8000/api/ingest/${data.job_id}/status`)
             const statusData = await statusRes.json()
             if (statusData.status === "done") {
               clearInterval(poll)

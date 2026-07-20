@@ -7,7 +7,7 @@ export default function NotesPage() {
   const fetchItems = async (filters: Record<string, string>, sort: string) => {
     const params = new URLSearchParams(filters)
     params.set("sort", sort)
-    const res = await fetch(`http://localhost:8000/api/knowledge/notes?${params.toString()}`)
+    const res = await fetch(`http://127.0.0.1:8000/api/knowledge/notes?${params.toString()}`)
     if (!res.ok) throw new Error("Failed to fetch")
     const data = await res.json()
     return Array.isArray(data) ? data : (data.items || [])

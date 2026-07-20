@@ -240,3 +240,8 @@ async def resolve_youtube_url(url: str) -> dict:
 async def debug_resolve(url: str) -> dict:
     """Debug helper: return raw yt-dlp output for a URL."""
     return await asyncio.to_thread(_run_yt_dlp_info, url)
+
+
+def extract_video_id(url: str) -> str | None:
+    """Public wrapper: extract the video ID from any YouTube URL."""
+    return _extract_video_id(url)

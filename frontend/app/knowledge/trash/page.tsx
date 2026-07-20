@@ -18,7 +18,7 @@ export default function TrashPage() {
       await restoreItem(id)
       setItems(prev => prev.filter(i => i.id !== id))
       toast.success("Item restored")
-    } catch (e) {
+    } catch (_) {
       toast.error("Failed to restore item")
     }
   }

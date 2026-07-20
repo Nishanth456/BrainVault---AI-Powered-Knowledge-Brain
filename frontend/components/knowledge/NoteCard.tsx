@@ -40,17 +40,18 @@ export function NoteCard({ item, onDelete }: NoteCardProps) {
   const diff = item.difficulty || 0
   const [editing, setEditing] = useState(false)
   const [editValue, setEditValue] = useState(item.raw_content || "")
+  const [displayValue, setDisplayValue] = useState(item.raw_content || "")
   const [saving, setSaving] = useState(false)
 
   const handleSave = async () => {
     setSaving(true)
     try {
-      await fetch(`http://localhost:8000/api/knowledge/${item.id}`, {
+      await fetch(`http://127.0.0.1:8000/api/knowledge/${item.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ raw_content: editValue }),
       })
-      item.raw_content = editValue
+      setDisplayValue(editValue)
       setEditing(false)
     } catch (e) {
       console.error(e)
@@ -139,7 +140,7 @@ export function NoteCard({ item, onDelete }: NoteCardProps) {
         ) : (
           <div className="group/raw relative">
             <pre className="text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap font-mono bg-white/[0.02] rounded-lg p-3 border border-white/[0.05]">
-              {item.raw_content || item.summary}
+              {displayValue || item.summary}
             </pre>
             <button
               onClick={() => setEditing(true)}

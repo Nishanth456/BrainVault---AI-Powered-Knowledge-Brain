@@ -2,10 +2,8 @@
 import {
     BookOpen, ExternalLink,
     GraduationCap,
-    Loader2,
-    Star,
-    Trash2,
-    User,
+        Star,
+        User,
     ChevronDown,
     ChevronUp,
     Layers
@@ -36,7 +34,7 @@ export interface CourseItem {
   instructor?: string
   rating?: number
   price?: string
-  syllabus?: any[] // array of modules
+  syllabus?: Record<string, unknown>[] // array of modules
   prerequisites?: string[]
   key_concepts: string[]
   tags: string[]
@@ -49,8 +47,7 @@ export interface CourseItem {
 
 export function CourseCard({ item, onDelete }: { item: CourseItem; onDelete?: (id: string) => void }) {
   const diff = item.difficulty || 0
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [showSyllabus, setShowSyllabus] = useState(false)
+    const [showSyllabus, setShowSyllabus] = useState(false)
 
   let displaySource = 'Course'
   if (item.source_url) {
@@ -62,26 +59,6 @@ export function CourseCard({ item, onDelete }: { item: CourseItem; onDelete?: (i
       }
     } catch (e) {
       // ignore
-    }
-  }
-
-  const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this course?")) return
-
-    setIsDeleting(true)
-    try {
-      const res = await fetch(`http://localhost:8000/api/knowledge/${item.id}`, {
-        method: "DELETE"
-      })
-      if (res.ok) {
-        onDelete?.(item.id)
-      } else {
-        console.error("Failed to delete course")
-        setIsDeleting(false)
-      }
-    } catch (e) {
-      console.error(e)
-      setIsDeleting(false)
     }
   }
 
@@ -208,12 +185,12 @@ export function CourseCard({ item, onDelete }: { item: CourseItem; onDelete?: (i
               
               {showSyllabus && (
                 <div className="mt-2 space-y-2 p-3 bg-black/20 border border-white/[0.05] rounded-xl max-h-60 overflow-y-auto">
-                  {item.syllabus.map((mod: any, idx: number) => (
+                  {item.syllabus.map((mod: Record<string, unknown>, idx: number) => (
                     <div key={idx} className="pb-2 border-b border-white/[0.05] last:border-0 last:pb-0">
                       <h4 className="text-sm font-medium text-zinc-200 mb-1">{idx + 1}. {mod.title || "Module"}</h4>
                       {mod.lessons && mod.lessons.length > 0 && (
                         <ul className="pl-5 list-disc space-y-1">
-                          {mod.lessons.map((lesson: any, i: number) => (
+                          {mod.lessons.map((lesson: Record<string, unknown> | string, i: number) => (
                             <li key={i} className="text-xs text-zinc-400">{typeof lesson === 'string' ? lesson : lesson.title || 'Lesson'}</li>
                           ))}
                         </ul>

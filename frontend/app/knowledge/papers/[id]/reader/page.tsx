@@ -7,7 +7,7 @@ interface ReaderPageProps {
 
 async function getKnowledgeItem(id: string) {
   try {
-    const res = await fetch(`http://localhost:8000/api/knowledge/${id}`, {
+    const res = await fetch(`http://127.0.0.1:8000/api/knowledge/${id}`, {
       cache: "no-store",
     })
     if (!res.ok) return null

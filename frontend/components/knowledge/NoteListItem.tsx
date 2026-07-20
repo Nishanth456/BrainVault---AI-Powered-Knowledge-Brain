@@ -14,10 +14,6 @@ import {
     Zap,
 } from "lucide-react"
 import { useState } from "react"
-import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
-import { DeleteWithUndo } from "@/components/knowledge/DeleteWithUndo"
-import { ExportButton } from "@/components/knowledge/ExportButton"
-import { restoreItem } from "@/lib/api"
 
 const difficultyLabel = ["", "Beginner", "Basic", "Intermediate", "Advanced", "Expert"]
 const difficultyColor = [
@@ -61,7 +57,7 @@ export function NoteListItem({ item, onDelete }: NoteListItemProps) {
     if (!window.confirm("Delete this note?")) return
     setIsDeleting(true)
     try {
-      const res = await fetch(`http://localhost:8000/api/knowledge/${item.id}`, {
+      const res = await fetch(`http://127.0.0.1:8000/api/knowledge/${item.id}`, {
         method: "DELETE",
       })
       if (res.ok) onDelete?.(item.id)

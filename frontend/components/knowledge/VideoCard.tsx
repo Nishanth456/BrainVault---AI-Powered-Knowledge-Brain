@@ -1,16 +1,16 @@
+/* eslint-disable @next/next/no-img-element */
 "use client"
 import {
     Clock,
     ExternalLink,
-    Loader2,
-    Play,
-    Trash2,
-    User,
+        Play,
+        User,
 } from "lucide-react"
 import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
 import { DeleteWithUndo } from "@/components/knowledge/DeleteWithUndo"
 import { ExportButton } from "@/components/knowledge/ExportButton"
 import { restoreItem } from "@/lib/api"
+import { useRouter } from "next/navigation"
 
 import { useState } from "react"
 
@@ -53,6 +53,44 @@ export interface VideoItem {
   playlist_id?: string | null
 }
 
+/**
+ * Extract YouTube video ID from any YouTube URL.
+ */
+function extractVideoId(url?: string): string | null {
+  if (!url) return null
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname === "youtu.be" || parsed.hostname === "www.youtu.be") {
+      return parsed.pathname.split("/")[1] || null
+    }
+    if (
+      parsed.hostname === "youtube.com" ||
+      parsed.hostname === "www.youtube.com" ||
+      parsed.hostname === "m.youtube.com"
+    ) {
+      return parsed.searchParams.get("v") || null
+    }
+  } catch {
+    // not a valid URL
+  }
+  return null
+}
+
+/**
+ * Get the best thumbnail URL for a YouTube video.
+ * Priority: YouTube CDN (free, no API key) → MinIO stored path → null
+ */
+function getThumbnailUrl(item: VideoItem): string | null {
+  const videoId = extractVideoId(item.source_url)
+  if (videoId) {
+    return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+  }
+  if (item.thumbnail_path) {
+    return `http://127.0.0.1:8000/api/files/${item.thumbnail_path}`
+  }
+  return null
+}
+
 function formatDuration(seconds?: number | null): string {
   if (!seconds) return ""
   const h = Math.floor(seconds / 3600)
@@ -65,14 +103,14 @@ function formatDuration(seconds?: number | null): string {
 export function VideoCard({
   item,
   onDelete,
-  onOpen,
-}: {
+  }: {
   item: VideoItem
   onDelete?: (id: string) => void
   onOpen?: (id: string) => void
 }) {
   const diff = item.difficulty || 0
-  const [isDeleting, setIsDeleting] = useState(false)
+    const router = useRouter()
+  const thumbnailUrl = getThumbnailUrl(item)
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -81,7 +119,7 @@ export function VideoCard({
 
     setIsDeleting(true)
     try {
-      const res = await fetch(`http://localhost:8000/api/knowledge/${item.id}`, {
+      const res = await fetch(`http://127.0.0.1:8000/api/knowledge/${item.id}`, {
         method: "DELETE"
       })
       if (res.ok) {
@@ -96,17 +134,15 @@ export function VideoCard({
     }
   }
 
-  const handleOpen = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    onOpen?.(item.id)
+  const handleClick = () => {
+    router.push(`/knowledge/youtube/${item.id}`)
   }
 
   const chapterCount = item.chapters?.length || 0
 
   return (
     <div
-      onClick={handleOpen}
+      onClick={handleClick}
       className="group relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-5 hover:border-red-500/30 hover:bg-white/[0.05] transition-all duration-300 overflow-hidden cursor-pointer"
     >
       {/* Subtle gradient on hover */}
@@ -114,20 +150,28 @@ export function VideoCard({
 
       <div className="relative flex gap-4">
         {/* Thumbnail */}
-        <div className="w-32 sm:w-40 flex-shrink-0 aspect-video rounded-xl bg-zinc-800 border border-white/[0.08] overflow-hidden relative">
-          {item.thumbnail_path ? (
-            <img
-              src={`http://localhost:8000/${item.thumbnail_path}`}
-              alt={item.title}
-              className="w-full h-full object-cover"
-            />
+        <div className="w-32 sm:w-44 flex-shrink-0 aspect-video rounded-xl bg-zinc-800 border border-white/[0.08] overflow-hidden relative group/thumb">
+          {thumbnailUrl ? (
+            <>
+              <img
+                src={thumbnailUrl}
+                alt={item.title}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover/thumb:scale-105"
+              />
+              {/* Play overlay on hover */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity duration-300 bg-black/30">
+                <div className="w-10 h-10 rounded-full bg-red-600/90 flex items-center justify-center shadow-lg shadow-red-600/20">
+                  <Play size={16} className="text-white ml-0.5" fill="white" />
+                </div>
+              </div>
+            </>
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-red-500/10">
               <Play size={20} className="text-red-400" />
             </div>
           )}
           {item.video_duration_seconds && (
-            <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/70 text-[10px] text-white font-medium">
+            <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/80 text-[10px] text-white font-medium backdrop-blur-sm">
               {formatDuration(item.video_duration_seconds)}
             </div>
           )}
@@ -135,7 +179,7 @@ export function VideoCard({
 
         {/* Main content */}
         <div className="flex-1 min-w-0 flex flex-col gap-2">
-          {/* Header row: channel + difficulty + delete */}
+          {/* Header row: channel + difficulty + actions */}
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs text-zinc-500 font-medium truncate">
               {item.channel_name || "YouTube"}

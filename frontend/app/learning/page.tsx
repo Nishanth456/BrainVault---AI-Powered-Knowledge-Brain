@@ -434,7 +434,7 @@ export default function LearningPage() {
 
   const fetchSaved = () => {
     setLoadingSaved(true)
-    fetch("http://localhost:8000/api/learning-path")
+    fetch("http://127.0.0.1:8000/api/learning-path")
       .then(r => r.json())
       .then(data => setSavedPaths(Array.isArray(data) ? data : []))
       .catch(() => setSavedPaths([]))
@@ -450,7 +450,7 @@ export default function LearningPage() {
     setCurrentPath(null)
     setCompletedStages([])
     try {
-      const res = await fetch("http://localhost:8000/api/learning-path/generate", {
+      const res = await fetch("http://127.0.0.1:8000/api/learning-path/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic }),
@@ -469,7 +469,7 @@ export default function LearningPage() {
     if (!currentPath) return
     setSaving(true)
     try {
-      await fetch("http://localhost:8000/api/learning-path/save", {
+      await fetch("http://127.0.0.1:8000/api/learning-path/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -498,7 +498,7 @@ export default function LearningPage() {
 
     if (currentPath?.id) {
       try {
-        await fetch(`http://localhost:8000/api/learning-path/${currentPath.id}`, {
+        await fetch(`http://127.0.0.1:8000/api/learning-path/${currentPath.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ completed_stages: next }),
@@ -510,7 +510,7 @@ export default function LearningPage() {
   }
 
   const handleDeleteSaved = async (id: string) => {
-    await fetch(`http://localhost:8000/api/learning-path/${id}`, { method: "DELETE" })
+    await fetch(`http://127.0.0.1:8000/api/learning-path/${id}`, { method: "DELETE" })
     setSavedPaths(prev => prev.filter(p => p.id !== id))
   }
 
@@ -671,7 +671,7 @@ export default function LearningPage() {
                     path={path}
                     onDelete={() => path.id && handleDeleteSaved(path.id)}
                     onOpen={() => {
-                      fetch(`http://localhost:8000/api/learning-path/${path.id}`)
+                      fetch(`http://127.0.0.1:8000/api/learning-path/${path.id}`)
                         .then(r => r.json())
                         .then(data => {
                           setCurrentPath(data)

@@ -27,7 +27,7 @@ async def build_rag_context(query: str, limit: int = 8, filters: dict | None = N
         }
         sources.append(source)
         context_parts.append(
-            f"[SOURCE {idx}]\n"
+            f"Source [{idx}]:\n"
             f"Title: {source['title']}\n"
             f"Type: {source['type']}\n"
             f"Summary: {source['summary'][:800]}\n"
@@ -49,8 +49,8 @@ async def answer_with_rag(query: str, session_id: str | None = None, filters: di
         "You are BrainVault, a personal knowledge assistant. "
         "Answer the user's question using ONLY the provided sources from their knowledge base. "
         "If the sources don't contain enough information, say so honestly. "
-        "Cite sources inline like [SOURCE 1] when you use them. "
-        "Be concise but complete."
+        "Cite sources inline using bracketed numbers like [1] or [2] when you use them. "
+        "Format your answer cleanly with markdown."
     )
     prompt = f"Question: {query}\n\nSources:\n{context}\n\nAnswer:"
 

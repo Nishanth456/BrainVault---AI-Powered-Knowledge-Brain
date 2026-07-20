@@ -1,12 +1,10 @@
 "use client"
 import {
     BookOpen,
-    ChevronRight,
     ExternalLink,
     FileText,
-    Loader2,
-    Trash2,
-    User
+    User,
+    ChevronRight
 } from "lucide-react"
 import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
 import { DeleteWithUndo } from "@/components/knowledge/DeleteWithUndo"
@@ -59,8 +57,7 @@ export function PaperCard({
   onRead?: (id: string) => void
 }) {
   const diff = item.difficulty || 0
-  const [isDeleting, setIsDeleting] = useState(false)
-
+  
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -68,7 +65,7 @@ export function PaperCard({
 
     setIsDeleting(true)
     try {
-      const res = await fetch(`http://localhost:8000/api/knowledge/${item.id}`, {
+      const res = await fetch(`http://127.0.0.1:8000/api/knowledge/${item.id}`, {
         method: "DELETE"
       })
       if (res.ok) {

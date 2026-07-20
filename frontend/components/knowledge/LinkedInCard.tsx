@@ -1,13 +1,10 @@
 "use client"
 import {
     BookOpen,
-    ChevronRight,
-    Clock,
+        Clock,
     ExternalLink,
     FileText,
-    Loader2,
-    Trash2,
-    User
+            User
 } from "lucide-react"
 import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
 import { DeleteWithUndo } from "@/components/knowledge/DeleteWithUndo"
@@ -66,27 +63,6 @@ export function LinkedInCard({ item, onDelete }: { item: LinkedInItem; onDelete?
   const hasPdf = item.attachments?.some(a => a.file_type === "pdf")
   const pdfAtt = item.attachments?.find(a => a.file_type === "pdf")
   const diff = item.difficulty || 0
-  const [isDeleting, setIsDeleting] = useState(false)
-
-  const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this item?")) return
-    
-    setIsDeleting(true)
-    try {
-      const res = await fetch(`http://localhost:8000/api/knowledge/${item.id}`, {
-        method: "DELETE"
-      })
-      if (res.ok) {
-        onDelete?.(item.id)
-      } else {
-        console.error("Failed to delete item")
-        setIsDeleting(false)
-      }
-    } catch (e) {
-      console.error(e)
-      setIsDeleting(false)
-    }
-  }
 
   return (
     <div className="group relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-5
@@ -121,7 +97,7 @@ export function LinkedInCard({ item, onDelete }: { item: LinkedInItem; onDelete?
               <BookmarkButton itemId={item.id} initial={item.is_bookmarked || false} />
               {hasPdf ? (
                 <a 
-                  href={`http://localhost:8000/api/files/${encodeURIComponent(pdfAtt.minio_path)}`}
+                  href={`http://127.0.0.1:8000/api/files/${encodeURIComponent(pdfAtt.minio_path)}`}
                   download={pdfAtt.filename || "document.pdf"}
                   target="_blank"
                   rel="noopener noreferrer"

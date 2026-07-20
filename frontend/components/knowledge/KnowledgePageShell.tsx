@@ -36,7 +36,7 @@ export function KnowledgePageShellInner<T>({
   getItemId,
   filterOptions,
   singleColumn,
-  groupBy = (item: T) => (item as any).knowledge_tree || "Uncategorized",
+  groupBy = (item: T) => (item as Record<string, unknown>).knowledge_tree || "Uncategorized",
 }: KnowledgePageShellProps<T>) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -117,9 +117,9 @@ export function KnowledgePageShellInner<T>({
           const filteredItems = items.filter(item => {
             if (filters.q) {
               const q = filters.q.toLowerCase()
-              const title = (item as any).title?.toLowerCase() || ""
-              const summary = (item as any).summary?.toLowerCase() || ""
-              const concepts = (item as any).key_concepts?.join(" ").toLowerCase() || ""
+              const title = (item as { title?: string }).title?.toLowerCase() || ""
+              const summary = (item as { summary?: string }).summary?.toLowerCase() || ""
+              const concepts = (item as { key_concepts?: string[] }).key_concepts?.join(" ").toLowerCase() || ""
               if (!title.includes(q) && !summary.includes(q) && !concepts.includes(q)) return false
             }
             return true
