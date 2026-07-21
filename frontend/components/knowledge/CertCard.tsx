@@ -39,6 +39,7 @@ export interface CertItem {
   knowledge_tree?: string
   knowledge_domain?: string | null
   created_at?: string
+  attachments?: import("@/components/knowledge/ExportButton").Attachment[]
 }
 
 export function CertCard({ item, onDelete }: { item: CertItem; onDelete?: (id: string) => void }) {
@@ -94,7 +95,7 @@ export function CertCard({ item, onDelete }: { item: CertItem; onDelete?: (id: s
               )}
               <div className="flex items-center gap-2">
               <BookmarkButton itemId={item.id} initial={item.is_bookmarked || false} />
-              <ExportButton itemId={item.id} title={item.title || "Export"} />
+              <ExportButton attachments={item.attachments} />
               <DeleteWithUndo
                 itemId={item.id}
                 itemTitle={item.title || ""}

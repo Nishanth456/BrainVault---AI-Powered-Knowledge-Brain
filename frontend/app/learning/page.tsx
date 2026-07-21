@@ -581,22 +581,31 @@ export default function LearningPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <input
-                      id="path-name-input"
-                      value={pathName}
-                      onChange={e => setPathName(e.target.value)}
-                      placeholder="Name this path..."
-                      className="text-sm bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-1.5 text-white placeholder:text-zinc-600 outline-none focus:border-emerald-500/50 w-52"
-                    />
-                    <Button
-                      size="sm"
-                      onClick={handleSave}
-                      disabled={saving}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white h-8"
-                    >
-                      <Save size={13} className="mr-1.5" />
-                      {saving ? "Saving..." : "Save"}
-                    </Button>
+                    {!currentPath.id ? (
+                      <>
+                        <input
+                          id="path-name-input"
+                          value={pathName}
+                          onChange={e => setPathName(e.target.value)}
+                          placeholder="Name this path..."
+                          className="text-sm bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-1.5 text-white placeholder:text-zinc-600 outline-none focus:border-emerald-500/50 w-52"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={handleSave}
+                          disabled={saving}
+                          className="bg-emerald-600 hover:bg-emerald-500 text-white h-8"
+                        >
+                          <Save size={13} className="mr-1.5" />
+                          {saving ? "Saving..." : "Save"}
+                        </Button>
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-sm font-medium h-8">
+                        <CheckCircle2 size={14} />
+                        Saved
+                      </div>
+                    )}
                   </div>
                 </div>
 

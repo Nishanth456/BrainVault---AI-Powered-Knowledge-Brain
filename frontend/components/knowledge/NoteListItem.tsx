@@ -41,6 +41,7 @@ export interface NoteItem {
   importance_score: number
   created_at: string
   raw_content?: string
+  attachments?: import("@/components/knowledge/ExportButton").Attachment[]
 }
 
 interface NoteListItemProps {

@@ -1,39 +1,41 @@
 "use client"
 import { Download } from "lucide-react"
-import { useState } from "react"
-import { exportItem } from "@/lib/api"
-import { toast } from "sonner"
 
-export function ExportButton({ itemId, title }: { itemId: string; title?: string }) {
-  const [loading, setLoading] = useState(false)
+export interface Attachment {
+  minio_path: string
+  filename: string
+  id?: string
+  file_type?: string
+  page_count?: number | null
+}
 
-  const handleExport = async (e: React.MouseEvent) => {
+export function ExportButton({ attachments }: { attachments?: Attachment[] }) {
+  if (!attachments || attachments.length === 0) return null
+
+  const handleDownload = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setLoading(true)
-    try {
-      const content = await exportItem(itemId, "markdown")
-      const blob = new Blob([content], { type: "text/markdown" })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `${title || "export"}.md`
-      a.click()
-      URL.revokeObjectURL(url)
-      toast.success("Exported successfully")
-    } catch (_) {
-      toast.error("Failed to export")
-    } finally {
-      setLoading(false)
-    }
+
+    // Download the first attachment
+    const att = attachments[0]
+    if (!att.minio_path) return
+
+    const url = `http://127.0.0.1:8000/api/files/${att.minio_path}`
+    
+    const a = document.createElement("a")
+    a.href = url
+    a.download = att.filename || "download"
+    a.target = "_blank"
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
   }
 
   return (
     <button
-      onClick={handleExport}
-      disabled={loading}
+      onClick={handleDownload}
       className="p-1.5 rounded-md border border-white/10 text-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-colors"
-      title="Export as Markdown"
+      title="Download Attachment"
     >
       <Download size={14} />
     </button>

@@ -107,7 +107,7 @@ export function LinkedInCard({ item, onDelete }: { item: LinkedInItem; onDelete?
                   <Download size={14} />
                 </a>
               ) : (
-                <ExportButton itemId={item.id} title={item.title || "Export"} />
+                <ExportButton attachments={item.attachments} />
               )}
               <DeleteWithUndo
                 itemId={item.id}
