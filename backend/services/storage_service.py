@@ -238,7 +238,9 @@ async def save_knowledge_item(state: BrainVaultState) -> uuid.UUID:
     try:
         from backend.services.embedding import generate_embedding
         from backend.services.qdrant import upsert_knowledge_item
+        from backend.services.text_chunker import chunk_text
 
+        # 1. Embed the main item
         for item in inserted_items:
             # For QnA pairs use per-pair keywords; for all other types fall back to state-level
             item_keywords = item.get("keywords") or state.get("key_concepts") or []
@@ -272,6 +274,28 @@ async def save_knowledge_item(state: BrainVaultState) -> uuid.UUID:
                             UPDATE knowledge_items SET embedding_id = :eid WHERE id = :id
                         """), {"eid": embedding_id, "id": item["id"]})
                         await db.commit()
+
+        # 2. Embed the attachments for Document RAG
+        primary_item_id = inserted_items[0]["id"] if inserted_items else str(item_id)
+        for att in (state.get("attachments") or []):
+            extracted = att.get("extracted_text")
+            if extracted and extracted.strip():
+                chunks = chunk_text(extracted, chunk_size=1500, overlap=200)
+                for i, chunk in enumerate(chunks):
+                    chunk_content = f"Document: {att.get('filename')}\nPart {i+1}\nContent: {chunk}"
+                    vector = await generate_embedding(chunk_content)
+                    upsert_knowledge_item(
+                        item_id=primary_item_id,
+                        vector=vector,
+                        payload={
+                            "type": "attachment_chunk",
+                            "title": att.get("filename") or "Attachment",
+                            "summary": chunk,
+                            "knowledge_tree": state.get("knowledge_tree") or "",
+                            "key_concepts": [],
+                            "difficulty": state.get("difficulty", 3),
+                        }
+                    )
     except Exception as e:
         print(f"⚠️ Embedding/Qdrant upsert failed (non-fatal): {e}")
 

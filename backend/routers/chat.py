@@ -87,6 +87,17 @@ async def list_sessions(db: AsyncSession = Depends(get_db)):
         select(ChatSession).order_by(ChatSession.updated_at.desc())
     )
     sessions = result.scalars().all()
+    # Auto-prune sessions beyond 20
+    if len(sessions) > 20:
+        from sqlalchemy import delete
+        from backend.models.schemas import ChatMessage
+        to_delete = sessions[20:]
+        for session in to_delete:
+            await db.execute(delete(ChatMessage).where(ChatMessage.session_id == session.id))
+            await db.delete(session)
+        await db.commit()
+        sessions = sessions[:20]
+        
     return {
         "sessions": [
             {
@@ -98,6 +109,27 @@ async def list_sessions(db: AsyncSession = Depends(get_db)):
             for s in sessions
         ]
     }
+
+@router.delete("/sessions/{session_id}")
+async def delete_session(session_id: str, db: AsyncSession = Depends(get_db)):
+    try:
+        sid = uuid.UUID(session_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid session_id")
+        
+    result = await db.execute(select(ChatSession).where(ChatSession.id == sid))
+    session = result.scalar_one_or_none()
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    from sqlalchemy import delete
+    from backend.models.schemas import ChatMessage
+    await db.execute(delete(ChatMessage).where(ChatMessage.session_id == sid))
+    await db.delete(session)
+    await db.commit()
+    
+    return {"success": True}
 
 
 @router.get("/sessions/{session_id}")

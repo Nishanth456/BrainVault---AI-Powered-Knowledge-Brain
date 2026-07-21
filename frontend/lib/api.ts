@@ -291,8 +291,14 @@ export async function listChatSessions(): Promise<{ sessions: ChatSession[] }> {
   return res.json()
 }
 
-export async function getChatSession(sessionId: string): Promise<ChatSession & { messages: ChatMessage[] }> {
+export async function getChatSession(sessionId: string): Promise<{ session: any; messages: ChatMessage[] }> {
   const res = await fetch(`${API_BASE}/api/chat/sessions/${sessionId}`)
-  if (!res.ok) throw new Error(`Session fetch failed: ${res.status}`)
+  if (!res.ok) throw new Error("Failed to load chat session")
+  return res.json()
+}
+
+export async function deleteChatSession(sessionId: string): Promise<{ success: boolean }> {
+  const res = await fetch(`${API_BASE}/api/chat/sessions/${sessionId}`, { method: "DELETE" })
+  if (!res.ok) throw new Error("Failed to delete chat session")
   return res.json()
 }

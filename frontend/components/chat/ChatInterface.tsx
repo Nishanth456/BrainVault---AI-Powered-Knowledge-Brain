@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import {
+    deleteChatSession,
     getChatSession,
     listChatSessions,
     sendChatMessage,
@@ -155,6 +156,18 @@ export function ChatInterface({ initialSessionId, initialFilters }: ChatInterfac
     setInput("")
   }
 
+  async function handleDeleteChat(id: string) {
+    try {
+      await deleteChatSession(id)
+      if (sessionId === id) {
+        startNewChat()
+      }
+      await loadSessions()
+    } catch (e) {
+      console.error("Failed to delete chat", e)
+    }
+  }
+
   return (
     <div className="flex h-full gap-4 p-4">
       <ChatHistorySidebar
@@ -162,6 +175,7 @@ export function ChatInterface({ initialSessionId, initialFilters }: ChatInterfac
         activeSessionId={sessionId}
         onSelect={setSessionId}
         onNewChat={startNewChat}
+        onDelete={handleDeleteChat}
       />
 
       <div className="flex flex-1 flex-col gap-4 overflow-hidden">

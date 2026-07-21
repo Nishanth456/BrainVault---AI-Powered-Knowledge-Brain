@@ -54,6 +54,7 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
   const [aiMessages, setAiMessages]   = useState<{ id?: string; role: "user" | "assistant"; content: string; citations?: SearchResultItem[] }[]>([])
   const [aiInput, setAiInput]         = useState<string>("")
   const [aiStreaming, setAiStreaming] = useState<boolean>(false)
+  const [aiSessionId, setAiSessionId] = useState<string | undefined>(undefined)
 
   // Support multiple PDFs — show first by default
   const [currentPdfIndex] = useState(0)
@@ -105,8 +106,9 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
         onCitations: (cits: SearchResultItem[]) => {
           citations = cits
         },
-        onDone: () => {
+        onDone: (sid?: string) => {
           setAiStreaming(false)
+          if (sid) setAiSessionId(sid)
           setAiMessages((prev) => {
             const withoutStreaming = prev.filter((m) => m.id !== "streaming")
             return [...withoutStreaming, { role: "assistant", content: answer, citations }]
@@ -120,7 +122,7 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
           ])
         },
       },
-      undefined,
+      aiSessionId,
       { item_id: item.id }
     )
   }
@@ -316,13 +318,6 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
                     <StreamingMessage content={msg.content} />
                   ) : (
                     <MarkdownRenderer content={msg.content} />
-                  )}
-                  {msg.citations && msg.citations.length > 0 && (
-                    <div className="mt-2 space-y-2">
-                      {msg.citations.map((c) => (
-                        <SourceCitationCard key={c.id} citation={c} compact />
-                      ))}
-                    </div>
                   )}
                 </div>
               ))}
