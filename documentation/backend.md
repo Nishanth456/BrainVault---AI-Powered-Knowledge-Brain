@@ -136,3 +136,17 @@ While the agents handle extraction and reasoning, **Ollama** is used specificall
   - `groq/llama-3.3-70b-versatile` (Complex reasoning, taxonomies, scoring, qna generation)
   - `gemini/gemini-2.5-flash-preview-05-20` (Long-context window handling for heavy documents like PDFs)
   - `ollama/nomic-embed-text` (Local dense vector embeddings generation)
+
+---
+
+## 3. Document RAG & Chunking
+To support deep semantic search within large attached files (e.g., long PDFs), the backend implements a Document RAG pipeline:
+- **Chunking (`text_chunker.py`):** Raw extracted text from attachments is split into overlapping chunks (e.g., 1000 characters with 200 character overlap) to preserve context.
+- **Embedding:** These chunks are embedded individually into Qdrant using the payload type `attachment_chunk`, and are linked to their parent `knowledge_item_id`.
+- **Retrieval (`chat_service.py`):** During semantic search, if an `attachment_chunk` is retrieved, its full text is provided to the LLM as context (unlike standard metadata chunks which are truncated to 800 characters). This enables precise "Ask AI" queries against single documents.
+
+## 4. Chat History Management
+The backend intelligently manages user chat sessions (`ChatSession`) and messages (`ChatMessage`):
+- **Cascading Deletes:** Deleting a `ChatSession` automatically deletes all its associated messages via SQLAlchemy `cascade="all, delete-orphan"`.
+- **Auto-Pruning:** The `/api/chat/sessions` endpoint automatically prunes the chat history, keeping only the 20 most recent chats. Older chats (and their messages) are permanently deleted to maintain database performance.
+- **Single Document Context:** When chatting with a specific document via the "Ask AI" feature, inline citations (e.g., `[1]`) are dynamically disabled in the LLM system prompt to prevent clutter, as the source document is already implicitly known.

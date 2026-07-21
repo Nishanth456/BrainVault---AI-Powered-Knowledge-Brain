@@ -25,12 +25,12 @@ In this project, Docker allows us to spin up complex databases and services with
 
 ### 3. Qdrant (`qdrant/qdrant:latest`)
 - **What it is:** An open-source vector similarity search engine and vector database. It provides a production-ready service with a convenient API to store, search, and manage points—vectors with an additional payload.
-- **Role in BrainVault:** Qdrant is the core of BrainVault's semantic search and Retrieval-Augmented Generation (RAG) capabilities. When text is ingested, it is converted into vector embeddings (using a local Ollama embedding model like `nomic-embed-text`) and stored in Qdrant. This allows the system to find conceptually similar knowledge items even if they don't share exact keywords.
+- **Role in BrainVault:** Qdrant is the core of BrainVault's semantic search and Retrieval-Augmented Generation (RAG) capabilities. When text is ingested, it is converted into vector embeddings (using a local Ollama embedding model like `nomic-embed-text`) and stored in Qdrant. This allows the system to find conceptually similar knowledge items even if they don't share exact keywords. It stores two primary payload types: standard metadata summaries (truncated for breadth) and `attachment_chunk` payloads (preserving full document text for deep RAG queries).
 - **Access:** REST API on port `6333`, gRPC on `6334`.
 
 ### 4. MinIO (`minio/minio:latest`)
 - **What it is:** A high-performance, S3-compatible object storage server.
-- **Role in BrainVault:** MinIO acts as our file storage system. Any physical assets associated with your knowledge items—such as downloaded PDF research papers, image attachments, or generated thumbnails for YouTube videos—are stored here. The backend retrieves these files directly from MinIO when requested by the frontend.
+- **Role in BrainVault:** MinIO acts as our file storage system. Any physical assets associated with your knowledge items—such as downloaded PDF research papers, image attachments, or generated thumbnails for YouTube videos—are stored here. The backend retrieves these files directly from MinIO and serves them to the frontend via a secure proxy endpoint (`/api/files/{path}`), ensuring direct access to original attachments.
 - **Access:** S3 API on port `9000`, Console UI on `9001`.
 
 ---

@@ -33,3 +33,10 @@ The frontend leverages cutting-edge web technologies to deliver performance and 
 ## Design Philosophy
 
 The frontend is strictly designed to prioritize visual excellence. It moves away from generic, plain UI and leans into rich aesthetics—utilizing curated color palettes, glassmorphism, smooth gradients, and purposeful hover states to ensure an engaging "wow" factor upon first use.
+
+## Recent Functional Highlights
+
+1. **Ask AI (Document RAG):** Users can chat directly with long PDFs or attached documents. This feature seamlessly ties into the backend's chunked embedding system. The UI intelligently suppresses redundant source citations when asking questions about a single document, while maintaining the same chat session for follow-up questions.
+2. **Chat History Management:** The Brain Talk interface provides a persistent chat history sidebar. Users can manually delete individual chats via a hover-over trash action. The UI is designed to automatically clear the active view if the currently open chat is deleted.
+3. **Direct File Downloads:** The knowledge cards feature an updated export system that directly downloads original attachments (like PDFs) from the backend MinIO proxy, only appearing when an attachment is actually present.
+4. **Learning Path Enhancements:** The learning path generator UI dynamically detects and indicates if a path has already been saved to the user's vault, preventing accidental duplicate saves.
