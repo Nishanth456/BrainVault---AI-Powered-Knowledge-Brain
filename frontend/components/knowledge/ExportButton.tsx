@@ -34,7 +34,7 @@ export function ExportButton({ attachments }: { attachments?: Attachment[] }) {
   return (
     <button
       onClick={handleDownload}
-      className="p-1.5 rounded-md border border-white/10 text-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-colors"
+      className="p-1.5 rounded-md border border-border text-muted-foreground hover:text-muted-foreground hover:bg-accent/50 transition-colors"
       title="Download Attachment"
     >
       <Download size={14} />

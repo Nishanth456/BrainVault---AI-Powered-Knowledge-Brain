@@ -92,9 +92,9 @@ export function KnowledgePageShellInner<T>({
           <div>
             <div className="flex items-center gap-3 mb-1">
               {icon}
-              <h1 className="text-2xl font-bold text-white">{title}</h1>
+              <h1 className="text-2xl font-bold text-foreground">{title}</h1>
             </div>
-            <p className="text-zinc-500 text-sm">{subtitle}</p>
+            <p className="text-muted-foreground text-sm">{subtitle}</p>
           </div>
           <SortDropdown value={sort} onChange={(v) => {
             setSort(v)
@@ -149,8 +149,8 @@ export function KnowledgePageShellInner<T>({
               {Object.entries(grouped).map(([group, groupItems]) => (
                 <div key={group}>
                   <div className="flex items-center gap-2 mb-4">
-                    <h2 className="text-lg font-semibold text-white/90">{group}</h2>
-                    <span className="text-xs text-white/20 bg-white/5 px-2 py-0.5 rounded-full border border-white/10">{groupItems.length}</span>
+                    <h2 className="text-lg font-semibold text-foreground/90">{group}</h2>
+                    <span className="text-xs text-muted-foreground/50 bg-accent/50 px-2 py-0.5 rounded-full border border-border">{groupItems.length}</span>
                   </div>
                   <StaggeredCardGrid singleColumn={singleColumn}>
                     {groupItems.map(item => renderCard(item, handleDelete))}

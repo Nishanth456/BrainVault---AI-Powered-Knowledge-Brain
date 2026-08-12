@@ -49,20 +49,20 @@ export function FilterBar({ filters, onChange, domains }: FilterBarProps) {
 
   return (
     <div className="flex flex-wrap items-center gap-2 mb-6">
-      <div className="flex items-center gap-1.5 text-xs text-zinc-500 mr-2">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mr-2">
         <SlidersHorizontal size={12} />
         Filters
       </div>
 
       <form onSubmit={handleSearchSubmit} className="relative flex items-center mr-1">
-        <Search size={12} className="absolute left-2.5 text-zinc-500" />
+        <Search size={12} className="absolute left-2.5 text-muted-foreground" />
         <input 
           type="text"
           placeholder="Filter..."
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
           onBlur={() => handleSearchSubmit()}
-          className="bg-white/[0.03] border border-white/[0.08] rounded-full text-xs text-white pl-7 pr-3 py-1 focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all placeholder:text-zinc-500 w-32 sm:w-48"
+          className="bg-card border border-border rounded-full text-xs text-foreground pl-7 pr-3 py-1 focus:outline-none focus:border-indigo-500/50 focus:bg-accent transition-all placeholder:text-muted-foreground w-32 sm:w-48"
         />
       </form>
 
@@ -71,7 +71,7 @@ export function FilterBar({ filters, onChange, domains }: FilterBarProps) {
         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border transition-colors ${
           filters.bookmarked === "true"
             ? "bg-amber-500/15 border-amber-500/40 text-amber-300"
-            : "bg-white/[0.03] border-white/[0.08] text-zinc-400 hover:text-white"
+            : "bg-card border-border text-muted-foreground hover:text-white"
         }`}
       >
         <Bookmark size={11} />
@@ -85,7 +85,7 @@ export function FilterBar({ filters, onChange, domains }: FilterBarProps) {
           className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${
             filters.domain === domain
               ? "bg-indigo-500/15 border-indigo-500/40 text-indigo-300"
-              : "bg-white/[0.03] border-white/[0.08] text-zinc-400 hover:text-white"
+              : "bg-card border-border text-muted-foreground hover:text-white"
           }`}
         >
           {domain}
@@ -99,7 +99,7 @@ export function FilterBar({ filters, onChange, domains }: FilterBarProps) {
           className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${
             filters.difficulty === String(d)
               ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
-              : "bg-white/[0.03] border-white/[0.08] text-zinc-400 hover:text-white"
+              : "bg-card border-border text-muted-foreground hover:text-white"
           }`}
         >
           L{d}
@@ -113,7 +113,7 @@ export function FilterBar({ filters, onChange, domains }: FilterBarProps) {
           className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border transition-colors ${
             filters.days === d.value
               ? "bg-cyan-500/15 border-cyan-500/40 text-cyan-300"
-              : "bg-white/[0.03] border-white/[0.08] text-zinc-400 hover:text-white"
+              : "bg-card border-border text-muted-foreground hover:text-white"
           }`}
         >
           <Calendar size={11} />
@@ -124,7 +124,7 @@ export function FilterBar({ filters, onChange, domains }: FilterBarProps) {
       {hasFilters && (
         <button
           onClick={clear}
-          className="flex items-center gap-1 px-2 py-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+          className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-muted-foreground transition-colors"
         >
           <X size={11} />
           Clear

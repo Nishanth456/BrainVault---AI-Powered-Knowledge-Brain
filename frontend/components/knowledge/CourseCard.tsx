@@ -66,7 +66,7 @@ export function CourseCard({ item, onDelete }: { item: CourseItem; onDelete?: (i
   return (
     <div
       id={`item-${item.id}`}
-      className="group block relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 hover:border-indigo-500/30 hover:bg-white/[0.05] transition-all duration-300 overflow-hidden target-glow-indigo"
+      className="group block relative bg-card border border-border rounded-2xl p-6 hover:border-indigo-500/30 hover:bg-accent transition-all duration-300 overflow-hidden target-glow-indigo"
     >
       {/* Subtle gradient on hover */}
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-indigo-600/5 via-transparent to-transparent rounded-2xl pointer-events-none" />
@@ -81,9 +81,9 @@ export function CourseCard({ item, onDelete }: { item: CourseItem; onDelete?: (i
         <div className="flex-1 min-w-0 flex flex-col gap-3">
           {/* Header row */}
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-zinc-500 font-medium flex items-center gap-2">
+            <span className="text-xs text-muted-foreground font-medium flex items-center gap-2">
               {displaySource !== 'Course' && (
-                <span className="bg-white/10 text-zinc-300 px-1.5 py-0.5 rounded uppercase tracking-wider text-[10px]">
+                <span className="bg-accent text-muted-foreground px-1.5 py-0.5 rounded uppercase tracking-wider text-[10px]">
                   {displaySource}
                 </span>
               )}
@@ -117,14 +117,14 @@ export function CourseCard({ item, onDelete }: { item: CourseItem; onDelete?: (i
             </h3>
           </a>
 
-          <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all duration-300">
+          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all duration-300">
             {item.summary}
           </p>
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-zinc-500 mt-1">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground mt-1">
             {item.instructor && (
               <span className="flex items-center gap-1.5">
-                <User size={13} className="text-zinc-400" />
+                <User size={13} className="text-muted-foreground" />
                 {item.instructor}
               </span>
             )}
@@ -140,14 +140,14 @@ export function CourseCard({ item, onDelete }: { item: CourseItem; onDelete?: (i
               </span>
             )}
             <span className="flex items-center gap-1.5">
-              <BookOpen size={13} className="text-zinc-400" />
+              <BookOpen size={13} className="text-muted-foreground" />
               {item.syllabus?.length || 0} Modules
             </span>
           </div>
           
           {/* Course Stats */}
           <div className="flex flex-wrap items-center gap-2 mt-2">
-            <span className="text-xs font-medium text-zinc-400 bg-white/5 px-2.5 py-1.5 rounded-lg border border-white/10 flex items-center gap-1.5">
+            <span className="text-xs font-medium text-muted-foreground bg-accent/50 px-2.5 py-1.5 rounded-lg border border-border flex items-center gap-1.5">
               <Layers size={14} className="text-indigo-400" />
               {item.syllabus?.length || 0} sections &bull; {item.syllabus?.reduce((acc, section) => acc + (section.lessons?.length || 0), 0) || 0} lectures
               {item.reading_time ? ` \u2022 ${Math.floor(item.reading_time / 60)}h ${item.reading_time % 60}m total length` : ""}
@@ -158,12 +158,12 @@ export function CourseCard({ item, onDelete }: { item: CourseItem; onDelete?: (i
           {item.key_concepts && item.key_concepts.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-2">
               {item.key_concepts.slice(0, 5).map((concept, i) => (
-                <span key={i} className="px-2 py-1 bg-white/5 border border-white/10 rounded-md text-[10px] text-zinc-300 font-medium">
+                <span key={i} className="px-2 py-1 bg-accent/50 border border-border rounded-md text-[10px] text-muted-foreground font-medium">
                   {concept}
                 </span>
               ))}
               {item.key_concepts.length > 5 && (
-                <span className="px-2 py-1 bg-white/5 border border-white/10 rounded-md text-[10px] text-zinc-500 font-medium">
+                <span className="px-2 py-1 bg-accent/50 border border-border rounded-md text-[10px] text-muted-foreground font-medium">
                   +{item.key_concepts.length - 5}
                 </span>
               )}
@@ -175,7 +175,7 @@ export function CourseCard({ item, onDelete }: { item: CourseItem; onDelete?: (i
             <div className="mt-3">
               <button 
                 onClick={() => setShowSyllabus(!showSyllabus)}
-                className="flex items-center justify-between w-full p-3 bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.05] rounded-xl transition-colors text-sm text-zinc-300"
+                className="flex items-center justify-between w-full p-3 bg-card/50 hover:bg-accent/50 border border-border/50 rounded-xl transition-colors text-sm text-muted-foreground"
               >
                 <span className="font-medium flex items-center gap-2">
                   <BookOpen size={14} className="text-indigo-400" />
@@ -185,14 +185,14 @@ export function CourseCard({ item, onDelete }: { item: CourseItem; onDelete?: (i
               </button>
               
               {showSyllabus && (
-                <div className="mt-2 space-y-2 p-3 bg-black/20 border border-white/[0.05] rounded-xl max-h-60 overflow-y-auto">
+                <div className="mt-2 space-y-2 p-3 bg-black/20 border border-border/50 rounded-xl max-h-60 overflow-y-auto">
                   {item.syllabus.map((mod: Record<string, unknown>, idx: number) => (
-                    <div key={idx} className="pb-2 border-b border-white/[0.05] last:border-0 last:pb-0">
+                    <div key={idx} className="pb-2 border-b border-border/50 last:border-0 last:pb-0">
                       <h4 className="text-sm font-medium text-zinc-200 mb-1">{idx + 1}. {mod.title || "Module"}</h4>
                       {mod.lessons && mod.lessons.length > 0 && (
                         <ul className="pl-5 list-disc space-y-1">
                           {mod.lessons.map((lesson: Record<string, unknown> | string, i: number) => (
-                            <li key={i} className="text-xs text-zinc-400">{typeof lesson === 'string' ? lesson : lesson.title || 'Lesson'}</li>
+                            <li key={i} className="text-xs text-muted-foreground">{typeof lesson === 'string' ? lesson : lesson.title || 'Lesson'}</li>
                           ))}
                         </ul>
                       )}

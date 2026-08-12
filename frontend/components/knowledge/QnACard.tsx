@@ -50,7 +50,7 @@ export function QnACard({ item, onDelete }: QnACardProps) {
     <div
       id={`item-${item.id}`}
       className="group relative flex flex-col w-full bg-[#111111]/80 rounded-xl
-                 border border-white/[0.05] hover:border-white/[0.1]
+                 border border-border/50 hover:border-white/[0.1]
                  overflow-hidden transition-all duration-300 shadow-xl target-glow-yellow"
     >
       {/* Top right actions */}
@@ -60,8 +60,8 @@ export function QnACard({ item, onDelete }: QnACardProps) {
             href={item.source_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-1.5 rounded-md bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white 
-                       border border-white/5 transition-colors"
+            className="p-1.5 rounded-md bg-accent/50 text-muted-foreground hover:bg-accent hover:text-foreground 
+                       border border-border/50 transition-colors"
             title="View Source"
           >
             <ExternalLink size={14} />
@@ -127,7 +127,7 @@ export function QnACard({ item, onDelete }: QnACardProps) {
             {/* Tags */}
             {item.tags && item.tags.length > 0 && (
               <div className="flex items-center gap-1.5 mt-3 flex-wrap">
-                <Tag size={10} className="text-zinc-500 flex-shrink-0" />
+                <Tag size={10} className="text-muted-foreground flex-shrink-0" />
                 {item.tags.map(tag => (
                   <span
                     key={tag}

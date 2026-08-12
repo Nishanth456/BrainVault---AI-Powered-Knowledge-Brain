@@ -94,11 +94,11 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
 
   if (!pdfApiUrl) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-[#0A0A0F] text-zinc-400 gap-4">
+      <div className="flex flex-col items-center justify-center h-screen bg-[#0A0A0F] text-muted-foreground gap-4">
         <FileText size={40} className="text-zinc-700" />
         <p className="text-sm">No PDF attachment found for this paper.</p>
         <Link href="/knowledge/papers">
-          <Button variant="outline" size="sm" className="border-white/10 text-zinc-400 hover:text-white">
+          <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:text-foreground">
             <ArrowLeft size={14} className="mr-2" />
             Back to Papers
           </Button>
@@ -108,25 +108,25 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
   }
 
   return (
-    <div className="flex h-screen bg-[#0A0A0F] text-white overflow-hidden">
+    <div className="flex h-screen bg-[#0A0A0F] text-foreground overflow-hidden">
 
       {/* ── Left: PDF Viewer ──────────────────────────────────────── */}
       <div id="pdf-panel" className="flex-1 flex flex-col overflow-hidden min-w-0">
 
         {/* Top navigation bar */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06]
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-border/60
                         bg-[#0D0D14] flex-shrink-0 flex-wrap gap-y-2">
 
           <Link href="/knowledge/papers">
-            <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white p-2 h-8 w-8">
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground p-2 h-8 w-8">
               <ArrowLeft size={15} />
             </Button>
           </Link>
 
           <div className="flex-1 min-w-0 hidden sm:block">
-            <p className="text-sm font-medium text-white truncate leading-tight">{item.title}</p>
+            <p className="text-sm font-medium text-foreground truncate leading-tight">{item.title}</p>
             {item.knowledge_tree && (
-              <p className="text-[11px] text-zinc-600 truncate">{item.knowledge_tree}</p>
+              <p className="text-[11px] text-muted-foreground truncate">{item.knowledge_tree}</p>
             )}
           </div>
 
@@ -136,7 +136,7 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
               variant="ghost" size="sm"
               onClick={() => goToPage(pageNumber - 1)}
               disabled={pageNumber <= 1}
-              className="text-zinc-400 hover:text-white p-1 h-7 w-7 disabled:opacity-30"
+              className="text-muted-foreground hover:text-foreground p-1 h-7 w-7 disabled:opacity-30"
             >
               <ChevronLeft size={14} />
             </Button>
@@ -150,50 +150,50 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
                     if (!isNaN(parsed)) goToPage(parsed)
                   }
                 }}
-                className="w-12 h-7 text-xs text-center bg-white/[0.05] border-white/[0.08] text-white"
+                className="w-12 h-7 text-xs text-center bg-accent border-border text-foreground"
               />
-              <span className="text-xs text-zinc-500">/ {numPages}</span>
+              <span className="text-xs text-muted-foreground">/ {numPages}</span>
             </div>
             <Button
               variant="ghost" size="sm"
               onClick={() => goToPage(pageNumber + 1)}
               disabled={pageNumber >= (numPages || 1)}
-              className="text-zinc-400 hover:text-white p-1 h-7 w-7 disabled:opacity-30"
+              className="text-muted-foreground hover:text-foreground p-1 h-7 w-7 disabled:opacity-30"
             >
               <ChevronRight size={14} />
             </Button>
           </div>
 
           {/* Zoom controls */}
-          <div className="flex items-center gap-1 border-l border-white/[0.06] pl-2">
+          <div className="flex items-center gap-1 border-l border-border/60 pl-2">
             <Button
               variant="ghost" size="sm"
               onClick={() => setScale(s => Math.max(0.5, +(s - 0.15).toFixed(2)))}
-              className="text-zinc-400 hover:text-white p-1.5 h-8 w-8"
+              className="text-muted-foreground hover:text-foreground p-1.5 h-8 w-8"
             >
               <ZoomOut size={13} />
             </Button>
-            <span className="text-xs text-zinc-500 w-9 text-center select-none">
+            <span className="text-xs text-muted-foreground w-9 text-center select-none">
               {Math.round(scale * 100)}%
             </span>
             <Button
               variant="ghost" size="sm"
               onClick={() => setScale(s => Math.min(3.0, +(s + 0.15).toFixed(2)))}
-              className="text-zinc-400 hover:text-white p-1.5 h-8 w-8"
+              className="text-muted-foreground hover:text-foreground p-1.5 h-8 w-8"
             >
               <ZoomIn size={13} />
             </Button>
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-1.5 border-l border-white/[0.06] pl-2">
+          <div className="flex items-center gap-1.5 border-l border-border/60 pl-2">
             <Button
               variant="outline" size="sm"
               onClick={() => setAiPanelOpen(v => !v)}
-              className={`h-8 text-xs border-white/10 gap-1.5 transition-colors ${
+              className={`h-8 text-xs border-border gap-1.5 transition-colors ${
                 aiPanelOpen
                   ? "bg-violet-600/20 text-violet-300 border-violet-500/30"
-                  : "text-zinc-400 hover:text-white bg-transparent"
+                  : "text-muted-foreground hover:text-white bg-transparent"
               }`}
             >
               <MessageSquare size={12} />
@@ -204,7 +204,7 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
               <a href={item.source_url} target="_blank" rel="noopener noreferrer">
                 <Button
                   variant="ghost" size="sm"
-                  className="text-zinc-400 hover:text-white p-1.5 h-8 w-8"
+                  className="text-muted-foreground hover:text-foreground p-1.5 h-8 w-8"
                   title="Open original paper"
                 >
                   <ExternalLink size={13} />
@@ -221,8 +221,8 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={err => console.error("PDF load error:", err)}
             loading={
-              <div className="flex flex-col items-center justify-center h-full gap-3 text-zinc-500">
-                <FileText size={28} className="animate-pulse text-zinc-600" />
+              <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
+                <FileText size={28} className="animate-pulse text-muted-foreground" />
                 <span className="text-sm">Loading PDF...</span>
               </div>
             }
@@ -230,7 +230,7 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
               <div className="flex flex-col items-center justify-center h-full gap-3 text-red-400/70 text-center">
                 <FileText size={28} />
                 <p className="text-sm">Failed to load PDF.</p>
-                <p className="text-xs text-zinc-600">
+                <p className="text-xs text-muted-foreground">
                   Make sure the backend is running and the file exists in MinIO.
                 </p>
               </div>
@@ -250,24 +250,24 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
 
       {/* ── Right: Structured Paper Panel ──────────────────────── */}
       {aiPanelOpen && (
-        <div className="w-96 border-l border-white/[0.06] flex flex-col bg-[#0D0D14] flex-shrink-0 overflow-hidden">
+        <div className="w-96 border-l border-border/60 flex flex-col bg-[#0D0D14] flex-shrink-0 overflow-hidden">
 
           {/* Panel header */}
-          <div className="p-4 border-b border-white/[0.05] flex items-center gap-2">
+          <div className="p-4 border-b border-border/50 flex items-center gap-2">
             <div className="w-6 h-6 rounded-lg bg-indigo-600/20 flex items-center justify-center">
               <BookOpen size={12} className="text-indigo-400" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-white">Paper Structure</h3>
-              <p className="text-[11px] text-zinc-500">AI-extracted breakdown</p>
+              <h3 className="text-sm font-semibold text-foreground">Paper Structure</h3>
+              <p className="text-[11px] text-muted-foreground">AI-extracted breakdown</p>
             </div>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {/* Summary */}
-            <div className="p-3 bg-white/[0.03] rounded-lg border border-white/[0.06]">
-              <span className="text-[11px] text-zinc-500 font-medium">Summary</span>
-              <p className="text-xs text-zinc-400 leading-relaxed mt-1.5">{item.summary}</p>
+            <div className="p-3 bg-card rounded-lg border border-border/60">
+              <span className="text-[11px] text-muted-foreground font-medium">Summary</span>
+              <p className="text-xs text-muted-foreground leading-relaxed mt-1.5">{item.summary}</p>
             </div>
 
             {/* Structured sections */}
@@ -277,19 +277,19 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
               const isOpen = expanded[key]
 
               return (
-                <div key={key} className="border border-white/[0.06] rounded-lg overflow-hidden">
+                <div key={key} className="border border-border/60 rounded-lg overflow-hidden">
                   <button
                     onClick={() => toggleSection(key)}
-                    className="w-full flex items-center justify-between p-3 bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
+                    className="w-full flex items-center justify-between p-3 bg-card/50 hover:bg-accent/50 transition-colors"
                   >
-                    <span className="text-xs font-medium text-white">{label}</span>
+                    <span className="text-xs font-medium text-foreground">{label}</span>
                     {isOpen
-                      ? <ChevronDown size={14} className="text-zinc-500" />
-                      : <ChevronRightIcon size={14} className="text-zinc-500" />
+                      ? <ChevronDown size={14} className="text-muted-foreground" />
+                      : <ChevronRightIcon size={14} className="text-muted-foreground" />
                     }
                   </button>
                   {isOpen && (
-                    <div className="p-3 text-xs text-zinc-400 leading-relaxed border-t border-white/[0.06]">
+                    <div className="p-3 text-xs text-muted-foreground leading-relaxed border-t border-border/60">
                       {content}
                     </div>
                   )}

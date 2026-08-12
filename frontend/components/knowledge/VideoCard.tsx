@@ -144,14 +144,14 @@ export function VideoCard({
   return (
     <div
       onClick={handleClick}
-      className="group relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-5 hover:border-red-500/30 hover:bg-white/[0.05] transition-all duration-300 overflow-hidden cursor-pointer"
+      className="group relative bg-card border border-border rounded-2xl p-5 hover:border-red-500/30 hover:bg-accent transition-all duration-300 overflow-hidden cursor-pointer"
     >
       {/* Subtle gradient on hover */}
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-red-600/5 via-transparent to-transparent rounded-2xl pointer-events-none" />
 
       <div className="relative flex gap-4">
         {/* Thumbnail */}
-        <div className="w-32 sm:w-44 flex-shrink-0 aspect-video rounded-xl bg-zinc-800 border border-white/[0.08] overflow-hidden relative group/thumb">
+        <div className="w-32 sm:w-44 flex-shrink-0 aspect-video rounded-xl bg-zinc-800 border border-border overflow-hidden relative group/thumb">
           {thumbnailUrl ? (
             <>
               <img
@@ -162,7 +162,7 @@ export function VideoCard({
               {/* Play overlay on hover */}
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity duration-300 bg-black/30">
                 <div className="w-10 h-10 rounded-full bg-red-600/90 flex items-center justify-center shadow-lg shadow-red-600/20">
-                  <Play size={16} className="text-white ml-0.5" fill="white" />
+                  <Play size={16} className="text-foreground ml-0.5" fill="white" />
                 </div>
               </div>
             </>
@@ -172,7 +172,7 @@ export function VideoCard({
             </div>
           )}
           {item.video_duration_seconds && (
-            <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/80 text-[10px] text-white font-medium backdrop-blur-sm">
+            <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/80 text-[10px] text-foreground font-medium backdrop-blur-sm">
               {formatDuration(item.video_duration_seconds)}
             </div>
           )}
@@ -182,7 +182,7 @@ export function VideoCard({
         <div className="flex-1 min-w-0 flex flex-col gap-2">
           {/* Header row: channel + difficulty + actions */}
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-zinc-500 font-medium truncate">
+            <span className="text-xs text-muted-foreground font-medium truncate">
               {item.channel_name || "YouTube"}
             </span>
             <div className="flex items-center gap-2 flex-shrink-0">
@@ -207,18 +207,18 @@ export function VideoCard({
           </div>
 
           {/* Title */}
-          <h3 className="text-base font-semibold text-white leading-snug line-clamp-2">
+          <h3 className="text-base font-semibold text-foreground leading-snug line-clamp-2">
             {item.title || "Untitled Video"}
           </h3>
 
           {/* Summary */}
-          <p className="text-sm text-zinc-400 leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all duration-300">
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all duration-300">
             {item.summary || "No summary available."}
           </p>
 
           {/* Footer: meta + chapters + link */}
           <div className="flex items-center justify-between gap-3 pt-1">
-            <div className="flex items-center gap-3 text-xs text-zinc-500 flex-wrap">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
               {item.author && (
                 <span className="flex items-center gap-1.5">
                   <User size={11} />
@@ -241,7 +241,7 @@ export function VideoCard({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="text-zinc-500 hover:text-red-400 transition-colors flex-shrink-0"
+                className="text-muted-foreground hover:text-red-400 transition-colors flex-shrink-0"
               >
                 <ExternalLink size={13} />
               </a>

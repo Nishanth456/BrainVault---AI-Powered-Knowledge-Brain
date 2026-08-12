@@ -29,7 +29,7 @@ export function BookmarkButton({ itemId, initial }: { itemId: string; initial: b
       className={`p-1.5 rounded-md border transition-colors ${
         bookmarked
           ? "bg-amber-500/15 border-amber-500/40 text-amber-400"
-          : "bg-white/5 border-white/10 text-zinc-500 hover:text-zinc-300"
+          : "bg-accent/50 border-border text-muted-foreground hover:text-muted-foreground"
       }`}
       title={bookmarked ? "Remove bookmark" : "Bookmark this item"}
     >

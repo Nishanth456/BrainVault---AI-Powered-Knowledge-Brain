@@ -81,14 +81,14 @@ export function NoteListItem({ item, onDelete }: NoteListItemProps) {
       <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-gradient-to-b from-cyan-500/0 via-cyan-500/40 to-cyan-500/0 opacity-0 group-hover:opacity-100 transition-opacity rounded-full" />
 
       <div
-        className="pl-5 pr-4 py-5 border-b border-white/[0.05] hover:bg-white/[0.02] transition-colors cursor-pointer"
+        className="pl-5 pr-4 py-5 border-b border-border/50 hover:bg-card/50 transition-colors cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
         {/* Top row: title + meta */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2.5 mb-1.5 flex-wrap">
-              <h3 className="text-[15px] font-semibold text-white leading-snug">
+              <h3 className="text-[15px] font-semibold text-foreground leading-snug">
                 {item.title || "Untitled Note"}
               </h3>
               {diff > 0 && (
@@ -101,7 +101,7 @@ export function NoteListItem({ item, onDelete }: NoteListItemProps) {
               )}
             </div>
 
-            <p className="text-sm text-zinc-300 leading-relaxed max-w-3xl whitespace-pre-wrap">
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-3xl whitespace-pre-wrap">
               {item.raw_content || item.summary || "No content available"}
             </p>
           </div>
@@ -110,7 +110,7 @@ export function NoteListItem({ item, onDelete }: NoteListItemProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-zinc-500 hover:text-red-400 hover:bg-red-500/10"
+              className="h-7 w-7 text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
               onClick={(e) => {
                 e.stopPropagation()
                 handleDelete()
@@ -121,17 +121,17 @@ export function NoteListItem({ item, onDelete }: NoteListItemProps) {
             </Button>
             <ChevronRight
               size={16}
-              className={`text-zinc-600 transition-transform ${expanded ? "rotate-90" : ""}`}
+              className={`text-muted-foreground transition-transform ${expanded ? "rotate-90" : ""}`}
             />
           </div>
         </div>
 
         {/* Middle row: taxonomy + stats */}
-        <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-zinc-500">
+        <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-muted-foreground">
           {item.knowledge_domain && (
             <div className="flex items-center gap-1.5">
               <Sparkles size={12} className="text-cyan-400" />
-              <span className="text-zinc-300">{item.knowledge_domain}</span>
+              <span className="text-muted-foreground">{item.knowledge_domain}</span>
 
             </div>
           )}
@@ -155,28 +155,28 @@ export function NoteListItem({ item, onDelete }: NoteListItemProps) {
         {/* Tags row */}
         {item.tags?.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 mt-3">
-            <Hash size={11} className="text-zinc-600 mr-0.5" />
+            <Hash size={11} className="text-muted-foreground mr-0.5" />
             {item.tags?.map((tag) => (
               <Badge
                 key={tag}
                 variant="secondary"
-                className="text-[10px] px-2 py-0 h-5 bg-white/[0.04] text-zinc-400 hover:bg-white/[0.08] border-none"
+                className="text-[10px] px-2 py-0 h-5 bg-accent/50 text-muted-foreground hover:bg-white/[0.08] border-none"
               >
                 {tag}
               </Badge>
             ))}
             {item.tags.length > 6 && (
-              <span className="text-[10px] text-zinc-600">+{item.tags.length - 6}</span>
+              <span className="text-[10px] text-muted-foreground">+{item.tags.length - 6}</span>
             )}
           </div>
         )}
 
         {/* Expanded detail */}
         {expanded && (
-          <div className="mt-4 pt-4 border-t border-white/[0.05] animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="mt-4 pt-4 border-t border-border/50 animate-in fade-in slide-in-from-top-2 duration-200">
             {item.key_concepts?.length > 0 && (
               <div className="mb-4">
-                <div className="flex items-center gap-1.5 text-xs text-zinc-500 mb-2">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
                   <Brain size={12} className="text-purple-400" />
                   Key concepts
                 </div>
@@ -196,11 +196,11 @@ export function NoteListItem({ item, onDelete }: NoteListItemProps) {
 
             {item.summary && item.summary !== item.raw_content && (
               <div>
-                <div className="flex items-center gap-1.5 text-xs text-zinc-500 mb-2">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
                   <Sparkles size={12} className="text-cyan-400" />
                   AI summary
                 </div>
-                <div className="bg-zinc-950/50 border border-white/[0.06] rounded-lg p-3 text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                <div className="bg-zinc-950/50 border border-border/60 rounded-lg p-3 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
                   {item.summary
                     .split(/\n\n+/)
                     .map((para) => para.replace(/\n(?!\s*[-•])/g, " ").trim())

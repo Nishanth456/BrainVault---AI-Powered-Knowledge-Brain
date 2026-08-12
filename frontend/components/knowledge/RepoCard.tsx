@@ -74,7 +74,7 @@ export function RepoCard({ item, onDelete }: { item: RepoItem; onDelete?: (id: s
       href={item.source_url || "#"}
       target={item.source_url ? "_blank" : undefined}
       rel={item.source_url ? "noopener noreferrer" : undefined}
-      className="group block relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 hover:border-emerald-500/30 hover:bg-white/[0.05] transition-all duration-300 overflow-hidden target-glow-emerald"
+      className="group block relative bg-card border border-border rounded-2xl p-6 hover:border-emerald-500/30 hover:bg-accent transition-all duration-300 overflow-hidden target-glow-emerald"
     >
       {/* Subtle gradient on hover */}
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-emerald-600/5 via-transparent to-transparent rounded-2xl pointer-events-none" />
@@ -90,11 +90,11 @@ export function RepoCard({ item, onDelete }: { item: RepoItem; onDelete?: (id: s
           {/* Header row: Title + Actions */}
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col gap-1.5">
-              <h3 className="text-base font-semibold text-white leading-snug line-clamp-2">
+              <h3 className="text-base font-semibold text-foreground leading-snug line-clamp-2">
                 {item.title || "Untitled Repository"}
               </h3>
               {(item.repo_language || typeof item.repo_stars === "number") && (
-                <div className="flex items-center gap-3 text-xs text-zinc-500 font-medium">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground font-medium">
                   {item.repo_language && <span>{item.repo_language}</span>}
                   {typeof item.repo_stars === "number" && (
                     <span className="flex items-center gap-1 text-yellow-400/80">
@@ -128,13 +128,13 @@ export function RepoCard({ item, onDelete }: { item: RepoItem; onDelete?: (id: s
           </div>
 
           {/* Summary */}
-          <p className="text-sm text-zinc-400 leading-relaxed line-clamp-3">
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
             {item.summary || "No summary available."}
           </p>
 
           {/* Architecture summary */}
           {item.architecture_summary && (
-            <p className="text-xs text-zinc-500 leading-relaxed line-clamp-2 border-l-2 border-emerald-500/30 pl-3">
+            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 border-l-2 border-emerald-500/30 pl-3">
               {item.architecture_summary}
             </p>
           )}
@@ -145,7 +145,7 @@ export function RepoCard({ item, onDelete }: { item: RepoItem; onDelete?: (id: s
               {stack.slice(0, 8).map((tech) => (
                 <span
                   key={tech}
-                  className="text-[11px] px-2 py-0.5 rounded-md bg-white/[0.06] text-zinc-400 border border-white/[0.06]"
+                  className="text-[11px] px-2 py-0.5 rounded-md bg-accent/80 text-muted-foreground border border-border/60"
                 >
                   {tech}
                 </span>
@@ -166,7 +166,7 @@ export function RepoCard({ item, onDelete }: { item: RepoItem; onDelete?: (id: s
               ))}
             </div>
             {item.source_url && (
-              <ExternalLink size={13} className="text-zinc-500 group-hover:text-emerald-400 transition-colors flex-shrink-0" />
+              <ExternalLink size={13} className="text-muted-foreground group-hover:text-emerald-400 transition-colors flex-shrink-0" />
             )}
           </div>
         </div>

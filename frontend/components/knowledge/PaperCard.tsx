@@ -83,7 +83,7 @@ export function PaperCard({
   const attachment = item.attachments?.[0]
 
   return (
-    <div className="group relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 hover:border-indigo-500/30 hover:bg-white/[0.05] transition-all duration-300 overflow-hidden">
+    <div className="group relative bg-card border border-border rounded-2xl p-6 hover:border-indigo-500/30 hover:bg-accent transition-all duration-300 overflow-hidden">
       {/* Subtle gradient on hover */}
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-indigo-600/5 via-transparent to-transparent rounded-2xl pointer-events-none" />
 
@@ -97,7 +97,7 @@ export function PaperCard({
         <div className="flex-1 min-w-0 flex flex-col gap-3">
           {/* Header row: Title + Actions */}
           <div className="flex items-start justify-between gap-3">
-            <h3 className="text-base font-semibold text-white leading-snug line-clamp-2">
+            <h3 className="text-base font-semibold text-foreground leading-snug line-clamp-2">
               {item.title || "Untitled Research Paper"}
             </h3>
 
@@ -123,7 +123,7 @@ export function PaperCard({
           </div>
 
           {/* Author + reading time + pages */}
-          <div className="flex items-center gap-3 text-xs text-zinc-500 flex-wrap">
+          <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
             {item.author && (
               <span className="flex items-center gap-1.5">
                 <User size={11} />
@@ -147,7 +147,7 @@ export function PaperCard({
           {/* Summary */}
           {item.summary && (
             <p
-              className="text-sm text-zinc-400 leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all duration-300"
+              className="text-sm text-muted-foreground leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all duration-300"
             >
               {item.summary}
             </p>
@@ -189,7 +189,7 @@ export function PaperCard({
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-1.5 w-24 px-3 py-2 rounded-lg text-xs font-medium
-                         border border-white/[0.08] text-zinc-400
+                         border border-border text-muted-foreground
                          hover:text-indigo-300 hover:border-indigo-500/30 transition-colors"
             >
               <ExternalLink size={13} />

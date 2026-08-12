@@ -65,8 +65,8 @@ export function LinkedInCard({ item, onDelete }: { item: LinkedInItem; onDelete?
   const diff = item.difficulty || 0
 
   return (
-    <div className="group relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-5
-                    hover:border-violet-500/30 hover:bg-white/[0.05] transition-all duration-300
+    <div className="group relative bg-card border border-border rounded-2xl p-5
+                    hover:border-violet-500/30 hover:bg-accent transition-all duration-300
                     flex flex-col gap-3.5 overflow-hidden">
 
       {/* Subtle gradient on hover */}
@@ -101,7 +101,7 @@ export function LinkedInCard({ item, onDelete }: { item: LinkedInItem; onDelete?
                   download={pdfAtt.filename || "document.pdf"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-1.5 rounded-md border border-white/10 text-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-colors flex items-center justify-center"
+                  className="p-1.5 rounded-md border border-border text-muted-foreground hover:text-muted-foreground hover:bg-accent/50 transition-colors flex items-center justify-center"
                   title="Download Document"
                 >
                   <Download size={14} />
@@ -122,20 +122,20 @@ export function LinkedInCard({ item, onDelete }: { item: LinkedInItem; onDelete?
       </div>
 
       {/* Title */}
-      <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2 -mb-1">
+      <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-2 -mb-1">
         {item.title || "Untitled Post"}
       </h3>
 
       {/* Author */}
       {item.author && (
-        <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <User size={11} />
           <span className="truncate">{item.author}</span>
         </div>
       )}
 
       {/* Summary */}
-      <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all duration-300">
+      <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all duration-300">
         {item.summary}
       </p>
 
@@ -167,7 +167,7 @@ export function LinkedInCard({ item, onDelete }: { item: LinkedInItem; onDelete?
       )}
 
       {/* Footer actions */}
-      <div className="flex items-center gap-2 mt-auto pt-2 border-t border-white/[0.05]">
+      <div className="flex items-center gap-2 mt-auto pt-2 border-t border-border/50">
         {hasPdf && (
           <Link
             href={`/knowledge/linkedin/${item.id}/reader`}
@@ -185,8 +185,8 @@ export function LinkedInCard({ item, onDelete }: { item: LinkedInItem; onDelete?
             href={item.source_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1.5 text-xs text-zinc-500
-                       hover:text-zinc-300 rounded-lg py-2 px-3 border border-white/[0.06]
+            className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground
+                       hover:text-muted-foreground rounded-lg py-2 px-3 border border-border/60
                        hover:border-white/15 transition-all duration-200"
           >
             <ExternalLink size={11} />
@@ -194,7 +194,7 @@ export function LinkedInCard({ item, onDelete }: { item: LinkedInItem; onDelete?
           </a>
         )}
         {!hasPdf && !item.source_url && !!item.reading_time && (
-          <div className="flex items-center gap-1.5 text-xs text-zinc-600">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Clock size={11} />
             {item.reading_time} min read
           </div>

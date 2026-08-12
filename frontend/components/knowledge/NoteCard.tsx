@@ -69,8 +69,8 @@ export function NoteCard({ item, onDelete }: NoteCardProps) {
   return (
     <div
       id={`item-${item.id}`}
-      className="group relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-5
-                 hover:border-cyan-500/30 hover:bg-white/[0.05] transition-all duration-300
+      className="group relative bg-card border border-border rounded-2xl p-5
+                 hover:border-cyan-500/30 hover:bg-accent transition-all duration-300
                  flex flex-col gap-3.5 overflow-hidden target-glow-cyan"
     >
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300
@@ -82,7 +82,7 @@ export function NoteCard({ item, onDelete }: NoteCardProps) {
           <div className="w-7 h-7 rounded-lg bg-cyan-500/15 flex items-center justify-center flex-shrink-0">
             <Tag size={13} className="text-cyan-400" />
           </div>
-          <span className="text-xs text-zinc-500 font-medium">{item.knowledge_domain || "Note"}</span>
+          <span className="text-xs text-muted-foreground font-medium">{item.knowledge_domain || "Note"}</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -107,7 +107,7 @@ export function NoteCard({ item, onDelete }: NoteCardProps) {
       </div>
 
       {/* Title */}
-      <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2 -mb-1">
+      <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-2 -mb-1">
         {item.title || "Untitled Note"}
       </h3>
 
@@ -118,14 +118,14 @@ export function NoteCard({ item, onDelete }: NoteCardProps) {
             <textarea
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
-              className="w-full text-xs text-zinc-300 bg-white/[0.04] border border-white/[0.12] rounded-lg p-3 leading-relaxed resize-none focus:outline-none focus:border-cyan-500/50 min-h-[100px] font-mono"
+              className="w-full text-xs text-muted-foreground bg-accent/50 border border-border/80 rounded-lg p-3 leading-relaxed resize-none focus:outline-none focus:border-cyan-500/50 min-h-[100px] font-mono"
               rows={6}
               autoFocus
             />
             <div className="flex items-center gap-2 justify-end">
               <button
                 onClick={handleCancel}
-                className="flex items-center gap-1 px-2.5 py-1 text-xs text-zinc-400 hover:text-white border border-white/[0.08] rounded-lg transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground border border-border rounded-lg transition-colors"
               >
                 <X size={11} /> Cancel
               </button>
@@ -140,12 +140,12 @@ export function NoteCard({ item, onDelete }: NoteCardProps) {
           </div>
         ) : (
           <div className="group/raw relative">
-            <pre className="text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap font-mono bg-white/[0.02] rounded-lg p-3 border border-white/[0.05]">
+            <pre className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap font-mono bg-card/50 rounded-lg p-3 border border-border/50">
               {displayValue || item.summary}
             </pre>
             <button
               onClick={() => setEditing(true)}
-              className="absolute top-2 right-2 opacity-0 group-hover/raw:opacity-100 transition-opacity p-1 rounded-md bg-white/5 border border-white/10 text-zinc-500 hover:text-zinc-300"
+              className="absolute top-2 right-2 opacity-0 group-hover/raw:opacity-100 transition-opacity p-1 rounded-md bg-accent/50 border border-border text-muted-foreground hover:text-muted-foreground"
               title="Edit content"
             >
               <Edit2 size={11} />
@@ -156,9 +156,9 @@ export function NoteCard({ item, onDelete }: NoteCardProps) {
 
       {/* AI Insight */}
       {item.summary && item.summary !== item.raw_content && (
-        <div className="flex gap-2 pt-1 border-t border-white/[0.05]">
+        <div className="flex gap-2 pt-1 border-t border-border/50">
           <span className="text-[10px] font-semibold text-cyan-400/70 uppercase tracking-wider mt-0.5 flex-shrink-0">AI</span>
-          <p className="text-xs text-zinc-500 leading-relaxed italic">
+          <p className="text-xs text-muted-foreground leading-relaxed italic">
             {item.summary}
           </p>
         </div>
@@ -181,7 +181,7 @@ export function NoteCard({ item, onDelete }: NoteCardProps) {
 
       {/* Footer */}
       {!!item.reading_time && (
-        <div className="flex items-center gap-1.5 text-xs text-zinc-600 mt-auto pt-2 border-t border-white/[0.05]">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-auto pt-2 border-t border-border/50">
           <Clock size={11} />
           {item.reading_time} min read
         </div>

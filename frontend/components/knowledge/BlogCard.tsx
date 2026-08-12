@@ -45,8 +45,8 @@ export function BlogCard({ item, onDelete }: { item: BlogItem; onDelete?: (id: s
   return (
     <div
       id={`item-${item.id}`}
-      className="group relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-5
-                 hover:border-orange-500/30 hover:bg-white/[0.05] transition-all duration-300
+      className="group relative bg-card border border-border rounded-2xl p-5
+                 hover:border-orange-500/30 hover:bg-accent transition-all duration-300
                  flex flex-col gap-3.5 overflow-hidden"
     >
       {/* Subtle gradient on hover */}
@@ -59,7 +59,7 @@ export function BlogCard({ item, onDelete }: { item: BlogItem; onDelete?: (id: s
           <div className="w-7 h-7 rounded-lg bg-orange-500/15 flex items-center justify-center flex-shrink-0">
             <Globe size={13} className="text-orange-400" />
           </div>
-          <span className="text-xs text-zinc-500 font-medium truncate">{item.site || "Blog"}</span>
+          <span className="text-xs text-muted-foreground font-medium truncate">{item.site || "Blog"}</span>
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -85,13 +85,13 @@ export function BlogCard({ item, onDelete }: { item: BlogItem; onDelete?: (id: s
       </div>
 
       {/* Title */}
-      <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2 -mb-1">
+      <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-2 -mb-1">
         {item.title || "Untitled Blog Post"}
       </h3>
 
       {/* Author */}
       {item.author && (
-        <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <User size={11} />
           <span className="truncate">{item.author}</span>
         </div>
@@ -99,7 +99,7 @@ export function BlogCard({ item, onDelete }: { item: BlogItem; onDelete?: (id: s
 
       {/* Summary */}
       {item.summary && (
-        <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all duration-300">
+        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all duration-300">
           {item.summary}
         </p>
       )}
@@ -120,14 +120,14 @@ export function BlogCard({ item, onDelete }: { item: BlogItem; onDelete?: (id: s
       )}
 
       {/* Footer actions */}
-      <div className="flex items-center gap-2 mt-auto pt-2 border-t border-white/[0.05]">
+      <div className="flex items-center gap-2 mt-auto pt-2 border-t border-border/50">
         {item.source_url && (
           <a
             href={item.source_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1.5 text-xs text-zinc-500
-                       hover:text-zinc-300 rounded-lg py-2 px-3 border border-white/[0.06]
+            className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground
+                       hover:text-muted-foreground rounded-lg py-2 px-3 border border-border/60
                        hover:border-white/15 transition-all duration-200"
           >
             <ExternalLink size={11} />
@@ -135,7 +135,7 @@ export function BlogCard({ item, onDelete }: { item: BlogItem; onDelete?: (id: s
           </a>
         )}
         {!!item.reading_time_minutes && (
-          <div className={`flex items-center gap-1.5 text-xs text-zinc-600 ${item.source_url ? "ml-auto" : ""}`}>
+          <div className={`flex items-center gap-1.5 text-xs text-muted-foreground ${item.source_url ? "ml-auto" : ""}`}>
             <Clock size={11} />
             {item.reading_time_minutes} min read
           </div>

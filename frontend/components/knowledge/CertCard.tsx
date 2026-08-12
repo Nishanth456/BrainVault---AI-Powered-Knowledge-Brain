@@ -64,7 +64,7 @@ export function CertCard({ item, onDelete }: { item: CertItem; onDelete?: (id: s
   return (
     <div
       id={`item-${item.id}`}
-      className="group block relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 hover:border-yellow-500/30 hover:bg-white/[0.05] transition-all duration-300 overflow-hidden target-glow-yellow"
+      className="group block relative bg-card border border-border rounded-2xl p-6 hover:border-yellow-500/30 hover:bg-accent transition-all duration-300 overflow-hidden target-glow-yellow"
     >
       {/* Subtle gradient on hover */}
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-yellow-600/5 via-transparent to-transparent rounded-2xl pointer-events-none" />
@@ -79,9 +79,9 @@ export function CertCard({ item, onDelete }: { item: CertItem; onDelete?: (id: s
         <div className="flex-1 min-w-0 flex flex-col gap-3">
           {/* Header row */}
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-zinc-500 font-medium flex items-center gap-2">
+            <span className="text-xs text-muted-foreground font-medium flex items-center gap-2">
               {displaySource !== 'Certification' && (
-                <span className="bg-white/10 text-zinc-300 px-1.5 py-0.5 rounded uppercase tracking-wider text-[10px]">
+                <span className="bg-accent text-muted-foreground px-1.5 py-0.5 rounded uppercase tracking-wider text-[10px]">
                   {displaySource}
                 </span>
               )}
@@ -115,16 +115,16 @@ export function CertCard({ item, onDelete }: { item: CertItem; onDelete?: (id: s
             </h3>
           </a>
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-zinc-500 mt-1">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground mt-1">
             {item.issuer && (
-              <span className="flex items-center gap-1.5 font-medium text-zinc-300">
+              <span className="flex items-center gap-1.5 font-medium text-muted-foreground">
                 <ShieldCheck size={14} className="text-yellow-500" />
                 {item.issuer}
               </span>
             )}
             {item.issue_date && item.issue_date !== "Unknown" && (
               <span className="flex items-center gap-1.5">
-                <Calendar size={13} className="text-zinc-400" />
+                <Calendar size={13} className="text-muted-foreground" />
                 Issued: {item.issue_date}
               </span>
             )}
@@ -136,14 +136,14 @@ export function CertCard({ item, onDelete }: { item: CertItem; onDelete?: (id: s
             )}
           </div>
           
-          <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all duration-300 mt-1">
+          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all duration-300 mt-1">
             {item.summary}
           </p>
 
           {/* Exam Topics */}
           {item.exam_topics && item.exam_topics.length > 0 && (
             <div className="mt-3">
-              <h4 className="text-xs font-semibold text-zinc-300 mb-2 uppercase tracking-wider">Exam Topics</h4>
+              <h4 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Exam Topics</h4>
               <div className="flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-0.5">
                 {item.exam_topics.map((topic, i) => (
                   <span key={i} className="px-2 py-1 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 rounded-md text-[10px] font-medium">
