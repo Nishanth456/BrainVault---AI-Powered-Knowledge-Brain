@@ -14,55 +14,26 @@ For a deep dive into the technical stack, architecture, and flows, please refer 
 
 ## 🚀 Quick Start (Local Development)
 
-To run the full application locally you need the backend, frontend, task queue, and infrastructure services all running at the same time.
+The entire application is Dockerized. You can start the infrastructure, backend API, celery workers, and frontend with a single command.
 
-### 1. Start infrastructure services
+### 1. Start all services
 
-Make sure Docker / Docker Compose is installed, then run:
-
-```bash
-cd infrastructure
-docker-compose up -d
-```
-
-This starts PostgreSQL, Qdrant, MinIO, and Redis.
-
-### 2. Run the backend API
-
-Run Uvicorn from the **project root** so Python can resolve the `backend` package:
+Make sure Docker and Docker Compose are installed, then run from the **project root**:
 
 ```bash
-cd C:\Users\nisha\Projects\BrainVault
-# activate your virtual environment first, e.g. .venv\Scripts\activate on Windows
-# powershell - .\backend\venv\Scripts\Activate.ps1
-# cmd - .\backend\venv\Scripts\activate.bat  
-uvicorn backend.main:app --reload --port 8000
+docker-compose up -d --build
 ```
 
-> Do not run this from inside the `backend` folder — imports like `from backend.config import settings` require the parent directory to be on the Python path.
+This starts:
+- **Infrastructure:** PostgreSQL, Qdrant, MinIO, and Redis.
+- **Backend API:** Available at [http://localhost:8000/docs](http://localhost:8000/docs).
+- **Celery Worker:** Running in the background for async tasks.
+- **Frontend:** Available at [http://localhost:3000](http://localhost:3000).
 
-### 3. Run the Celery worker
+> **Hot Reloading:** The local `backend` and `frontend` directories are mounted into the containers. Any changes you make to the code will instantly reflect without needing to rebuild the images!
 
-In a **new terminal**:
-
-```bash
-cd C:\Users\nisha\Projects\BrainVault
-backend\venv\Scripts\celery.exe -A backend.tasks.ingestion worker --loglevel=info --pool=solo
-```
-
-> The worker loads `browser.py` once at startup. After any change to the LinkedIn scraper or agents, **restart the Celery worker** so the new code takes effect.
-
-### 4. Run the frontend
-
-In another **new terminal**:
-
-```bash
-cd frontend
-npm install   # only the first time
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+> After any change to the LinkedIn scraper or agents, **restart the Celery worker** container so the new code takes effect:
+> `docker-compose restart celery`
 
 ---
 
