@@ -1,14 +1,47 @@
 # BrainVault — AI-Powered Knowledge Brain
 
-Capture anything. Understand everything. Paste any URL, text, or file. BrainVault's AI agents automatically extract, classify, and organise it into your personal knowledge brain.
+> **Capture anything. Understand everything.** Paste any URL, text, or file. BrainVault's AI agents automatically extract, classify, and organize it into your personal knowledge brain.
+
+## 🧠 What is BrainVault?
+
+BrainVault is an **intelligent second brain**. Unlike standard note-taking tools, it doesn't just store information; it *understands* it. Using a multi-agent AI architecture, BrainVault automatically figures out what a piece of content is (LinkedIn post, research paper, YouTube video, etc.), classifies it into the right domain, scores its difficulty, and places it into a hierarchical knowledge tree.
+
+**You don't organize. The AI does.**
+
+---
+
+## 🏗️ Architecture & 7 Core Services
+
+BrainVault runs on a robust, asynchronous, and containerized architecture. It is fully Dockerized and consists of **7 Core Services** running simultaneously to process knowledge in the background without blocking the user interface:
+
+1. **Frontend (Next.js 16)**: The beautiful, premium user interface built with React 19, Tailwind CSS v4, and Framer Motion.
+2. **Backend API (FastAPI)**: The high-speed Python backend that serves data and triggers ingestion workflows.
+3. **Celery Worker**: The background processing engine that runs heavy AI extractions, web scraping, and LangGraph orchestrations.
+4. **PostgreSQL**: The primary relational database storing metadata, tags, and user profiles.
+5. **Qdrant**: The vector database storing text embeddings for Semantic Search and RAG (Chat).
+6. **Redis**: The message broker routing tasks between FastAPI and Celery.
+7. **MinIO**: The S3-compatible object storage for saving raw files, PDFs, and images.
+
+---
+
+## ⚙️ How It Works (The AI Pipeline)
+
+BrainVault uses **LangGraph** to orchestrate 9 specialized AI agent subgraphs. When you submit content:
+1. **Routing**: The Master Agent uses Groq (Llama-3) to detect the input type.
+2. **Extraction**: A specialized agent (e.g., GitHub Agent, YouTube Agent, PDF Agent) scrapes and parses the raw data.
+3. **Enrichment**: Gemini 2.5 Flash and Llama-3 summarize, tag, and assign a difficulty score (1-5).
+4. **Embedding**: Local Ollama (`nomic-embed-text`) generates vector embeddings.
+5. **Retrieval**: You can semantically search your entire database or chat with it via Retrieval-Augmented Generation (RAG).
+
+---
 
 ## 📚 Documentation
 
 For a deep dive into the technical stack, architecture, and flows, please refer to the detailed documentation:
 
-- **[Backend Architecture & Agents](documentation/backend.md)**: Complete breakdown of the LangGraph master orchestrator, the 9 agent subgraphs, and exhaustive details on LLM usage (Groq, Gemini, and local Ollama embeddings).
+- **[Backend Architecture & Agents](documentation/backend.md)**: Complete breakdown of the LangGraph master orchestrator, the 9 agent subgraphs, and exhaustive details on LLM usage.
 - **[Frontend Architecture](documentation/frontend.md)**: Details on the Next.js App Router stack, Tailwind CSS v4 styling, component-driven design, and premium aesthetic philosophy.
-- **[Infrastructure Flow](documentation/infrastructure.md)**: Explanation of the containerized core services (PostgreSQL, Redis, Qdrant, MinIO) and the end-to-end data ingestion pipeline.
+- **[Infrastructure Flow](documentation/infrastructure.md)**: Explanation of the containerized core services and the end-to-end data ingestion pipeline.
 
 ---
 
@@ -24,10 +57,8 @@ Make sure Docker and Docker Compose are installed, then run from the **project r
 docker-compose up -d --build
 ```
 
-This starts:
-- **Infrastructure:** PostgreSQL, Qdrant, MinIO, and Redis.
+This starts all 7 core services at once.
 - **Backend API:** Available at [http://localhost:8000/docs](http://localhost:8000/docs).
-- **Celery Worker:** Running in the background for async tasks.
 - **Frontend:** Available at [http://localhost:3000](http://localhost:3000).
 
 > **Hot Reloading:** The local `backend` and `frontend` directories are mounted into the containers. Any changes you make to the code will instantly reflect without needing to rebuild the images!
