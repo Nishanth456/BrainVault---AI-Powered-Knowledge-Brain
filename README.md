@@ -33,8 +33,40 @@ BrainVault uses **LangGraph** to orchestrate 9 specialized AI agent subgraphs. W
 4. **Embedding**: Local Ollama (`nomic-embed-text`) generates vector embeddings.
 5. **Retrieval**: You can semantically search your entire database or chat with it via Retrieval-Augmented Generation (RAG).
 
+## 🤖 Specialized AI Agents & Tools
+
+BrainVault runs **9 specialized AI agent subgraphs**, each an expert at a specific content type:
+
+| Agent | Handles | Key Outputs |
+|---|---|---|
+| **LinkedIn Agent** | LinkedIn posts + attachments + carousels + PDFs | Summary, topics, tags, difficulty, stitches carousels to PDFs |
+| **Blog Agent** | Medium, Dev.to, Hashnode, personal blogs | Article text, headings, key concepts, clean summary |
+| **Research Paper Agent** | ArXiv, PDF papers | Problem, method, architecture, dataset, results, limitations |
+| **PDF Agent** | Books, cheat sheets, slides, documentation | Section extraction, page summaries, tables, images |
+| **Plain Text Agent** | Pasted notes, code snippets, ChatGPT chats | Context inference, topic detection, auto-classification |
+| **GitHub Agent** | GitHub repositories | README, architecture, tech stack, use cases |
+| **YouTube Agent** | Single videos + full playlists | Transcript, chapter summaries, overall summary, key concepts |
+| **Course Agent** (Future) | Udemy, Coursera, fast.ai, DeepLearning.AI | Syllabus, module summaries, notes, progress tracking |
+| **Certification Agent** (Future) | Certificate links, exam prep material | Credential metadata, related resources, study notes |
+
 ---
 
+## 🗂️ Knowledge Spaces
+
+Each knowledge type lives in its own curated space within the platform:
+
+| Space | What's Inside |
+|---|---|
+| **LinkedIn Knowledge** | Cards with thumbnail, summary, difficulty, tags, attachments |
+| **Blog Library** | Article cards with image, author, reading time, key concepts |
+| **Research Papers** | Papers grouped by domain with method/results summaries |
+| **Interview Questions** | Auto-extracted Q&As grouped by domain |
+| **AI Notes** | Quick pasted text, auto-classified hierarchically |
+| **GitHub Repos** | Repo cards with architecture, tech stack, language, stars |
+| **PDF Library** | Books and documents with reader + AI summary |
+| **YouTube** | Saved videos and full playlists, transcribed and summarized |
+
+---
 ## 📚 Documentation
 
 For a deep dive into the technical stack, architecture, and flows, please refer to the detailed documentation:
