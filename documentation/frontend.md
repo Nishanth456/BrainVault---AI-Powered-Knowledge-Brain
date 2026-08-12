@@ -27,7 +27,7 @@ The frontend leverages cutting-edge web technologies to deliver performance and 
 1. **App Router Architecture:** The project uses the Next.js `app/` directory structure, allowing for nested layouts, error boundaries, and streamlined data fetching strategies.
 2. **Component-Driven Design:** The UI is heavily modularized into components (e.g., `QnACard`, `LinkedInReader`, `LinkedInCard`), ensuring maintainability and reusability across different knowledge domains.
 3. **Type Safety:** The entire codebase is strictly typed using **TypeScript** (`tsconfig.json`), preventing runtime errors and improving developer experience with comprehensive intellisense.
-4. **Theme Management:** Utilizes `next-themes` to support robust light/dark mode toggling, enhancing the premium aesthetic requirements.
+4. **Theme Management:** Utilizes `next-themes` alongside a robust CSS variable-based semantic color system (e.g., `bg-card`, `text-foreground`, `border-border`). This ensures seamless light/dark mode toggling and maintains a premium aesthetic without relying on hardcoded color values.
 5. **Linting & Code Quality:** Enforced through standard `eslint` configurations to maintain a clean and consistent codebase.
 
 ## Design Philosophy
