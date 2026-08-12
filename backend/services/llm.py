@@ -65,11 +65,11 @@ Respond with ONLY the category name, nothing else."""
 
 async def call_llm(
     prompt: str,
-    model: str = "groq/llama-3.3-70b-versatile",
+    model: str = "gemini/gemini-3.5-flash",
     system: str = "You are a helpful AI assistant.",
     temperature: float = 0.1,
     max_tokens: int = 1000,
-    fallback_model: str = "groq/llama-3.1-8b-instant",
+    fallback_model: str = "gemini/gemini-3.5-flash-lite",
     response_format: dict = None
 ) -> str:
     """

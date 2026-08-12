@@ -1,4 +1,5 @@
 import json
+import string
 from backend.services.qdrant import search_knowledge
 from backend.services.llm import stream_rag_response
 
@@ -49,20 +50,33 @@ async def answer_with_rag(query: str, session_id: str | None = None, filters: di
       {"type": "token", "data": "..."}
       {"type": "citations", "data": [...]}
     """
-    context, sources = await build_rag_context(query, limit=8, filters=filters)
+    clean_query = query.strip().lower().translate(str.maketrans('', '', string.punctuation))
+    greetings = {"hi", "hello", "hey", "greetings", "good morning", "good afternoon", "good evening", "howdy", "sup"}
+    bot_questions = {"who are you", "what are you", "what can you do", "help"}
 
-    is_single_doc = bool(filters and filters.get("item_id"))
+    if clean_query in greetings:
+        system = "You are BrainVault, a personal knowledge assistant. The user just greeted you."
+        prompt = f"User says: {query}\n\nRespond with a friendly, brief greeting and offer to help them search or summarize their knowledge base."
+        sources = []
+    elif clean_query in bot_questions:
+        system = "You are BrainVault, a personal knowledge assistant."
+        prompt = f"User asked: {query}\n\nExplain briefly that you help them search, summarize, and understand the contents of their personal knowledge base."
+        sources = []
+    else:
+        context, sources = await build_rag_context(query, limit=8, filters=filters)
     
-    system = (
-        "You are BrainVault, a personal knowledge assistant. "
-        "Answer the user's question using ONLY the provided sources from their knowledge base. "
-        "If the sources don't contain enough information, say so honestly. "
-        "Format your answer cleanly with markdown."
-    )
-    
-    if not is_single_doc:
-        system += " Cite sources inline using bracketed numbers like [1] or [2] when you use them."
-    prompt = f"Question: {query}\n\nSources:\n{context}\n\nAnswer:"
+        is_single_doc = bool(filters and filters.get("item_id"))
+        
+        system = (
+            "You are BrainVault, a personal knowledge assistant. "
+            "Answer the user's question using ONLY the provided sources from their knowledge base. "
+            "If the sources don't contain enough information, say so honestly. "
+            "Format your answer cleanly with markdown."
+        )
+        
+        if not is_single_doc:
+            system += " Cite sources inline using bracketed numbers like [1] or [2] when you use them."
+        prompt = f"Question: {query}\n\nSources:\n{context}\n\nAnswer:"
 
     full_answer = ""
     async for token in stream_rag_response(system, prompt):

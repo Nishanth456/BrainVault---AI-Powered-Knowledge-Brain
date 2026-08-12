@@ -280,7 +280,6 @@ Content:
 
     summary = await call_llm(
         prompt=prompt,
-        model="groq/llama-3.1-8b-instant",
         system="You are a technical knowledge extraction expert. Write clear, specific, one-sentence summaries.",
         max_tokens=100,
     )
@@ -312,7 +311,6 @@ Content:
 {context_text}
 
 Return ONLY valid JSON, nothing else.""",
-        model="groq/llama-3.1-8b-instant",
         system="You are a technical content analyst. Always return valid JSON.",
         max_tokens=250,
         temperature=0,
@@ -362,7 +360,6 @@ Author: {state.get("author", "unknown")}
 Has PDF attachment: {bool(state.get("downloaded_files"))}
 
 Return ONLY valid JSON.""",
-        model="groq/llama-3.3-70b-versatile",
         system="You are a knowledge management expert. Return only valid JSON.",
         max_tokens=200,
         temperature=0,
@@ -409,7 +406,6 @@ Text:
 {raw}
 
 Respond with ONLY the domain name, nothing else.""",
-        model="groq/llama-3.1-8b-instant",
         system="You are a knowledge domain classifier.",
         max_tokens=30,
         temperature=0,
@@ -451,7 +447,6 @@ Think step by step:
 - Is this introductory, practical, or research-level?
 
 Reply with ONLY the number (1, 2, 3, 4, or 5). Nothing else.""",
-        model="groq/llama-3.3-70b-versatile",
         system="You are a technical difficulty assessor for AI practitioners. Be calibrated — most practical tutorials are 2-3, most application guides are 3, only truly deep internals are 4-5.",
         max_tokens=10,
         temperature=0,
@@ -525,7 +520,6 @@ Concepts: {concepts}
 Tags: {tags}
 
 Return ONLY valid JSON.""",
-        model="groq/llama-3.3-70b-versatile",
         system="You are a knowledge taxonomy expert. You strictly adhere to the allowed list. Return only valid JSON.",
         max_tokens=150,
         temperature=0,
@@ -566,7 +560,6 @@ Summary: {summary}
 Content sample: {content[:2000]}
 
 Return ONLY valid JSON.""",
-        model="groq/llama-3.1-8b-instant",
         system="You are a classifier. Return only valid JSON.",
         max_tokens=50,
         temperature=0,
@@ -591,13 +584,15 @@ Return ONLY valid JSON.""",
     if is_qna and not has_attachment:
         steps.append("🤖 Extracting QnA and answering missing questions...")
         qna_prompt = f"""You are an expert Principal AI Engineer conducting a senior technical interview.
-The following text contains a list of multiple interview questions.
+The following text contains a list of multiple interview questions, often preceded by an interviewer situation or context.
 You MUST extract EVERY SINGLE QUESTION from the text (there are usually 10-20 questions). Do not stop after the first one!
 For each question:
-1. Extract the exact question into the "q" field.
-2. If the original text provides a highly detailed answer, use it.
-3. If an answer is missing, vague, or incomplete, YOU MUST write a high-quality, professional, and comprehensive answer yourself. 
+1. Extract any background scenario or setup text into the "context" field. If there is no background scenario in the original text, leave this field completely empty "". Do not invent a scenario.
+2. Extract the exact question into the "q" field.
+2. Extract the answer or explanation from the text into the "a" field. The "a" field MUST be a SINGLE JSON string, NOT an array. IF the source text is a single massive block without line breaks (e.g. from OCR extraction), YOU MUST reformat it by adding bullet points and double newlines (`\\n\\n`) between logical points so it is highly readable. Do NOT change the actual wording, but DO add markdown formatting (bullet points, bolding, and `\\n\\n` spacing). Do NOT leave the explanation as a single unformatted paragraph.
+3. Only if an answer is COMPLETELY MISSING from the original text, YOU MUST write a high-quality, professional, and comprehensive answer yourself. 
    - The answer should be tailored for a senior AI/ML interview.
+   - Use Markdown formatting (bullet points, bold text, line breaks) to make it highly readable.
    - Do NOT simply restate or repeat the question. 
    - Provide a direct, insightful, and technically accurate explanation.
 4. Map the question to EXACTLY ONE of the following AI topics:
@@ -612,7 +607,8 @@ For each question:
 Return ONLY a valid JSON array of objects:
 [
   {{
-    "q": "The question",
+    "context": "The background setup or scenario (or empty string if none)",
+    "q": "The actual question",
     "a": "The high-quality technical answer",
     "topic": "The exact topic from the list above",
     "keywords": ["multi-agent systems", "deadlock", "circular wait", "resource ordering", "agent coordination"]
@@ -624,9 +620,8 @@ Text:
 """
         qna_response = await call_llm(
             prompt=qna_prompt,
-            model="groq/llama-3.3-70b-versatile",
-            system="You are an expert AI Interviewer. Return only valid JSON.",
-            max_tokens=4000,
+            system="You are an expert interview question extractor. Return valid JSON only.",
+            max_tokens=8000,
             temperature=0,
         )
         try:
@@ -644,6 +639,10 @@ Text:
                 
             qna_pairs = json.loads(qna_clean)
             if isinstance(qna_pairs, list):
+                for pair in qna_pairs:
+                    context = pair.pop("context", "").strip()
+                    if context:
+                        pair["q"] = f"**Situation:** {context}\n\n**Question:** {pair['q']}"
                 steps.append(f"✅ Extracted {len(qna_pairs)} QnA pairs")
             else:
                 qna_pairs = []

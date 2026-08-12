@@ -397,7 +397,8 @@ async def detect_interview_qna(state: PlainTextState) -> dict:
     summary = state.get("summary", "")
 
     response = await call_llm(
-        prompt=f"""Determine if this content is primarily a list of Interview Questions and Answers (or interview preparation material).
+        prompt=f"""Determine if this content is an interview question and answer.
+If the text contains a question followed by an explanation, answer, or technical breakdown, you MUST classify it as true, even if it is just a single question.
 Return ONLY a JSON object:
 {{
   "is_interview_qna": true or false
@@ -430,24 +431,21 @@ Return ONLY valid JSON.""",
         qna_prompt = f"""You are an expert Principal AI Engineer conducting a senior technical interview.
 The following text contains interview questions and answers.
 Extract EVERY SINGLE QUESTION from the text. For each question:
-1. Put the exact question in the "q" field.
-2. Put the best available answer in the "a" field. If the answer is missing or weak, write a strong senior-level answer yourself.
-3. Map the question to EXACTLY ONE topic from this list:
+1. Extract any background scenario or setup text into the "context" field. If there is no background scenario in the original text, leave this field completely empty "". Do not invent a scenario.
+2. Extract the exact question into the "q" field.
+3. Extract the answer or explanation from the text into the "a" field. The "a" field MUST be a SINGLE JSON string, NOT an array. IF the source text is a single massive block without line breaks (e.g. from OCR extraction), YOU MUST reformat it by adding bullet points and double newlines (`\\n\\n`) between logical points so it is highly readable. Do NOT change the actual wording, but DO add markdown formatting (bullet points, bolding, and `\\n\\n` spacing). Do NOT leave the explanation as a single unformatted paragraph. If the answer is missing or weak, write a strong senior-level answer yourself using Markdown formatting.
+4. Map the question to EXACTLY ONE topic from this list:
 {chr(10).join([f"- {t}" for t in AI_CONCEPTS_LIST])}
-4. Generate 4-8 searchable keywords for this specific question. Think in layers:
-   a) DOMAIN/CONTEXT: broad topic area (e.g. "multi-agent systems", "LangGraph", "transformer architecture")
-   b) CONCEPT: the core subject (e.g. "deadlock", "attention mechanism", "backpropagation")
-   c) METHODS/TECHNIQUES: specific approaches mentioned (e.g. "circular wait prevention", "resource ordering")
-   d) SYNONYMS/VARIANTS: alternate search terms someone might use (e.g. "agent coordination", "livelock")
-   Include keywords from all relevant layers. Do NOT repeat the full question text as a keyword.
+5. Generate 4-8 searchable keywords for this specific question. Include keywords from all relevant layers. Do NOT repeat the full question text as a keyword.
 
 Return ONLY a valid JSON array of objects:
 [
   {{
-    "q": "The question",
+    "context": "The background setup or scenario (or empty string if none)",
+    "q": "The actual question",
     "a": "The high-quality technical answer",
     "topic": "The exact topic from the list above",
-    "keywords": ["multi-agent systems", "deadlock", "circular wait", "resource ordering", "agent coordination"]
+    "keywords": ["tag1", "tag2"]
   }}
 ]
 
@@ -467,6 +465,10 @@ Text:
             qna_clean = match.group(0) if match else qna_response.replace("```json", "").replace("```", "").strip()
             qna_pairs = json.loads(qna_clean)
             if isinstance(qna_pairs, list):
+                for pair in qna_pairs:
+                    context = pair.pop("context", "").strip()
+                    if context:
+                        pair["q"] = f"**Situation:** {context}\n\n**Question:** {pair['q']}"
                 steps.append(f"✅ Extracted {len(qna_pairs)} QnA pairs")
             else:
                 qna_pairs = []

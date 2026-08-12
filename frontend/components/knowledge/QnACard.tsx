@@ -4,6 +4,9 @@ import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
 import { DeleteWithUndo } from "@/components/knowledge/DeleteWithUndo"
 import { restoreItem } from "@/lib/api"
 import { ExportButton } from "@/components/knowledge/ExportButton"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
+import remarkBreaks from "remark-breaks"
 
 const difficultyLabel = ["", "Beginner", "Basic", "Intermediate", "Advanced", "Expert"]
 const difficultyColor = [
@@ -100,9 +103,11 @@ export function QnACard({ item, onDelete }: QnACardProps) {
                 )}
               </div>
             )}
-            <h3 className="text-sm font-semibold text-violet-100 leading-snug whitespace-pre-wrap">
-              {item.title}
-            </h3>
+            <div className="text-sm text-violet-100 leading-snug prose prose-sm prose-invert prose-p:my-1 prose-ul:my-1 max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+                {item.title ? item.title.replace(/\\n/g, '\n').replace(/\n+/g, '\n\n') : ''}
+              </ReactMarkdown>
+            </div>
           </div>
         </div>
       </div>
@@ -114,8 +119,10 @@ export function QnACard({ item, onDelete }: QnACardProps) {
             <MessageCircle size={16} />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm text-emerald-100/90 leading-relaxed whitespace-pre-wrap">
-              {item.summary}
+            <div className="text-sm text-emerald-100/90 leading-relaxed prose prose-sm prose-invert prose-p:my-1 prose-ul:my-1 max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+                {item.summary ? item.summary.replace(/\\n/g, '\n').replace(/\n+/g, '\n\n') : ''}
+              </ReactMarkdown>
             </div>
             {/* Tags */}
             {item.tags && item.tags.length > 0 && (

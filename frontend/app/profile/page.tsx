@@ -60,7 +60,7 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-center justify-between mb-4">
-      <div className="flex items-center gap-2 text-zinc-100 font-semibold text-sm uppercase tracking-wider">
+      <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100 font-semibold text-sm uppercase tracking-wider">
         <span className="text-violet-400">{icon}</span>
         {title}
       </div>
@@ -70,12 +70,12 @@ function SectionHeader({
             <button onClick={onSave} className="flex items-center gap-1 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-xs font-medium transition-colors">
               <Check size={12} /> Save
             </button>
-            <button onClick={onCancel} className="flex items-center gap-1 px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded-lg text-xs font-medium transition-colors">
+            <button onClick={onCancel} className="flex items-center gap-1 px-3 py-1.5 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-300 rounded-lg text-xs font-medium transition-colors">
               <X size={12} /> Cancel
             </button>
           </>
         ) : (
-          <button onClick={onEdit} className="flex items-center gap-1 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 rounded-lg text-xs font-medium transition-colors border border-white/10">
+          <button onClick={onEdit} className="flex items-center gap-1 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:text-zinc-200 rounded-lg text-xs font-medium transition-colors border border-zinc-200 dark:border-white/10">
             <Edit3 size={12} /> Edit
           </button>
         )}
@@ -178,11 +178,11 @@ export default function ProfilePage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
       {/* ── HEADER CARD ──────────────────────────────────────────────────────── */}
-      <div className="relative bg-gradient-to-br from-zinc-900 via-zinc-900 to-violet-950/30 rounded-2xl border border-white/10 p-6 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-white dark:from-zinc-900 via-white dark:via-zinc-900 to-violet-100/30 dark:to-violet-950/30 rounded-2xl border border-zinc-200 dark:border-white/10 p-6 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-violet-600/5 to-transparent pointer-events-none" />
         <div className="relative flex items-start gap-6">
           {/* Avatar */}
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center text-2xl font-bold text-white flex-shrink-0 shadow-lg shadow-violet-900/40">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center text-2xl font-bold text-white flex-shrink-0 shadow-lg shadow-violet-200 dark:shadow-violet-900/40">
             {initials}
           </div>
 
@@ -201,14 +201,14 @@ export default function ProfilePage() {
                   ].map(f => (
                     <input key={f.key} value={draft[f.key] || ""} placeholder={f.placeholder}
                       onChange={e => setDraft({ ...draft, [f.key]: e.target.value })}
-                      className="bg-zinc-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500 w-full" />
+                      className="bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500 w-full" />
                   ))}
                 </div>
                 <div className="flex gap-2 mt-2">
                   <button onClick={() => saveSection("personal")} className="flex items-center gap-1 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition-colors">
                     <Check size={14} /> Save
                   </button>
-                  <button onClick={cancelEdit} className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded-lg text-sm font-medium transition-colors">
+                  <button onClick={cancelEdit} className="px-4 py-2 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-300 rounded-lg text-sm font-medium transition-colors">
                     Cancel
                   </button>
                 </div>
@@ -217,23 +217,23 @@ export default function ProfilePage() {
               <>
                 <div className="flex items-start justify-between">
                   <div>
-                    <h1 className="text-2xl font-bold text-zinc-100">{profile.full_name}</h1>
+                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{profile.full_name}</h1>
                     <p className="text-violet-400 text-sm mt-0.5 font-medium">AI & ML Engineer</p>
                   </div>
                   <button onClick={() => startEdit("personal")}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 rounded-lg text-xs font-medium transition-colors border border-white/10">
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:text-zinc-200 rounded-lg text-xs font-medium transition-colors border border-zinc-200 dark:border-white/10">
                     <Edit3 size={12} /> Edit
                   </button>
                 </div>
-                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-zinc-400">
+                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-zinc-600 dark:text-zinc-400">
                   {profile.email && <a href={`mailto:${profile.email}`} className="flex items-center gap-1.5 hover:text-violet-400 transition-colors"><Mail size={13} />{profile.email}</a>}
                   {profile.phone && <span className="flex items-center gap-1.5"><Phone size={13} />{profile.phone}</span>}
                   {profile.location && <span className="flex items-center gap-1.5"><MapPin size={13} />{profile.location}</span>}
                 </div>
                 <div className="mt-2 flex flex-wrap gap-3">
-                  {profile.linkedin_url && <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-violet-400 transition-colors"><Link2 size={13} />LinkedIn</a>}
-                  {profile.github_url && <a href={profile.github_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-violet-400 transition-colors"><GitBranch size={13} />GitHub</a>}
-                  {profile.website_url && <a href={profile.website_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-violet-400 transition-colors"><Globe size={13} />Website</a>}
+                  {profile.linkedin_url && <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400 hover:text-violet-400 transition-colors"><Link2 size={13} />LinkedIn</a>}
+                  {profile.github_url && <a href={profile.github_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400 hover:text-violet-400 transition-colors"><GitBranch size={13} />GitHub</a>}
+                  {profile.website_url && <a href={profile.website_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400 hover:text-violet-400 transition-colors"><Globe size={13} />Website</a>}
                 </div>
               </>
             )}
@@ -244,7 +244,7 @@ export default function ProfilePage() {
       <div className="space-y-6">
 
           {/* Summary */}
-          <div className="bg-zinc-900 rounded-2xl border border-white/10 p-5">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 p-5">
             <SectionHeader title="Summary" icon={<User size={16} />}
               editing={editSection === "summary"}
               onEdit={() => startEdit("summary")}
@@ -252,14 +252,14 @@ export default function ProfilePage() {
               onCancel={cancelEdit} />
             {editSection === "summary" ? (
               <textarea rows={5} value={draft || ""} onChange={e => setDraft(e.target.value)}
-                className="w-full bg-zinc-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500 resize-none" />
+                className="w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500 resize-none" />
             ) : (
-              <p className="text-sm text-zinc-400 leading-relaxed">{profile.summary}</p>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{profile.summary}</p>
             )}
           </div>
 
           {/* Skills */}
-          <div className="bg-zinc-900 rounded-2xl border border-white/10 p-5">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 p-5">
             <SectionHeader title="Skills" icon={sectionIcon.skills}
               editing={editSection === "skills"}
               onEdit={() => startEdit("skills")}
@@ -285,7 +285,7 @@ export default function ProfilePage() {
                           e.currentTarget.value = ""
                         }
                       }}
-                      className="w-full bg-zinc-800 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500" />
+                      className="w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500" />
                   </div>
                 ))}
               </div>
@@ -304,16 +304,16 @@ export default function ProfilePage() {
           </div>
 
           {/* Resume */}
-          <div className="bg-zinc-900 rounded-2xl border border-white/10 p-5">
-            <div className="flex items-center gap-2 text-zinc-100 font-semibold text-sm uppercase tracking-wider mb-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 p-5">
+            <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100 font-semibold text-sm uppercase tracking-wider mb-4">
               <span className="text-violet-400"><FileText size={16} /></span>
               Resume
             </div>
             {profile.resume_path ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 bg-zinc-800 rounded-lg px-3 py-2 border border-white/10">
+                <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg px-3 py-2 border border-zinc-200 dark:border-white/10">
                   <FileText size={14} className="text-violet-400 flex-shrink-0" />
-                  <span className="text-xs text-zinc-300 truncate">{profile.resume_path.split("/").pop()}</span>
+                  <span className="text-xs text-zinc-700 dark:text-zinc-300 truncate">{profile.resume_path.split("/").pop()}</span>
                 </div>
                 <a href={`${API}/resume`} download
                   className="flex items-center gap-2 w-full justify-center px-3 py-2 bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 text-violet-300 rounded-lg text-xs font-medium transition-colors">
@@ -325,9 +325,9 @@ export default function ProfilePage() {
             )}
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="mt-3 border-2 border-dashed border-white/10 hover:border-violet-500/40 rounded-xl p-4 text-center cursor-pointer transition-colors group">
+              className="mt-3 border-2 border-dashed border-zinc-200 dark:border-white/10 hover:border-violet-500/40 rounded-xl p-4 text-center cursor-pointer transition-colors group">
               <Upload size={20} className="mx-auto text-zinc-500 group-hover:text-violet-400 transition-colors mb-1" />
-              <p className="text-xs text-zinc-500 group-hover:text-zinc-300 transition-colors">
+              <p className="text-xs text-zinc-500 group-hover:text-zinc-700 dark:text-zinc-300 transition-colors">
                 {profile.resume_path ? "Update resume" : "Upload resume"} (PDF or DOCX)
               </p>
             </div>
@@ -337,7 +337,7 @@ export default function ProfilePage() {
 
 
           {/* Education */}
-          <div className="bg-zinc-900 rounded-2xl border border-white/10 p-5">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 p-5">
             <SectionHeader title="Education" icon={sectionIcon.education}
               editing={editSection === "education"}
               onEdit={() => startEdit("education")}
@@ -346,13 +346,13 @@ export default function ProfilePage() {
             {editSection === "education" ? (
               <div className="space-y-4">
                 {(draft as Education[]).map((edu, i) => (
-                  <div key={i} className="bg-zinc-800 rounded-xl p-4 border border-white/10 space-y-2">
+                  <div key={i} className="bg-zinc-100 dark:bg-zinc-800 rounded-xl p-4 border border-zinc-200 dark:border-white/10 space-y-2">
                     {(["degree", "institution", "duration", "score"] as const).map(field => (
                       <input key={field} value={edu[field]} placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
                         onChange={e => {
                           const updated = [...draft]; updated[i] = { ...updated[i], [field]: e.target.value }; setDraft(updated)
                         }}
-                        className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500" />
+                        className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500" />
                     ))}
                     <button onClick={() => setDraft(draft.filter((_: unknown, j: number) => j !== i))}
                       className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors">
@@ -373,8 +373,8 @@ export default function ProfilePage() {
                       <GraduationCap size={16} className="text-violet-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-zinc-100">{edu.degree}</p>
-                      <p className="text-xs text-zinc-400 mt-0.5">{edu.institution}</p>
+                      <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{edu.degree}</p>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">{edu.institution}</p>
                       <div className="flex gap-3 mt-1">
                         <span className="text-xs text-zinc-500">{edu.duration}</span>
                         {edu.score && <span className="text-xs text-violet-400 font-medium">{edu.score}</span>}
@@ -387,7 +387,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Experience */}
-          <div className="bg-zinc-900 rounded-2xl border border-white/10 p-5">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 p-5">
             <SectionHeader title="Experience" icon={sectionIcon.experience}
               editing={editSection === "experience"}
               onEdit={() => startEdit("experience")}
@@ -396,17 +396,17 @@ export default function ProfilePage() {
             {editSection === "experience" ? (
               <div className="space-y-4">
                 {(draft as Experience[]).map((exp, i) => (
-                  <div key={i} className="bg-zinc-800 rounded-xl p-4 border border-white/10 space-y-2">
+                  <div key={i} className="bg-zinc-100 dark:bg-zinc-800 rounded-xl p-4 border border-zinc-200 dark:border-white/10 space-y-2">
                     {(["role", "company", "duration"] as const).map(field => (
                       <input key={field} value={exp[field]} placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
                         onChange={e => { const u = [...draft]; u[i] = { ...u[i], [field]: e.target.value }; setDraft(u) }}
-                        className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500" />
+                        className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500" />
                     ))}
                     <div>
                       <p className="text-[10px] text-zinc-500 mb-1 font-medium">Responsibilities (one per line)</p>
                       <textarea rows={4} value={exp.responsibilities.join("\n")}
                         onChange={e => { const u = [...draft]; u[i] = { ...u[i], responsibilities: e.target.value.split("\n") }; setDraft(u) }}
-                        className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-violet-500 resize-none" />
+                        className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-violet-500 resize-none" />
                     </div>
                     <button onClick={() => setDraft(draft.filter((_: unknown, j: number) => j !== i))}
                       className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors">
@@ -427,15 +427,15 @@ export default function ProfilePage() {
                       <Briefcase size={16} className="text-emerald-400" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-zinc-100">{exp.role}</p>
+                      <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{exp.role}</p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs text-zinc-400">{exp.company}</span>
+                        <span className="text-xs text-zinc-600 dark:text-zinc-400">{exp.company}</span>
                         <span className="text-zinc-700">·</span>
                         <span className="text-xs text-zinc-500">{exp.duration}</span>
                       </div>
                       <ul className="mt-2 space-y-1">
                         {exp.responsibilities.filter(Boolean).map((r, j) => (
-                          <li key={j} className="text-xs text-zinc-400 flex gap-2">
+                          <li key={j} className="text-xs text-zinc-600 dark:text-zinc-400 flex gap-2">
                             <span className="text-violet-500 mt-0.5 flex-shrink-0">•</span>{r}
                           </li>
                         ))}
@@ -453,7 +453,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Projects */}
-          <div className="bg-zinc-900 rounded-2xl border border-white/10 p-5">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 p-5">
             <SectionHeader title="Projects" icon={sectionIcon.projects}
               editing={editSection === "projects"}
               onEdit={() => startEdit("projects")}
@@ -462,15 +462,15 @@ export default function ProfilePage() {
             {editSection === "projects" ? (
               <div className="space-y-4">
                 {(draft as Project[]).map((proj, i) => (
-                  <div key={i} className="bg-zinc-800 rounded-xl p-4 border border-white/10 space-y-2">
+                  <div key={i} className="bg-zinc-100 dark:bg-zinc-800 rounded-xl p-4 border border-zinc-200 dark:border-white/10 space-y-2">
                     {(["title", "year"] as const).map(field => (
                       <input key={field} value={proj[field]} placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
                         onChange={e => { const u = [...draft]; u[i] = { ...u[i], [field]: e.target.value }; setDraft(u) }}
-                        className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500" />
+                        className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500" />
                     ))}
                     <textarea rows={2} value={proj.description} placeholder="Description"
                       onChange={e => { const u = [...draft]; u[i] = { ...u[i], description: e.target.value }; setDraft(u) }}
-                      className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500 resize-none" />
+                      className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500 resize-none" />
                     <button onClick={() => setDraft(draft.filter((_: unknown, j: number) => j !== i))}
                       className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors">
                       <Trash2 size={11} /> Remove
@@ -485,12 +485,12 @@ export default function ProfilePage() {
             ) : (
               <div className="space-y-4">
                 {profile.projects.map((proj, i) => (
-                  <div key={i} className="bg-zinc-800/50 rounded-xl p-4 border border-white/10 hover:border-violet-500/20 transition-colors">
+                  <div key={i} className="bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-4 border border-zinc-200 dark:border-white/10 hover:border-violet-500/20 transition-colors">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-semibold text-zinc-100">{proj.title}</p>
-                      <span className="text-[10px] text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full border border-white/10 flex-shrink-0">{proj.year}</span>
+                      <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{proj.title}</p>
+                      <span className="text-[10px] text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-200 dark:border-white/10 flex-shrink-0">{proj.year}</span>
                     </div>
-                    <p className="text-xs text-zinc-400 mt-1.5 leading-relaxed">{proj.description}</p>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1.5 leading-relaxed">{proj.description}</p>
                     {proj.tech?.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-3">
                         {proj.tech.map((t, j) => <Tag key={j} label={t} />)}
@@ -503,7 +503,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Certifications */}
-          <div className="bg-zinc-900 rounded-2xl border border-white/10 p-5">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 p-5">
             <SectionHeader title="Certifications" icon={sectionIcon.certifications}
               editing={editSection === "certifications"}
               onEdit={() => startEdit("certifications")}
@@ -512,11 +512,11 @@ export default function ProfilePage() {
             {editSection === "certifications" ? (
               <div className="space-y-3">
                 {(draft as Certification[]).map((cert, i) => (
-                  <div key={i} className="bg-zinc-800 rounded-xl p-4 border border-white/10 space-y-2">
+                  <div key={i} className="bg-zinc-100 dark:bg-zinc-800 rounded-xl p-4 border border-zinc-200 dark:border-white/10 space-y-2">
                     {(["name", "issuer", "year", "credential_url"] as const).map(field => (
                       <input key={field} value={(cert as Record<string, unknown>)[field] as string || ""} placeholder={field === "credential_url" ? "Credential URL (optional)" : field.charAt(0).toUpperCase() + field.slice(1)}
                         onChange={e => { const u = [...draft]; u[i] = { ...u[i], [field]: e.target.value }; setDraft(u) }}
-                        className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500" />
+                        className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500" />
                     ))}
                     <button onClick={() => setDraft(draft.filter((_: unknown, j: number) => j !== i))}
                       className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors">
@@ -532,14 +532,14 @@ export default function ProfilePage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {profile.certifications.map((cert, i) => (
-                  <div key={i} className="bg-zinc-800/50 rounded-xl p-4 border border-yellow-500/10 hover:border-yellow-500/20 transition-colors">
+                  <div key={i} className="bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-4 border border-yellow-500/10 hover:border-yellow-500/20 transition-colors">
                     <div className="flex items-start gap-3">
                       <div className="w-8 h-8 rounded-lg bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center flex-shrink-0">
                         <Award size={14} className="text-yellow-400" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-zinc-100 leading-snug">{cert.name}</p>
-                        <p className="text-[11px] text-zinc-400 mt-0.5">{cert.issuer}</p>
+                        <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 leading-snug">{cert.name}</p>
+                        <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5">{cert.issuer}</p>
                         <div className="flex items-center gap-2 mt-1.5">
                           <span className="text-[10px] text-zinc-500">{cert.year}</span>
                           {cert.badge && <span className="text-[10px] text-yellow-400 font-medium">{cert.badge}</span>}
@@ -559,7 +559,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Publications */}
-          <div className="bg-zinc-900 rounded-2xl border border-white/10 p-5">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 p-5">
             <SectionHeader title="Publications" icon={sectionIcon.publications}
               editing={editSection === "publications"}
               onEdit={() => startEdit("publications")}
@@ -568,9 +568,9 @@ export default function ProfilePage() {
             {editSection === "publications" ? (
               <div className="space-y-3">
                 {(draft as Publication[]).map((pub, i) => (
-                  <div key={i} className="bg-zinc-800 rounded-xl p-4 border border-white/10 space-y-2">
+                  <div key={i} className="bg-zinc-100 dark:bg-zinc-800 rounded-xl p-4 border border-zinc-200 dark:border-white/10 space-y-2">
                     <select value={pub.type} onChange={e => { const u = [...draft]; u[i] = { ...u[i], type: e.target.value }; setDraft(u) }}
-                      className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-zinc-100 focus:outline-none focus:border-violet-500">
+                      className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-violet-500">
                       {["Conference Paper", "Journal Paper", "Book Chapter", "Patent", "Workshop Paper"].map(t => (
                         <option key={t} value={t}>{t}</option>
                       ))}
@@ -578,7 +578,7 @@ export default function ProfilePage() {
                     {(["title", "venue", "year"] as const).map(field => (
                       <input key={field} value={pub[field] || ""} placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
                         onChange={e => { const u = [...draft]; u[i] = { ...u[i], [field]: e.target.value }; setDraft(u) }}
-                        className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500" />
+                        className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500" />
                     ))}
                     <button onClick={() => setDraft(draft.filter((_: unknown, j: number) => j !== i))}
                       className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors">
@@ -597,7 +597,7 @@ export default function ProfilePage() {
                   <div key={i} className="flex gap-3 items-start">
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 font-medium flex-shrink-0 mt-0.5">{pub.type}</span>
                     <div>
-                      <p className="text-xs text-zinc-200 leading-snug font-medium">{pub.title}</p>
+                      <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-snug font-medium">{pub.title}</p>
                       {(pub.venue || pub.year) && (
                         <p className="text-[11px] text-zinc-500 mt-0.5">{[pub.venue, pub.year].filter(Boolean).join(" · ")}</p>
                       )}
@@ -609,7 +609,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Achievements */}
-          <div className="bg-zinc-900 rounded-2xl border border-white/10 p-5">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 p-5">
             <SectionHeader title="Achievements" icon={sectionIcon.achievements}
               editing={editSection === "achievements"}
               onEdit={() => startEdit("achievements")}
@@ -620,7 +620,7 @@ export default function ProfilePage() {
                 {(draft as string[]).map((ach, i) => (
                   <div key={i} className="flex gap-2">
                     <input value={ach} onChange={e => { const u = [...draft]; u[i] = e.target.value; setDraft(u) }}
-                      className="flex-1 bg-zinc-800 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500" />
+                      className="flex-1 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500" />
                     <button onClick={() => setDraft(draft.filter((_: unknown, j: number) => j !== i))}
                       className="text-zinc-500 hover:text-red-400 transition-colors">
                       <Trash2 size={14} />
@@ -635,7 +635,7 @@ export default function ProfilePage() {
             ) : (
               <ul className="space-y-2">
                 {profile.achievements.map((ach, i) => (
-                  <li key={i} className="flex gap-2.5 text-sm text-zinc-400">
+                  <li key={i} className="flex gap-2.5 text-sm text-zinc-600 dark:text-zinc-400">
                     <span className="text-violet-500 flex-shrink-0 mt-0.5">🏆</span>{ach}
                   </li>
                 ))}
