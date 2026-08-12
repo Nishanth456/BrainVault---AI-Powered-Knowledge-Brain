@@ -67,6 +67,20 @@ Each knowledge type lives in its own curated space within the platform:
 | **YouTube** | Saved videos and full playlists, transcribed and summarized |
 
 ---
+
+## ✨ AI-Powered Features
+
+### 🔍 Semantic Search
+Search using natural language — not keywords. Ask "show everything about prompt engineering" and get results across LinkedIn posts, blogs, papers, notes, and interview questions via Qdrant vector search.
+
+### 💬 AI Chat (RAG over your Knowledge)
+Ask BrainVault anything. It searches your entire personal knowledge base and answers using only what *you* have stored — your own curated second brain.
+
+### 📚 Learning Mode
+Select any topic (e.g., "LLMs") and BrainVault generates a **personalized progressive learning path** from your own stored content — ordered from foundational to advanced.
+
+---
+
 ## 📚 Documentation
 
 For a deep dive into the technical stack, architecture, and flows, please refer to the detailed documentation:
