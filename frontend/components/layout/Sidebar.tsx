@@ -149,7 +149,7 @@ export function Sidebar() {
                 const Icon = item.icon
                 const isActive = item.href === "/"
                   ? pathname === "/"
-                  : pathname === item.href || pathname.startsWith(item.href + "/")
+                  : pathname === item.href || (pathname?.startsWith(item.href + "/") ?? false)
 
                 return (
                   <Link
@@ -159,7 +159,7 @@ export function Sidebar() {
                       "relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 group",
                       isActive
                         ? "text-sidebar-accent-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                        : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent"
                     )}
                   >
                     {isActive && (
