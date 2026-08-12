@@ -84,4 +84,4 @@ backend/*.session.pkl
 
 # ── Project Specific Folders ──────────────────────────────────────────────────
 phases/
-
+documentation/deployment_plan.md
