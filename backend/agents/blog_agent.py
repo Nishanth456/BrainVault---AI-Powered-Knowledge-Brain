@@ -171,14 +171,16 @@ Return ONLY valid JSON.""",
 # ── Node 3: Summarize article ─────────────────────────────────────────────────
 
 async def summarize_blog(state: BlogState) -> dict:
-    """Create a 3-5 sentence summary of the article."""
+    """Create a 2-3 sentence summary of the article."""
     text = (state.get("article_text") or "")[:8000]
 
     summary = await call_llm(
-        prompt=f"""Summarize this blog article in 3-5 short sentenced paragraph.
-Focus on the key technical insight or learning. Be specific and concise.
+        prompt=f"""Summarize this blog article in exactly 2 to 3 very short, easy-to-read sentences.
+Focus on the core idea or key takeaway. Use simple language and keep the total summary under 40 words.
 
 CRITICAL RULES:
+- Maximum 3 sentences.
+- Maximum 40 words.
 - Output ONLY the summary sentences.
 - Do NOT start with "Here is a summary", "Here is a summary of", "In summary", "This article discusses", or any similar meta-text.
 - Do NOT add an introduction, conclusion, or explanation.
@@ -188,7 +190,7 @@ Article:
 {text}""",
         model="groq/llama-3.1-8b-instant",
         system="You are a technical knowledge extraction expert. Return only the requested summary with no meta commentary.",
-        max_tokens=300,
+        max_tokens=150,
     )
 
     # Strip common LLM meta-prefaces as a safety net
