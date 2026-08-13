@@ -102,23 +102,29 @@ Make sure Docker and Docker Compose are installed, then run from the **project r
 **For the first time (or when dependencies change):**
 This initial build may take a few minutes as it downloads base images and installs dependencies.
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 **For subsequent runs:**
 Since Docker caches the build layers, you don't need to rebuild every time. Just run:
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 This starts all 7 core services at once.
 - **Backend API:** Available at [http://localhost:8000/docs](http://localhost:8000/docs).
 - **Frontend:** Available at [http://localhost:3000](http://localhost:3000).
 
-> **Hot Reloading:** The local `backend` and `frontend` directories are mounted into the containers. Any changes you make to the code will instantly reflect without needing to rebuild the images!
+> **Backend Hot Reloading:** The `backend` directory is mounted into the backend and celery containers. Any backend code changes will reflect instantly without rebuilding.
+
+> **Frontend Changes:** The frontend runs as a production build inside Docker. After making frontend code changes, rebuild the frontend image:
+> ```bash
+> docker compose build frontend
+> docker compose up frontend -d
+> ```
 
 > After any change to the LinkedIn scraper or agents, **restart the Celery worker** container so the new code takes effect:
-> `docker-compose restart celery`
+> `docker compose restart celery`
 
 ---
 
