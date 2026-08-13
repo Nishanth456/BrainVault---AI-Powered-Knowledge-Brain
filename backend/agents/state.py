@@ -39,6 +39,26 @@ class BrainVaultState(TypedDict):
     transcript: Optional[list]
     playlist_id: Optional[str]
 
+    # GitHub-specific fields
+    repo_stars: Optional[int]
+    repo_language: Optional[str]
+    tech_stack: Optional[list[str]]
+    architecture_summary: Optional[str]
+
+    # Course-specific fields
+    instructor: Optional[str]
+    rating: Optional[float]
+    price: Optional[str]
+    syllabus: Optional[str]
+    prerequisites: Optional[list[str]]
+
+    # Certification-specific fields
+    issuer: Optional[str]
+    issue_date: Optional[str]
+    valid_until: Optional[str]
+    cert_id: Optional[str]
+    exam_topics: Optional[list[str]]
+
     # Storage references
     knowledge_item_id: Optional[str]    # PostgreSQL UUID
     embedding_id: Optional[str]         # Qdrant point ID
@@ -47,3 +67,4 @@ class BrainVaultState(TypedDict):
     # Status / Streaming
     agent_steps: Annotated[list[str], operator.add]  # Streamed to frontend
     error: Optional[str]
+
