@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState, Suspense } from "react"
+import { useEffect, useState, useRef, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { FilterBar } from "./FilterBar"
 import { SortDropdown } from "./SortDropdown"
@@ -55,25 +55,31 @@ export function KnowledgePageShellInner<T>({
     setSort(params.get("sort") || "newest")
   }, [searchParams])
 
+  // Stabilize fetchItems via ref so it never appears as a changed dependency.
+  // Without this, every parent that passes an inline arrow function causes an
+  // infinite loop: new ref → effect fires → API call → re-render → new ref → …
+  const fetchItemsRef = useRef(fetchItems)
+  useEffect(() => { fetchItemsRef.current = fetchItems }, [fetchItems])
+
   useEffect(() => {
     setLoading(true)
-    fetchItems(filters, sort)
+    fetchItemsRef.current(filters, sort)
       .then(setItems)
       .catch(console.error)
       .finally(() => setLoading(false))
-  }, [filters, sort, fetchItems])
+  }, [filters, sort]) // fetchItems intentionally excluded — stabilized via ref above
 
   useEffect(() => {
     const handleRestoreEvent = () => {
       setLoading(true)
-      fetchItems(filters, sort)
+      fetchItemsRef.current(filters, sort)
         .then(setItems)
         .catch(console.error)
         .finally(() => setLoading(false))
     }
     window.addEventListener("knowledge-item-restored", handleRestoreEvent)
     return () => window.removeEventListener("knowledge-item-restored", handleRestoreEvent)
-  }, [filters, sort, fetchItems])
+  }, [filters, sort]) // fetchItems via ref, not dependency
 
   const updateFilters = (next: Record<string, string>) => {
     const params = new URLSearchParams()
