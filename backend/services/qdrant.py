@@ -203,10 +203,16 @@ async def search_knowledge(
     # ── Merge and deduplicate, boosting keyword hits ─────────────────────────
     seen = set()
     merged = []
+    
+    # If we are searching within a specific item, we want multiple chunks from it,
+    # so we deduplicate by chunk/embedding ID. Otherwise, we deduplicate by document ID.
+    dedup_by_item = not (filters and filters.get("item_id"))
+
     for r in keyword_results:
         kid = str(r.payload.get("knowledge_item_id") or r.id)
-        if kid not in seen:
-            seen.add(kid)
+        dedup_key = kid if dedup_by_item else str(r.id)
+        if dedup_key not in seen:
+            seen.add(dedup_key)
             merged.append({
                 "id": kid,
                 "score": 1.0 + float(r.score),  # keyword hits outrank pure semantic
@@ -230,13 +236,14 @@ async def search_knowledge(
     semantic_added = 0
     for r in vector_results:
         kid = str(r.payload.get("knowledge_item_id") or r.id)
-        if kid not in seen:
+        dedup_key = kid if dedup_by_item else str(r.id)
+        if dedup_key not in seen:
             score = float(r.score)
             if score < semantic_threshold:
                 continue
             if semantic_added >= semantic_limit:
                 continue
-            seen.add(kid)
+            seen.add(dedup_key)
             semantic_added += 1
             merged.append({
                 "id": kid,
