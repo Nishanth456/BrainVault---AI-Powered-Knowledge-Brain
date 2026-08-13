@@ -1,7 +1,7 @@
 "use client"
 import { KnowledgePageShell } from "@/components/knowledge/KnowledgePageShell"
 import { QnACard, type QnAItem } from "@/components/knowledge/QnACard"
-import { LinkedInCard } from "@/components/knowledge/LinkedInCard"
+import { LinkedInCard, type LinkedInItem } from "@/components/knowledge/LinkedInCard"
 import { MessageSquare } from "lucide-react"
 
 export default function InterviewsPage() {
@@ -30,7 +30,7 @@ export default function InterviewsPage() {
       fetchItems={fetchItems}
       renderCard={(item, onDelete) => {
         if (item.attachments && item.attachments.length > 0) {
-          return <LinkedInCard key={item.id} item={item} onDelete={onDelete} />
+          return <LinkedInCard key={item.id} item={item as unknown as LinkedInItem} onDelete={onDelete} />
         }
         return (
           <div key={item.id} className="col-span-1 md:col-span-2 lg:col-span-3">

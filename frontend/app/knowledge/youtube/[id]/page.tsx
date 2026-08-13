@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/EmptyState"
 import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
-import { ExportButton } from "@/components/knowledge/ExportButton"
+
 import {
   ArrowLeft,
   Clock,
@@ -346,7 +346,7 @@ export default function VideoDetailPage() {
               </a>
             )}
             <BookmarkButton itemId={item.id} initial={item.is_bookmarked || false} />
-            <ExportButton itemId={item.id} title={item.title || "Export"} />
+
           </div>
         </div>
 
