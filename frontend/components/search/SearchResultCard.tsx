@@ -5,6 +5,7 @@ import { NoteCard } from "@/components/knowledge/NoteCard"
 import { PaperCard } from "@/components/knowledge/PaperCard"
 import { QnACard } from "@/components/knowledge/QnACard"
 import type { SearchResultItem } from "@/lib/api"
+import { useRouter } from "next/navigation"
 
 interface SearchResultCardProps {
   item: SearchResultItem
@@ -12,6 +13,8 @@ interface SearchResultCardProps {
 }
 
 export function SearchResultCard({ item, onDelete }: SearchResultCardProps) {
+  const router = useRouter()
+  
   switch (item.type) {
     case "linkedin":
       return (
@@ -22,6 +25,7 @@ export function SearchResultCard({ item, onDelete }: SearchResultCardProps) {
             attachments: item.attachments,
           }}
           onDelete={onDelete}
+          onRead={(id) => router.push(`/knowledge/linkedin/${id}/reader`)}
         />
       )
     case "blog":
@@ -47,6 +51,7 @@ export function SearchResultCard({ item, onDelete }: SearchResultCardProps) {
             key_concepts: item.key_concepts,
           }}
           onDelete={onDelete}
+          onRead={(id) => router.push(`/knowledge/papers/${id}/reader`)}
         />
       )
     case "note":
@@ -75,3 +80,4 @@ export function SearchResultCard({ item, onDelete }: SearchResultCardProps) {
       )
   }
 }
+
