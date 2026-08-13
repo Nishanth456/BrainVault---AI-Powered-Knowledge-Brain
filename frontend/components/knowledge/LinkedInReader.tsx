@@ -1,19 +1,22 @@
 "use client"
 import { SourceCitationCard } from "@/components/chat/SourceCitationCard"
-import { AnimatedBackground } from "@/components/ui/AnimatedBackground"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import { sendChatMessage, type SearchResultItem } from "@/lib/api"
 import {
-    ArrowLeft,
-        BookOpen,
-    ExternalLink,
-    FileText,
-    Loader2,
-    MessageSquare,
-    Send,
-    ZoomIn, ZoomOut
+  ArrowLeft,
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  FileText,
+  Loader2,
+  MessageSquare,
+  Send,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react"
 import { MarkdownRenderer } from "@/components/chat/MarkdownRenderer"
 import { StreamingMessage } from "@/components/chat/StreamingMessage"
@@ -21,12 +24,13 @@ import Link from "next/link"
 import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
 import { useCallback, useEffect, useState, useRef } from "react"
 import { Document, Page, pdfjs } from "react-pdf"
-import "react-pdf/dist/esm/Page/AnnotationLayer.css"
-import "react-pdf/dist/esm/Page/TextLayer.css"
+import "react-pdf/dist/Page/AnnotationLayer.css"
+import "react-pdf/dist/Page/TextLayer.css"
 
-// Use the CDN worker so we don't need to copy files manually
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`
-
+// Guard against SSR — pdfjs accesses browser globals at module evaluation time
+if (typeof window !== "undefined") {
+  pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+}
 
 interface LinkedInReaderProps {
   item: {
@@ -42,20 +46,24 @@ interface LinkedInReaderProps {
     structured?: Record<string, string>
     is_bookmarked?: boolean
   }
-  pdfMinioPaths: string[]  // e.g. ["brainvault-files/linkedin_abc.pdf"]
+  pdfMinioPaths: string[] // e.g. ["brainvault-files/linkedin_abc.pdf"]
 }
 
 export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
-  const [numPages, setNumPages]       = useState<number>(0)
-  const [pageNumber, setPageNumber]   = useState<number>(1)
-  const [pageInput, setPageInput]     = useState<string>("1")
-  const [scale, setScale]             = useState<number>(1.0)
+  const [numPages, setNumPages] = useState<number>(0)
+  const [pageNumber, setPageNumber] = useState<number>(1)
+  const [pageInput, setPageInput] = useState<string>("1")
+  const [scale, setScale] = useState<number>(1.0)
   const [aiPanelOpen, setAiPanelOpen] = useState<boolean>(false)
   const [containerHeight, setContainerHeight] = useState<number>(600)
-  const [aiMessages, setAiMessages]   = useState<{ id?: string; role: "user" | "assistant"; content: string; citations?: SearchResultItem[] }[]>([])
-  const [aiInput, setAiInput]         = useState<string>("")
+  const [aiMessages, setAiMessages] = useState<
+    { id?: string; role: "user" | "assistant"; content: string; citations?: SearchResultItem[] }[]
+  >([])
+  const [aiInput, setAiInput] = useState<string>("")
   const [aiStreaming, setAiStreaming] = useState<boolean>(false)
   const [aiSessionId, setAiSessionId] = useState<string | undefined>(undefined)
+
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // Support multiple PDFs — show first by default
   const [currentPdfIndex] = useState(0)
@@ -68,21 +76,132 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
 
   // Measure container height for horizontal PDF scale
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+    }
     const handleResize = () => {
       const pdfPanel = document.getElementById("pdf-canvas-container")
       if (pdfPanel) {
-        setContainerHeight(Math.max(pdfPanel.clientHeight - 64, 400)) // 64px for padding
+        // Reserve space for top bar, padding and page indicator pill
+        setContainerHeight(Math.max(pdfPanel.clientHeight - 90, 360))
       }
     }
     handleResize()
-    setTimeout(handleResize, 100)
+    const timer = setTimeout(handleResize, 150)
     window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
+    return () => {
+      window.removeEventListener("resize", handleResize)
+      clearTimeout(timer)
+    }
   }, [])
 
   const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
     setNumPages(numPages)
   }, [])
+
+  // Smooth scroll to a specific page
+  const scrollToPage = useCallback(
+    (page: number, smooth: boolean = true) => {
+      const clamped = Math.max(1, Math.min(numPages || 1, page))
+      setPageNumber(clamped)
+      setPageInput(String(clamped))
+
+      const targetEl = document.getElementById(`pdf-page-${clamped}`)
+      if (targetEl) {
+        targetEl.scrollIntoView({
+          behavior: smooth ? "smooth" : "auto",
+          inline: "center",
+          block: "nearest",
+        })
+      }
+    },
+    [numPages]
+  )
+
+  // Mouse wheel horizontal scroll listener (converts vertical wheel to horizontal carousel scroll)
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const handleWheel = (e: WheelEvent) => {
+      // If user is scrolling with mouse wheel (dominant deltaY)
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        e.preventDefault()
+        container.scrollLeft += e.deltaY * 1.2
+      }
+    }
+
+    container.addEventListener("wheel", handleWheel, { passive: false })
+    return () => {
+      container.removeEventListener("wheel", handleWheel)
+    }
+  }, [])
+
+  // Active page detection as user scrolls horizontally
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container || numPages === 0) return
+
+    let animationFrameId: number
+
+    const handleScroll = () => {
+      const containerRect = container.getBoundingClientRect()
+      const containerCenter = containerRect.left + containerRect.width / 2
+
+      let closestPage = 1
+      let minDistance = Infinity
+
+      for (let i = 1; i <= numPages; i++) {
+        const el = document.getElementById(`pdf-page-${i}`)
+        if (el) {
+          const rect = el.getBoundingClientRect()
+          const pageCenter = rect.left + rect.width / 2
+          const distance = Math.abs(pageCenter - containerCenter)
+          if (distance < minDistance) {
+            minDistance = distance
+            closestPage = i
+          }
+        }
+      }
+
+      setPageNumber(closestPage)
+      setPageInput(String(closestPage))
+    }
+
+    const onScroll = () => {
+      cancelAnimationFrame(animationFrameId)
+      animationFrameId = requestAnimationFrame(handleScroll)
+    }
+
+    container.addEventListener("scroll", onScroll, { passive: true })
+    return () => {
+      container.removeEventListener("scroll", onScroll)
+      cancelAnimationFrame(animationFrameId)
+    }
+  }, [numPages])
+
+  // Keyboard navigation (Left / Right arrow keys)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA"
+      ) {
+        return
+      }
+
+      if (e.key === "ArrowLeft") {
+        e.preventDefault()
+        scrollToPage(pageNumber - 1)
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault()
+        scrollToPage(pageNumber + 1)
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [pageNumber, numPages, scrollToPage])
 
   function handleAiSend() {
     if (!aiInput.trim() || aiStreaming) return
@@ -101,7 +220,10 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
           answer += token
           setAiMessages((prev) => {
             const withoutStreaming = prev.filter((m) => m.id !== "streaming")
-            return [...withoutStreaming, { id: "streaming", role: "assistant", content: answer, citations: [] }]
+            return [
+              ...withoutStreaming,
+              { id: "streaming", role: "assistant", content: answer, citations: [] },
+            ]
           })
         },
         onCitations: (cits: SearchResultItem[]) => {
@@ -134,7 +256,11 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
         <FileText size={40} className="text-zinc-700" />
         <p className="text-sm">No PDF attachment found for this item.</p>
         <Link href="/knowledge/linkedin">
-          <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:text-foreground">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-border text-muted-foreground hover:text-foreground"
+          >
             <ArrowLeft size={14} className="mr-2" />
             Back to LinkedIn
           </Button>
@@ -144,51 +270,95 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
   }
 
   return (
-    <div className="flex h-screen bg-transparent text-foreground overflow-hidden relative">
-      <AnimatedBackground />
-
+    <div className="flex h-screen bg-[#09090D] text-foreground overflow-hidden relative select-none">
       {/* ── Left: PDF Viewer ──────────────────────────────────────── */}
-      <div id="pdf-panel" className="flex-1 flex flex-col overflow-hidden min-w-0">
-
+      <div id="pdf-panel" className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
         {/* Top navigation bar */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-border/60
-                        bg-[#0D0D14] flex-shrink-0 flex-wrap gap-y-2">
-
+        <div
+          className="flex items-center gap-2 px-4 py-2.5 border-b border-border/60
+                        bg-[#0D0D14]/90 backdrop-blur-md flex-shrink-0 w-full overflow-x-auto no-scrollbar relative z-30"
+        >
           {/* Back button */}
           <Link href="/knowledge/linkedin">
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground p-2 h-8 w-8">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground p-2 h-8 w-8 rounded-lg"
+            >
               <ArrowLeft size={15} />
             </Button>
           </Link>
 
           {/* Title + tree */}
           <div className="flex-1 min-w-0 hidden sm:block">
-            <p className="text-sm font-medium text-foreground truncate leading-tight">{item.title}</p>
+            <p className="text-sm font-medium text-foreground truncate leading-tight">
+              {item.title}
+            </p>
             {item.knowledge_tree && (
               <p className="text-[11px] text-muted-foreground truncate">{item.knowledge_tree}</p>
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 px-3">
-             <span className="text-xs font-medium text-muted-foreground">{numPages} Pages</span>
+          {/* Page navigation */}
+          <div className="flex items-center gap-1.5 px-3 bg-card/60 border border-border/50 rounded-lg py-0.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => scrollToPage(pageNumber - 1)}
+              disabled={pageNumber <= 1}
+              className="text-muted-foreground hover:text-foreground p-1 h-7 w-7 disabled:opacity-30 rounded-md"
+              title="Previous page (Left Arrow)"
+            >
+              <ChevronLeft size={14} />
+            </Button>
+            <div className="flex items-center gap-1">
+              <Input
+                value={pageInput}
+                onChange={(e) => setPageInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    const parsed = parseInt(pageInput, 10)
+                    if (!isNaN(parsed)) scrollToPage(parsed)
+                  }
+                }}
+                className="w-11 h-6 text-xs text-center bg-zinc-900/80 border-border/70 text-foreground p-0 rounded"
+              />
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                / {numPages || 1}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => scrollToPage(pageNumber + 1)}
+              disabled={pageNumber >= (numPages || 1)}
+              className="text-muted-foreground hover:text-foreground p-1 h-7 w-7 disabled:opacity-30 rounded-md"
+              title="Next page (Right Arrow)"
+            >
+              <ChevronRight size={14} />
+            </Button>
           </div>
 
           {/* Zoom controls */}
           <div className="flex items-center gap-1 border-l border-border/60 pl-2">
             <Button
-              variant="ghost" size="sm"
-              onClick={() => setScale(s => Math.max(0.5, +(s - 0.15).toFixed(2)))}
-              className="text-muted-foreground hover:text-foreground p-1.5 h-8 w-8"
+              variant="ghost"
+              size="sm"
+              onClick={() => setScale((s) => Math.max(0.5, +(s - 0.15).toFixed(2)))}
+              className="text-muted-foreground hover:text-foreground p-1.5 h-8 w-8 rounded-lg"
+              title="Zoom out"
             >
               <ZoomOut size={13} />
             </Button>
-            <span className="text-xs text-muted-foreground w-9 text-center select-none">
+            <span className="text-xs text-muted-foreground w-10 text-center select-none font-mono">
               {Math.round(scale * 100)}%
             </span>
             <Button
-              variant="ghost" size="sm"
-              onClick={() => setScale(s => Math.min(3.0, +(s + 0.15).toFixed(2)))}
-              className="text-muted-foreground hover:text-foreground p-1.5 h-8 w-8"
+              variant="ghost"
+              size="sm"
+              onClick={() => setScale((s) => Math.min(2.5, +(s + 0.15).toFixed(2)))}
+              className="text-muted-foreground hover:text-foreground p-1.5 h-8 w-8 rounded-lg"
+              title="Zoom in"
             >
               <ZoomIn size={13} />
             </Button>
@@ -197,9 +367,10 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
           {/* Action buttons */}
           <div className="flex items-center gap-1.5 border-l border-border/60 pl-2">
             <Button
-              variant="outline" size="sm"
-              onClick={() => setAiPanelOpen(v => !v)}
-              className={`h-8 text-xs border-border gap-1.5 transition-colors ${
+              variant="outline"
+              size="sm"
+              onClick={() => setAiPanelOpen((v) => !v)}
+              className={`h-8 text-xs border-border gap-1.5 transition-colors rounded-lg ${
                 aiPanelOpen
                   ? "bg-violet-600/20 text-violet-300 border-violet-500/30"
                   : "text-muted-foreground hover:text-white bg-transparent"
@@ -212,8 +383,9 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
             {item.source_url && (
               <a href={item.source_url} target="_blank" rel="noopener noreferrer">
                 <Button
-                  variant="ghost" size="sm"
-                  className="text-muted-foreground hover:text-foreground p-1.5 h-8 w-8"
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground p-1.5 h-8 w-8 rounded-lg"
                   title="Open original post"
                 >
                   <ExternalLink size={13} />
@@ -223,47 +395,106 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
           </div>
         </div>
 
-        {/* PDF canvas */}
-        <div id="pdf-canvas-container" className="flex-1 overflow-x-auto overflow-y-hidden bg-transparent z-10 relative">
+        {/* Floating Left Carousel Navigation Button */}
+        {numPages > 1 && pageNumber > 1 && (
+          <button
+            onClick={() => scrollToPage(pageNumber - 1)}
+            className="absolute left-6 top-1/2 -translate-y-1/2 z-40 p-3 rounded-full bg-zinc-900/80 hover:bg-zinc-800 text-white/80 hover:text-white border border-white/15 backdrop-blur-md shadow-2xl transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer"
+            title="Previous page"
+            aria-label="Previous page"
+          >
+            <ChevronLeft size={22} />
+          </button>
+        )}
+
+        {/* Floating Right Carousel Navigation Button */}
+        {numPages > 1 && pageNumber < numPages && (
+          <button
+            onClick={() => scrollToPage(pageNumber + 1)}
+            className="absolute right-6 top-1/2 -translate-y-1/2 z-40 p-3 rounded-full bg-zinc-900/80 hover:bg-zinc-800 text-white/80 hover:text-white border border-white/15 backdrop-blur-md shadow-2xl transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer"
+            title="Next page"
+            aria-label="Next page"
+          >
+            <ChevronRight size={22} />
+          </button>
+        )}
+
+        {/* PDF Horizontal Canvas Container */}
+        <div
+          ref={containerRef}
+          id="pdf-canvas-container"
+          className="flex-1 overflow-x-auto overflow-y-hidden bg-[#09090D] z-10 relative scroll-smooth focus:outline-none"
+          tabIndex={0}
+        >
           <Document
             file={pdfApiUrl}
             onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={err => console.error("PDF load error:", err)}
+            onLoadError={(err) => console.error("PDF load error:", err)}
             loading={
-              <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
-                <FileText size={28} className="animate-pulse text-muted-foreground" />
-                <span className="text-sm">Loading PDF...</span>
+              <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground w-full py-20">
+                <FileText size={32} className="animate-pulse text-violet-400" />
+                <span className="text-sm">Loading document carousel...</span>
               </div>
             }
             error={
-              <div className="flex flex-col items-center justify-center h-full gap-3 text-red-400/70 text-center">
-                <FileText size={28} />
-                <p className="text-sm">Failed to load PDF.</p>
-                <p className="text-xs text-muted-foreground">
-                  Make sure the backend is running and the file exists in MinIO.
+              <div className="flex flex-col items-center justify-center h-full gap-3 text-red-400/70 text-center w-full py-20">
+                <FileText size={32} />
+                <p className="text-sm font-medium">Failed to load PDF.</p>
+                <p className="text-xs text-muted-foreground max-w-sm">
+                  Make sure the backend is running and the file exists in storage.
                 </p>
               </div>
             }
-            className="flex h-full min-w-max items-center px-8 gap-6"
+            className="flex h-full min-w-max items-center px-12 md:px-20 gap-8 py-6"
           >
-            {Array.from(new Array(numPages), (el, index) => (
-              <Page
-                key={`page_${index + 1}`}
-                pageNumber={index + 1}
-                height={containerHeight * scale}
-                renderTextLayer={true}         
-                renderAnnotationLayer={true}   
-                className="shadow-2xl shadow-black/60 rounded-sm bg-white overflow-hidden flex-shrink-0"
-              />
-            ))}
+            {numPages > 0 &&
+              Array.from({ length: numPages }, (_, index) => {
+                const pageNum = index + 1
+                return (
+                  <div
+                    key={pageNum}
+                    id={`pdf-page-${pageNum}`}
+                    className="flex-shrink-0 flex flex-col items-center justify-center relative group"
+                  >
+                    {/* Page Card */}
+                    <div className="relative rounded-xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.85)] border border-white/10 bg-white transition-all duration-200">
+                      <Page
+                        pageNumber={pageNum}
+                        height={containerHeight * scale}
+                        renderTextLayer={true}
+                        renderAnnotationLayer={true}
+                        className="overflow-hidden select-text"
+                        loading={
+                          <div
+                            style={{
+                              height: containerHeight * scale,
+                              width: containerHeight * scale * 0.72,
+                            }}
+                            className="flex flex-col items-center justify-center bg-zinc-900/90 text-muted-foreground gap-2 rounded-xl border border-border/40"
+                          >
+                            <Loader2 className="h-6 w-6 animate-spin text-violet-400" />
+                            <span className="text-xs font-medium text-zinc-400">
+                              Page {pageNum}
+                            </span>
+                          </div>
+                        }
+                      />
+                    </div>
+
+                    {/* Page badge */}
+                    <div className="mt-3 px-3 py-1 rounded-full bg-[#111118]/90 backdrop-blur-md border border-border/70 text-[11px] font-medium text-zinc-300 shadow-lg">
+                      {pageNum} / {numPages}
+                    </div>
+                  </div>
+                )
+              })}
           </Document>
         </div>
       </div>
 
-      {/* ── Right: AI Panel (Phase 6) ───────────────────────────── */}
+      {/* ── Right: AI Panel ───────────────────────────── */}
       {aiPanelOpen && (
-        <div className="w-80 border-l border-border/60 flex flex-col bg-[#0D0D14] flex-shrink-0">
-
+        <div className="w-80 border-l border-border/60 flex flex-col bg-[#0D0D14] flex-shrink-0 relative z-30 select-text">
           {/* Panel header */}
           <div className="p-4 border-b border-border/50 flex items-center gap-2">
             <div className="w-6 h-6 rounded-lg bg-violet-600/20 flex items-center justify-center">
@@ -279,7 +510,9 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
           <div className="mx-4 my-3 p-3 bg-card rounded-lg border border-border/60">
             <div className="flex items-center gap-2 mb-1.5">
               <BookOpen size={11} className="text-violet-400" />
-              <span className="text-[11px] text-muted-foreground font-medium">Document context</span>
+              <span className="text-[11px] text-muted-foreground font-medium">
+                Document context
+              </span>
             </div>
             <p
               className="text-xs text-muted-foreground leading-relaxed max-h-32 overflow-y-auto"
@@ -289,9 +522,12 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
             </p>
             {item.tags?.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
-                {item.tags.slice(0, 3).map(t => (
-                  <span key={t} className="text-[10px] text-violet-400/70 bg-violet-600/8
-                                           px-1.5 py-0.5 rounded-full border border-violet-600/15">
+                {item.tags.slice(0, 3).map((t) => (
+                  <span
+                    key={t}
+                    className="text-[10px] text-violet-400/70 bg-violet-600/8
+                                             px-1.5 py-0.5 rounded-full border border-violet-600/15"
+                  >
                     {t}
                   </span>
                 ))}
@@ -344,11 +580,15 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
               />
               <Button
                 size="icon"
-                className="h-8 w-8 shrink-0 bg-violet-600 hover:bg-violet-500"
+                className="h-8 w-8 shrink-0 bg-violet-600 hover:bg-violet-500 rounded-lg"
                 disabled={!aiInput.trim() || aiStreaming}
                 onClick={handleAiSend}
               >
-                {aiStreaming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                {aiStreaming ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Send className="h-3.5 w-3.5" />
+                )}
               </Button>
             </div>
           </div>
