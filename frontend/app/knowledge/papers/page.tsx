@@ -2,8 +2,11 @@
 import { KnowledgePageShell } from "@/components/knowledge/KnowledgePageShell"
 import { PaperCard, type PaperItem } from "@/components/knowledge/PaperCard"
 import { GraduationCap } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 export default function PapersPage() {
+  const router = useRouter()
+
   const fetchItems = async (filters: Record<string, string>, sort: string) => {
     const params = new URLSearchParams(filters)
     params.set("sort", sort)
@@ -27,10 +30,18 @@ export default function PapersPage() {
       emptyDescription="You haven't saved any research papers yet."
       emptyHint="Paste an Arxiv or PDF URL in the dashboard."
       fetchItems={fetchItems}
-      renderCard={(item, onDelete) => <PaperCard key={item.id} item={item} onDelete={onDelete} />}
+      renderCard={(item, onDelete) => (
+        <PaperCard 
+          key={item.id} 
+          item={item} 
+          onDelete={onDelete} 
+          onRead={(id) => router.push(`/knowledge/papers/${id}/reader`)} 
+        />
+      )}
       getItemId={(item) => item.id}
       
       singleColumn={true}
     />
   )
 }
+

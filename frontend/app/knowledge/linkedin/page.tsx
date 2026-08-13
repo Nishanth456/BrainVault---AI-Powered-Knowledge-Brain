@@ -2,8 +2,11 @@
 import { KnowledgePageShell } from "@/components/knowledge/KnowledgePageShell"
 import { LinkedInCard, type LinkedInItem } from "@/components/knowledge/LinkedInCard"
 import { Link2 } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 export default function LinkedinPage() {
+  const router = useRouter()
+
   const fetchItems = async (filters: Record<string, string>, sort: string) => {
     const params = new URLSearchParams(filters)
     params.set("sort", sort)
@@ -27,9 +30,17 @@ export default function LinkedinPage() {
       emptyDescription="You haven't saved any LinkedIn content yet."
       emptyHint="Paste a LinkedIn URL in the dashboard to add one."
       fetchItems={fetchItems}
-      renderCard={(item, onDelete) => <LinkedInCard key={item.id} item={item} onDelete={onDelete} />}
+      renderCard={(item, onDelete) => (
+        <LinkedInCard 
+          key={item.id} 
+          item={item} 
+          onDelete={onDelete} 
+          onRead={(id) => router.push(`/knowledge/linkedin/${id}/reader`)} 
+        />
+      )}
       getItemId={(item) => item.id}
       
     />
   )
 }
+
