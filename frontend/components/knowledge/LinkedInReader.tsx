@@ -1,5 +1,6 @@
 "use client"
 import { SourceCitationCard } from "@/components/chat/SourceCitationCard"
+import { AnimatedBackground } from "@/components/ui/AnimatedBackground"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
@@ -20,11 +21,11 @@ import Link from "next/link"
 import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
 import { useCallback, useEffect, useState, useRef } from "react"
 import { Document, Page, pdfjs } from "react-pdf"
-import "react-pdf/dist/Page/AnnotationLayer.css"
-import "react-pdf/dist/Page/TextLayer.css"
+import "react-pdf/dist/esm/Page/AnnotationLayer.css"
+import "react-pdf/dist/esm/Page/TextLayer.css"
 
 // Use the CDN worker so we don't need to copy files manually
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`
 
 
 interface LinkedInReaderProps {
@@ -143,7 +144,8 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
   }
 
   return (
-    <div className="flex h-screen bg-[#0A0A0F] text-foreground overflow-hidden">
+    <div className="flex h-screen bg-transparent text-foreground overflow-hidden relative">
+      <AnimatedBackground />
 
       {/* ── Left: PDF Viewer ──────────────────────────────────────── */}
       <div id="pdf-panel" className="flex-1 flex flex-col overflow-hidden min-w-0">
@@ -222,7 +224,7 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
         </div>
 
         {/* PDF canvas */}
-        <div id="pdf-canvas-container" className="flex-1 overflow-x-auto overflow-y-hidden bg-[#111118]">
+        <div id="pdf-canvas-container" className="flex-1 overflow-x-auto overflow-y-hidden bg-transparent z-10 relative">
           <Document
             file={pdfApiUrl}
             onLoadSuccess={onDocumentLoadSuccess}

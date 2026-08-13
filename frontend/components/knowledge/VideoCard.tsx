@@ -87,7 +87,7 @@ function getThumbnailUrl(item: VideoItem): string | null {
     return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
   }
   if (item.thumbnail_path) {
-    return `http://127.0.0.1:8000/api/files/${item.thumbnail_path}`
+    return `http://localhost:8000/api/files/${item.thumbnail_path}`
   }
   return null
 }
@@ -120,7 +120,7 @@ export function VideoCard({
 
     setIsDeleting(true)
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/knowledge/${item.id}`, {
+      const res = await fetch(`http://localhost:8000/api/knowledge/${item.id}`, {
         method: "DELETE"
       })
       if (res.ok) {

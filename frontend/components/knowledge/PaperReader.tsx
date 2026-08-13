@@ -1,5 +1,6 @@
 "use client"
 import { Button } from "@/components/ui/button"
+import { AnimatedBackground } from "@/components/ui/AnimatedBackground"
 import { Input } from "@/components/ui/input"
 import {
     ArrowLeft,
@@ -15,10 +16,10 @@ import Link from "next/link"
 import { BookmarkButton } from "@/components/knowledge/BookmarkButton"
 import { useCallback, useEffect, useState } from "react"
 import { Document, Page, pdfjs } from "react-pdf"
-import "react-pdf/dist/Page/AnnotationLayer.css"
-import "react-pdf/dist/Page/TextLayer.css"
+import "react-pdf/dist/esm/Page/AnnotationLayer.css"
+import "react-pdf/dist/esm/Page/TextLayer.css"
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`
 
 
 interface PaperReaderProps {
@@ -94,7 +95,7 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
 
   if (!pdfApiUrl) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-[#0A0A0F] text-muted-foreground gap-4">
+      <div className="flex flex-col items-center justify-center h-screen bg-transparent text-muted-foreground gap-4">
         <FileText size={40} className="text-zinc-700" />
         <p className="text-sm">No PDF attachment found for this paper.</p>
         <Link href="/knowledge/papers">
@@ -108,14 +109,15 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
   }
 
   return (
-    <div className="flex h-screen bg-[#0A0A0F] text-foreground overflow-hidden">
+    <div className="flex h-screen bg-transparent text-foreground overflow-hidden relative">
+      <AnimatedBackground />
 
       {/* ── Left: PDF Viewer ──────────────────────────────────────── */}
       <div id="pdf-panel" className="flex-1 flex flex-col overflow-hidden min-w-0">
 
         {/* Top navigation bar */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-border/60
-                        bg-[#0D0D14] flex-shrink-0 flex-wrap gap-y-2">
+                        bg-transparent backdrop-blur-sm flex-shrink-0 flex-wrap gap-y-2">
 
           <Link href="/knowledge/papers">
             <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground p-2 h-8 w-8">
@@ -150,7 +152,7 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
                     if (!isNaN(parsed)) goToPage(parsed)
                   }
                 }}
-                className="w-12 h-7 text-xs text-center bg-accent border-border text-foreground"
+                className="w-12 h-7 text-xs text-center bg-transparent border-border text-foreground"
               />
               <span className="text-xs text-muted-foreground">/ {numPages}</span>
             </div>
@@ -215,7 +217,7 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
         </div>
 
         {/* PDF canvas */}
-        <div id="pdf-canvas-container" className="flex-1 overflow-x-auto overflow-y-hidden bg-[#111118]">
+        <div id="pdf-canvas-container" className="flex-1 flex justify-center overflow-auto bg-transparent py-8 z-10 relative">
           <Document
             file={pdfApiUrl}
             onLoadSuccess={onDocumentLoadSuccess}

@@ -10,7 +10,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
-const API = "http://127.0.0.1:8000/api/profile"
+const API = "http://localhost:8000/api/profile"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

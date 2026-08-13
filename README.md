@@ -99,8 +99,16 @@ The entire application is Dockerized. You can start the infrastructure, backend 
 
 Make sure Docker and Docker Compose are installed, then run from the **project root**:
 
+**For the first time (or when dependencies change):**
+This initial build may take a few minutes as it downloads base images and installs dependencies.
 ```bash
 docker-compose up -d --build
+```
+
+**For subsequent runs:**
+Since Docker caches the build layers, you don't need to rebuild every time. Just run:
+```bash
+docker-compose up -d
 ```
 
 This starts all 7 core services at once.

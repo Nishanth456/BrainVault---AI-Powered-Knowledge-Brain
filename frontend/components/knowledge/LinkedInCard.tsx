@@ -97,7 +97,7 @@ export function LinkedInCard({ item, onDelete }: { item: LinkedInItem; onDelete?
               <BookmarkButton itemId={item.id} initial={item.is_bookmarked || false} />
               {hasPdf ? (
                 <a 
-                  href={`http://127.0.0.1:8000/api/files/${encodeURIComponent(pdfAtt.minio_path)}`}
+                  href={`http://localhost:8000/api/files/${encodeURIComponent(pdfAtt.minio_path)}`}
                   download={pdfAtt.filename || "document.pdf"}
                   target="_blank"
                   rel="noopener noreferrer"

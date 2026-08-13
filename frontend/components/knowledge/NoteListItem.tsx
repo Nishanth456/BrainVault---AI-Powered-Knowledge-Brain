@@ -58,7 +58,7 @@ export function NoteListItem({ item, onDelete }: NoteListItemProps) {
     if (!window.confirm("Delete this note?")) return
     setIsDeleting(true)
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/knowledge/${item.id}`, {
+      const res = await fetch(`http://localhost:8000/api/knowledge/${item.id}`, {
         method: "DELETE",
       })
       if (res.ok) onDelete?.(item.id)

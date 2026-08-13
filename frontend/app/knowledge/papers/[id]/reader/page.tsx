@@ -1,13 +1,15 @@
-import { PaperReader } from "@/components/knowledge/PaperReader"
+import { PaperReaderWrapper } from "@/components/knowledge/PaperReaderWrapper"
 import type { Metadata } from "next"
 
 interface ReaderPageProps {
   params: Promise<{ id: string }>
 }
 
+const INTERNAL_API_URL = process.env.INTERNAL_API_URL || "http://backend:8000"
+
 async function getKnowledgeItem(id: string) {
   try {
-    const res = await fetch(`http://127.0.0.1:8000/api/knowledge/${id}`, {
+    const res = await fetch(`${INTERNAL_API_URL}/api/knowledge/${id}`, {
       cache: "no-store",
     })
     if (!res.ok) return null
@@ -42,7 +44,7 @@ export default async function PaperReaderPage({ params }: ReaderPageProps) {
     .map((a: { minio_path: string }) => a.minio_path)
 
   return (
-    <PaperReader
+    <PaperReaderWrapper
       item={item}
       pdfMinioPaths={pdfPaths}
     />

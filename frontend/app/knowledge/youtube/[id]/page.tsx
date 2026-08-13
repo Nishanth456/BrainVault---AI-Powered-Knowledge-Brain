@@ -114,7 +114,7 @@ export default function VideoDetailPage() {
     if (!id) return
     setLoading(true)
     setError(false)
-    fetch(`http://127.0.0.1:8000/api/knowledge/${id}`)
+    fetch(`http://localhost:8000/api/knowledge/${id}`)
       .then(r => {
         if (!r.ok) throw new Error("API error")
         return r.json()
@@ -199,7 +199,7 @@ export default function VideoDetailPage() {
   const thumbnailUrl = videoId
     ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
     : item.thumbnail_path
-      ? `http://127.0.0.1:8000/api/files/${item.thumbnail_path}`
+      ? `http://localhost:8000/api/files/${item.thumbnail_path}`
       : null
   const diff = item.difficulty || 0
 
