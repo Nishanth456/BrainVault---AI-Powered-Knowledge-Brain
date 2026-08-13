@@ -118,11 +118,12 @@ async def detect_tech_stack(state: GitHubState) -> dict:
             snippet = content[:500].replace("\n", " ")
             file_hints.append(f"{name}: {snippet}")
 
+    file_hints_str = '\n'.join([h for h in file_hints[:8] if h])
     context = f"""Primary language: {language}
 Topics: {', '.join([t for t in topics if t]) if topics else 'None'}
 Top-level files: {', '.join([n for n in file_names[:30] if n])}
 Key file snippets:
-{'\n'.join([h for h in file_hints[:8] if h])}
+{file_hints_str}
 """
 
     response = await call_llm(
