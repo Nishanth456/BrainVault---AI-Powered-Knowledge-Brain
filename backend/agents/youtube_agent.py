@@ -52,7 +52,7 @@ AI_CONCEPTS_LIST = [
     "Retrieval-Augmented Generation (RAG)", "Knowledge Graphs", "Vector Databases", "Semantic Search",
     "Fine-Tuning", "Parameter-Efficient Fine-Tuning (PEFT)", "Quantization", "Model Distillation",
     "AI Agents", "Agentic AI", "Multi-Agent Systems", "Agent Frameworks",
-    "AI Memory", "Model Context Protocol (MCP)", "AI Tools", "AI Frameworks",
+    "AI Memory", "Model Context Protocol (MCP)", "AI Tools", "AI Frameworks", "FastAPI for AI",
     "AI APIs", "Open-Source LLMs", "AI Cloud Platforms", "AI Infrastructure",
     "MLOps", "LLMOps", "AI Deployment", "AI Evaluation", "AI Benchmarks",
     "AI Observability", "AI Guardrails", "AI Safety", "AI Security", "AI Privacy",
@@ -176,7 +176,6 @@ CRITICAL RULES:
 - Output ONLY the summary sentences.
 - Do NOT start with "Here is a summary" or "This chapter discusses".
 - Do NOT use bullet points or numbered lists.""",
-            model="groq/llama-3.1-8b-instant",
             system="You are a video content summarizer. Return only the summary with no meta commentary.",
             max_tokens=200,
         )
@@ -223,7 +222,6 @@ CRITICAL RULES:
 - Output ONLY the summary sentences.
 - Do NOT start with "Here is a summary" or "This playlist is about".
 - Do NOT use bullet points or numbered lists.""",
-            model="groq/llama-3.1-8b-instant",
             system="You are a video content summarizer. Return only the summary with no meta commentary.",
             max_tokens=300,
         )
@@ -260,7 +258,6 @@ CRITICAL RULES:
 - Output ONLY the summary sentences.
 - Do NOT start with "Here is a summary" or "This video is about".
 - Do NOT use bullet points or numbered lists.""",
-        model="groq/llama-3.1-8b-instant",
         system="You are a video content summarizer. Return only the summary with no meta commentary.",
         max_tokens=300,
     )
@@ -313,7 +310,6 @@ Overall summary: {summary}
 {context}
 
 Return ONLY valid JSON, nothing else.""",
-        model="groq/llama-3.1-8b-instant",
         system="You are a technical content analyst. Always return valid JSON.",
         max_tokens=250,
         temperature=0,
@@ -365,7 +361,6 @@ Think step by step:
 - Is this introductory, practical, or research-level?
 
 Reply with ONLY the number (1, 2, 3, 4, or 5). Nothing else.""",
-        model="groq/llama-3.3-70b-versatile",
         system="You are a technical difficulty assessor for AI practitioners. Be calibrated — most practical tutorials are 2-3, most application guides are 3, only truly deep internals are 4-5.",
         max_tokens=10,
         temperature=0,
@@ -414,7 +409,6 @@ Summary: {summary}
 Concepts: {', '.join([c for c in concepts if c])}
 
 Return ONLY valid JSON.""",
-        model="groq/llama-3.3-70b-versatile",
         system="You are a knowledge taxonomy expert. Strictly adhere to the allowed list. Return only valid JSON.",
         max_tokens=200,
         temperature=0,

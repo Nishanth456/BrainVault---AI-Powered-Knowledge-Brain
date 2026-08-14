@@ -85,7 +85,7 @@ async def extract_cert_info_node(state: CertState) -> dict:
     {state['clean_text'][:10000]}
     """
     
-    response = await call_llm(prompt, model="groq/llama-3.3-70b-versatile", temperature=0.1, response_format={"type": "json_object"})
+    response = await call_llm(prompt, temperature=0.1, response_format={"type": "json_object"})
     
     try:
         clean_json = response.replace("```json", "").replace("```", "").strip()
@@ -123,7 +123,7 @@ async def summarize_cert_node(state: CertState) -> dict:
     {state['clean_text'][:5000]}
     """
     
-    summary = await call_llm(prompt, model="groq/llama-3.3-70b-versatile")
+    summary = await call_llm(prompt)
     
     import re
     summary = re.sub(r"(?i)^here\s*(?:is|'s)\s*a\s*(?:\d+-\d+\s*sentence\s*)?summary[^\n]*", "", summary).strip()
@@ -146,7 +146,7 @@ async def extract_concepts_node(state: CertState) -> dict:
     Text: {state['clean_text'][:5000]}
     """
     
-    res = await call_llm(prompt, model="groq/llama-3.3-70b-versatile")
+    res = await call_llm(prompt)
     concepts = [c.strip() for c in res.split(",") if c.strip()]
     return {
         "key_concepts": concepts,
@@ -169,7 +169,7 @@ async def map_knowledge_tree_node(state: CertState) -> dict:
     Respond with NOTHING ELSE.
     """
     
-    tree_path = await call_llm(prompt, model="groq/llama-3.3-70b-versatile", temperature=0)
+    tree_path = await call_llm(prompt, temperature=0)
     tree_path = tree_path.strip().split("\n")[0].strip()
     domain = tree_path.split(">")[0].strip() if ">" in tree_path else tree_path
     
@@ -209,7 +209,6 @@ Reply with ONLY the number (1, 2, 3, 4, or 5). Nothing else."""
 
     response = await call_llm(
         prompt=prompt,
-        model="groq/llama-3.3-70b-versatile",
         system="You are a technical difficulty assessor for AI practitioners. Be calibrated — most practical tutorials are 2-3, most application guides are 3, only truly deep internals are 4-5.",
         max_tokens=10,
         temperature=0,

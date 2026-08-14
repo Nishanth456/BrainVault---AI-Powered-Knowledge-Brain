@@ -11,7 +11,7 @@ if settings.GEMINI_API_KEY:
 async def detect_input_type(raw_input: str) -> str:
     """
     LLM Call #1 (the ONLY real LLM call in Phase 0).
-    Uses Groq llama-3.1-8b-instant — fast and free.
+    Uses Groq GPT-OSS 20B (openai/gpt-oss-20b) — fast and capable.
     Returns: 'linkedin' | 'blog' | 'pdf' | 'research' | 'github' | 'youtube' | 'course' | 'plaintext'
     """
     raw_input_lower = raw_input.strip().lower()
@@ -48,7 +48,7 @@ Respond with ONLY the category name, nothing else."""
 
     try:
         response = await acompletion(
-            model="groq/llama-3.1-8b-instant",
+            
             messages=[{"role": "user", "content": prompt}],
             max_tokens=10,
             temperature=0,
@@ -65,11 +65,11 @@ Respond with ONLY the category name, nothing else."""
 
 async def call_llm(
     prompt: str,
-    model: str = "gemini/gemini-3.5-flash",
+    model: str = "groq/openai/gpt-oss-120b",
     system: str = "You are a helpful AI assistant.",
     temperature: float = 0.1,
     max_tokens: int = 1000,
-    fallback_model: str = "gemini/gemini-3.5-flash-lite",
+    fallback_model: str = None,  # User requested to disable Gemini fallback temporarily
     response_format: dict = None
 ) -> str:
     """
@@ -92,22 +92,14 @@ async def call_llm(
             num_retries=3,
             **kwargs
         )
-        return response.choices[0].message.content.strip()
+        content = response.choices[0].message.content.strip()
+        # Strip <think>...</think> blocks from reasoning models (like Qwen)
+        import re
+        content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip()
+        return content
     except Exception as e:
-        print(f"Primary model failed: {e}. Trying fallback: {fallback_model}")
-        # Auto-fallback if rate limited or model unavailable
-        response = await acompletion(
-            model=fallback_model,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=temperature,
-            max_tokens=max_tokens,
-            num_retries=5,
-            **kwargs
-        )
-        return response.choices[0].message.content.strip()
+        print(f"❌ Primary model ({model}) failed: {str(e)}")
+        raise
 
 
 async def stream_rag_response(system: str, prompt: str):
@@ -117,9 +109,9 @@ async def stream_rag_response(system: str, prompt: str):
     Yields text chunks as they arrive.
     """
     models = [
-        "groq/llama-3.3-70b-versatile",
-        "groq/llama-3.1-8b-instant",
-        "groq/llama-3.3-70b-specdec",
+        "groq/openai/gpt-oss-120b",
+        "groq/openai/gpt-oss-20b",
+        "groq/qwen/qwen3.6-27b",
         "gemini/gemini-2.0-flash",
     ]
     last_error = None
@@ -151,7 +143,7 @@ async def stream_rag_response(system: str, prompt: str):
 
 async def call_llm_json(
     prompt: str,
-    model: str = "groq/llama-3.3-70b-versatile",
+    model: str = "groq/openai/gpt-oss-120b",
     max_tokens: int = 1500,
 ) -> dict:
     """

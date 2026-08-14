@@ -80,7 +80,7 @@ Text: {request.raw_input[:1000]}
 
 Return ONLY the domain name."""
 
-    domain = await call_llm(domain_prompt, model="groq/llama-3.1-8b-instant", max_tokens=20, temperature=0)
+    domain = await call_llm(domain_prompt, max_tokens=20, temperature=0)
     domain = domain.strip()
     valid = {"Artificial Intelligence", "Machine Learning", "Python", "System Design", "SQL", "Cloud Computing", "DevOps", "Mathematics", "General"}
     if domain not in valid:

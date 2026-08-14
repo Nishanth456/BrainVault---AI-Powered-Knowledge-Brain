@@ -66,7 +66,7 @@ AI_CONCEPTS_LIST = [
     "Retrieval-Augmented Generation (RAG)", "Knowledge Graphs", "Vector Databases", "Semantic Search",
     "Fine-Tuning", "Parameter-Efficient Fine-Tuning (PEFT)", "Quantization", "Model Distillation",
     "AI Agents", "Agentic AI", "Multi-Agent Systems", "Agent Frameworks",
-    "AI Memory", "Model Context Protocol (MCP)", "AI Tools", "AI Frameworks",
+    "AI Memory", "Model Context Protocol (MCP)", "AI Tools", "AI Frameworks", "FastAPI for AI",
     "AI APIs", "Open-Source LLMs", "AI Cloud Platforms", "AI Infrastructure",
     "MLOps", "LLMOps", "AI Deployment", "AI Evaluation", "AI Benchmarks",
     "AI Observability", "AI Guardrails", "AI Safety", "AI Security", "AI Privacy",
@@ -366,7 +366,6 @@ Paper text:
 {context}
 
 Return ONLY valid JSON, nothing else.""",
-        model="groq/llama-3.1-8b-instant",
         system="You are a technical content analyst. Always return valid JSON.",
         max_tokens=300,
         temperature=0,
@@ -415,7 +414,6 @@ Concepts: {concepts}
 Tags: {tags}
 
 Return ONLY valid JSON.""",
-        model="groq/llama-3.3-70b-versatile",
         system="You are a knowledge management expert. Return only valid JSON with the importance score.",
         max_tokens=100,
         temperature=0,
@@ -468,7 +466,6 @@ Text:
 {text or abstract}
 
 Return ONLY valid JSON. Do NOT rewrite or summarise the title.""",
-        model="groq/llama-3.1-8b-instant",
         system="You are a metadata extraction assistant. Return only the exact title in valid JSON.",
         max_tokens=150,
         temperature=0,
@@ -517,7 +514,6 @@ Think step by step:
 - Is this introductory, practical, or research-level?
 
 Reply with ONLY the number (1, 2, 3, 4, or 5). Nothing else.""",
-        model="groq/llama-3.3-70b-versatile",
         system="You are a technical difficulty assessor for AI practitioners. Be calibrated — most practical tutorials are 2-3, most application guides are 3, only truly deep internals are 4-5.",
         max_tokens=10,
         temperature=0,
@@ -567,7 +563,6 @@ Paper text:
 {text}
 
 Return ONLY valid JSON.""",
-        model="groq/llama-3.3-70b-versatile",
         system="You are a knowledge taxonomy expert. Strictly adhere to the allowed list. Return only valid JSON.",
         max_tokens=200,
         temperature=0,

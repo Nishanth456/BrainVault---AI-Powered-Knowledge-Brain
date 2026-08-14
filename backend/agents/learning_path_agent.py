@@ -90,7 +90,7 @@ Rules:
 - If only 1-2 items exist, create fewer stages (1-2 is fine)
 """
 
-    result = await call_llm_json(prompt, model="groq/llama-3.3-70b-versatile", max_tokens=2000)
+    result = await call_llm_json(prompt, max_tokens=2000)
 
     raw_stages = result.get("stages", [])
     gaps = result.get("gaps", [])

@@ -53,7 +53,7 @@ AI_CONCEPTS_LIST = [
     "Retrieval-Augmented Generation (RAG)", "Knowledge Graphs", "Vector Databases", "Semantic Search",
     "Fine-Tuning", "Parameter-Efficient Fine-Tuning (PEFT)", "Quantization", "Model Distillation",
     "AI Agents", "Agentic AI", "Multi-Agent Systems", "Agent Frameworks",
-    "AI Memory", "Model Context Protocol (MCP)", "AI Tools", "AI Frameworks",
+    "AI Memory", "Model Context Protocol (MCP)", "AI Tools", "AI Frameworks", "FastAPI for AI",
     "AI APIs", "Open-Source LLMs", "AI Cloud Platforms", "AI Infrastructure",
     "MLOps", "LLMOps", "AI Deployment", "AI Evaluation", "AI Benchmarks",
     "AI Observability", "AI Guardrails", "AI Safety", "AI Security", "AI Privacy",
@@ -137,7 +137,6 @@ Return ONLY a JSON object:
 {context}
 
 Return ONLY valid JSON, nothing else.""",
-        model="groq/llama-3.1-8b-instant",
         system="You are a tech stack analyzer. Return only valid JSON.",
         max_tokens=200,
         temperature=0,
@@ -182,7 +181,6 @@ CRITICAL RULES:
 
 README:
 {text}""",
-        model="groq/llama-3.1-8b-instant",
         system="You are a technical documentation summarizer. Return only the summary with no meta commentary.",
         max_tokens=300,
     )
@@ -204,44 +202,10 @@ README:
 # ── Node 4: Extract architecture ───────────────────────────────────────────────
 
 async def extract_architecture(state: GitHubState) -> dict:
-    """Generate an architecture summary from README and structure."""
-    readme = state.get("readme", "")
-    structure = state.get("structure") or []
-    tech_stack = state.get("tech_stack") or []
-
-    file_names = [item.get("path") or "" for item in structure]
-    text = f"""Tech stack: {', '.join([t for t in tech_stack if t])}
-Top-level structure: {', '.join([n for n in file_names[:40] if n])}
-
-README:
-{readme[:8000]}
-"""
-
-    architecture = await call_llm(
-        prompt=f"""Describe the architecture of this repository in 3-5 sentences.
-Explain the main components, how they interact, and the overall design pattern.
-
-CRITICAL RULES:
-- Output ONLY the architecture description.
-- Do NOT start with "Here is" or "The architecture is".
-- Do NOT use bullet points or numbered lists.
-
-{text}""",
-        model="groq/llama-3.1-8b-instant",
-        system="You are a software architecture analyst. Return only the architecture description.",
-        max_tokens=350,
-    )
-
-    for pattern in [
-        r"(?i)^here\s+is[^\n]*",
-        r"(?i)^the\s+architecture\s+is[^\n]*",
-        r"(?i)^in\s+summary[^\n]*",
-    ]:
-        architecture = re.sub(pattern, "", architecture).strip()
-
+    """Skip architecture summary per user request to avoid redundant second summary."""
     return {
-        "architecture_summary": architecture,
-        "agent_steps": ["✅ Architecture overview extracted"],
+        "architecture_summary": "",
+        "agent_steps": ["✅ Architecture overview skipped (not needed)"],
     }
 
 
@@ -260,7 +224,6 @@ Summary: {summary}
 Tech stack: {', '.join([t for t in tech_stack if t])}
 
 Reply with ONLY the category name. Nothing else.""",
-        model="groq/llama-3.1-8b-instant",
         system="You are a repository classifier.",
         max_tokens=20,
         temperature=0,
@@ -290,7 +253,7 @@ async def extract_github_concepts(state: GitHubState) -> dict:
         prompt=f"""Extract key concepts and tags from this GitHub repository.
 Return a JSON object with two lists:
 - "concepts": 3-8 specific technical concepts
-- "tags": 3-6 short tags
+- "tags": 3-6 short, authentic GitHub-style tags (must be single-word or two-words max, e.g. "pandas", "scikit-learn", "nlp", "fastapi", "react"). Do NOT write sentences.
 
 {f'Primary concept (must be included): {concept}' if concept else ''}
 
@@ -299,7 +262,6 @@ Architecture: {architecture}
 Tech stack: {', '.join([t for t in tech_stack if t])}
 
 Return ONLY valid JSON, nothing else.""",
-        model="groq/llama-3.1-8b-instant",
         system="You are a technical content analyst. Always return valid JSON.",
         max_tokens=250,
         temperature=0,
@@ -350,7 +312,6 @@ Think step by step:
 - Is this introductory, practical, or research-level?
 
 Reply with ONLY the number (1, 2, 3, 4, or 5). Nothing else.""",
-        model="groq/llama-3.3-70b-versatile",
         system="You are a technical difficulty assessor for AI practitioners. Be calibrated — most practical tutorials are 2-3, most application guides are 3, only truly deep internals are 4-5.",
         max_tokens=10,
         temperature=0,
@@ -427,7 +388,6 @@ Architecture: {architecture}
 Tech stack: {', '.join([t for t in tech_stack if t])}
 
 Return ONLY valid JSON.""",
-        model="groq/llama-3.3-70b-versatile",
         system="You are a knowledge taxonomy expert. Strictly adhere to the allowed list. Return only valid JSON.",
         max_tokens=200,
         temperature=0,

@@ -1,14 +1,14 @@
 """
-linkedin_agent.py — Full 9-node LangGraph subgraph for the LinkedIn agent.
+linkedin_agent.py — Optimised LangGraph subgraph for the LinkedIn agent.
 
 Pipeline:
   fetch_page → extract_post → download_attachments → build_combined_text
-  → summarize → extract_concepts → generate_metadata → score_difficulty
-  → place_in_tree → END
+  → summarize → extract_concepts → generate_metadata
+  → analyze_all (parallel: infer_domain + score_difficulty + place_in_tree + detect_qna)
+  → END
 
-Phase 1: Authenticated LinkedIn scraping.
-  - PDFs: downloaded directly if LinkedIn exposes download URL
-  - Carousel slides: downloaded as images then stitched into a PDF via pdf_generator
+All LLM calls use explicit Groq models to avoid Gemini rate-limit delays.
+Four post-summary analysis steps run in parallel via asyncio.gather().
 """
 from langgraph.graph import StateGraph, END
 from typing import TypedDict, Optional
@@ -17,6 +17,7 @@ from backend.tools.pdf_extractor import pdf_extractor
 from backend.tools.pdf_generator import create_slides_pdf
 from backend.tools.minio_uploader import download_and_store_pdf, store_bytes_to_minio
 from backend.services.llm import call_llm
+import asyncio
 import json
 import uuid
 import httpx
@@ -245,10 +246,10 @@ async def build_combined_text(state: LinkedInState) -> dict:
     }
 
 
-# ── Node 5: Summarize with Groq llama-3.1-8b-instant ─────────────────────────
+# ── Node 5: Summarize with Groq GPT-OSS 20B ─────────────────────────────────
 
 async def summarize_content(state: LinkedInState) -> dict:
-    """LLM Call — Groq llama-3.1-8b-instant — generate a single short sentence summary."""
+    """LLM Call — Groq GPT-OSS 20B — generate a single short sentence summary."""
     if state.get("error"):
         return {}
 
@@ -281,7 +282,6 @@ Content:
     summary = await call_llm(
         prompt=prompt,
         system="You are a technical knowledge extraction expert. Write clear, specific, one-sentence summaries.",
-        max_tokens=100,
     )
 
     return {
@@ -293,7 +293,7 @@ Content:
 # ── Node 6: Extract concepts + tags ──────────────────────────────────────────
 
 async def extract_key_concepts(state: LinkedInState) -> dict:
-    """LLM Call — Groq llama-3.1-8b-instant — extract concepts and tags."""
+    """LLM Call — Groq GPT-OSS 20B — extract concepts and tags."""
     content = state.get("combined_text") or state.get("post_text") or ""
     concept = state.get("concept") or ""
 
@@ -301,27 +301,38 @@ async def extract_key_concepts(state: LinkedInState) -> dict:
 
     response = await call_llm(
         prompt=f"""Extract key concepts and tags from this content.
-Return a JSON object with two lists:
-- "concepts": 3-8 specific technical concepts
-- "tags": 3-6 short tags
+Return ONLY a JSON object:
+{{"concepts": ["concept1", ...up to 6], "tags": ["tag1", ...up to 5]}}
+
+IMPORTANT: Explicitly check for AI/web frameworks or technologies (e.g., FastAPI, LangChain, Docker, React, etc.) and MUST include them as tags if they are mentioned or implied.
 
 Primary concept (must be included): "{concept}"
+
+URL: {state.get("url", "")}
+Document Title: {state.get("document_title", "")}
 
 Content:
 {context_text}
 
-Return ONLY valid JSON, nothing else.""",
-        system="You are a technical content analyst. Always return valid JSON.",
-        max_tokens=250,
-        temperature=0,
+Return ONLY valid JSON.""",
+        system="You are a technical content analyst. Return only valid JSON.",
+        temperature=0.1,
     )
 
     try:
-        clean = response.strip().strip("```json").strip("```").strip()
+        clean = response.strip()
+        if clean.startswith("```json"):
+            clean = clean[7:]
+        if clean.startswith("```"):
+            clean = clean[3:]
+        if clean.endswith("```"):
+            clean = clean[:-3]
+        clean = clean.strip()
         data = json.loads(clean)
         concepts = data.get("concepts", [])
         tags = data.get("tags", [])
-    except Exception:
+    except Exception as e:
+        print(f"❌ extract_concepts JSON parse failed: {e}\nRaw response:\n{response}")
         # Fallback: use the concept as at least one tag
         concepts = [concept] if concept else []
         tags = [concept] if concept else []
@@ -336,7 +347,7 @@ Return ONLY valid JSON, nothing else.""",
 # ── Node 7: Generate metadata ─────────────────────────────────────────────────
 
 async def generate_metadata(state: LinkedInState) -> dict:
-    """LLM Call — Groq llama-3.3-70b-versatile — generate full metadata JSON."""
+    """LLM Call — Groq GPT-OSS 120B — generate full metadata JSON."""
     summary   = state.get("summary", "")
     concepts  = state.get("key_concepts", [])
     tags      = state.get("tags", [])
@@ -344,36 +355,38 @@ async def generate_metadata(state: LinkedInState) -> dict:
     doc_title = state.get("document_title") or ""
 
     response = await call_llm(
-        prompt=f"""Generate metadata for this LinkedIn post. Return ONLY a JSON object:
-
+        prompt=f"""Generate metadata for this LinkedIn post. Return ONLY this JSON:
 {{
-  "title": "descriptive title (incorporate the concept '{concept}' if provided, max 100 chars)",
-  "reading_time_minutes": <integer, estimated reading time>,
-  "importance_score": <1-10, how important/valuable is this knowledge>
+  "title": "5-8 word article-style title. MUST include the primary technology/framework (e.g., FastAPI, LangChain, Docker) if it is present in the Summary or Tags. Example: 'FastAPI RAG Pipeline Production Deployment'. Concept hint: '{concept}'",
+  "reading_time_minutes": <integer>,
+  "importance_score": <1-10>
 }}
-
-Post summary: {summary}
-Document title: {doc_title}
-Concepts: {concepts}
+Summary: {summary}
 Tags: {tags}
-Author: {state.get("author", "unknown")}
-Has PDF attachment: {bool(state.get("downloaded_files"))}
-
+Doc title: {doc_title}
 Return ONLY valid JSON.""",
-        system="You are a knowledge management expert. Return only valid JSON.",
-        max_tokens=200,
-        temperature=0,
+        model="groq/openai/gpt-oss-120b",
+        system="You are a knowledge management expert. Return only valid compact JSON.",
+        temperature=0.1,
     )
 
     try:
-        clean    = response.strip().strip("```json").strip("```").strip()
+        clean = response.strip()
+        if clean.startswith("```json"):
+            clean = clean[7:]
+        if clean.startswith("```"):
+            clean = clean[3:]
+        if clean.endswith("```"):
+            clean = clean[:-3]
+        clean = clean.strip()
         metadata = json.loads(clean)
-    except Exception:
+    except Exception as e:
+        print(f"❌ generate_metadata JSON parse failed: {e}\nRaw response:\n{response}")
         # Fallback title uses concept or document title
         fallback_title = (
             doc_title or
             (f"{concept} — LinkedIn Post" if concept else None) or
-            (state.get("post_text") or "LinkedIn Post")[:80]
+            "LinkedIn Post"
         )
         metadata = {
             "title":                fallback_title,
@@ -387,87 +400,56 @@ Return ONLY valid JSON.""",
     }
 
 
-# ── Node 8: Infer Knowledge Domain ────────────────────────────────────────────
+# ── Helper: Infer Knowledge Domain (runs inside analyze_all) ─────────────────
 
-async def infer_domain(state: LinkedInState) -> dict:
+async def _infer_domain(state: LinkedInState) -> dict:
     """Pick the broad knowledge domain for the post."""
-    content = state.get("combined_text") or state.get("post_text") or ""
-    raw = content[:3000]
+    summary = state.get("summary") or ""
+    tags    = state.get("tags") or []
     concept = state.get("concept") or ""
 
     response = await call_llm(
-        prompt=f"""Determine the broad knowledge domain for this text.
-Choose exactly ONE from this list:
+        prompt=f"""Choose ONE knowledge domain from this list:
 Artificial Intelligence, Machine Learning, Python, System Design, SQL, Cloud Computing, DevOps, Mathematics, General
 
-{f'User-provided concept: {concept}' if concept else ''}
+Summary: {summary}
+Tags: {tags}{f', Concept: {concept}' if concept else ''}
 
-Text:
-{raw}
-
-Respond with ONLY the domain name, nothing else.""",
-        system="You are a knowledge domain classifier.",
-        max_tokens=30,
+Respond with ONLY the domain name.""",
+        system="You are a knowledge domain classifier. Reply with only the domain name.",
+        model="groq/qwen/qwen3.6-27b",
+        max_tokens=15,
         temperature=0,
     )
 
     domain = response.strip()
     valid_domains = {"Artificial Intelligence", "Machine Learning", "Python", "System Design", "SQL", "Cloud Computing", "DevOps", "Mathematics", "General"}
-    if domain not in valid_domains:
-        domain = "General"
+    return domain if domain in valid_domains else "General"
 
-    return {
-        "knowledge_domain": domain,
-        "agent_steps": [f"📁 Domain inferred: {domain}"],
-    }
+# ── Helper: Score difficulty (runs inside analyze_all) ───────────────────────
 
-# ── Node 9: Score difficulty ──────────────────────────────────────────────────
-
-async def score_difficulty(state: LinkedInState) -> dict:
-    """LLM Call — Groq llama-3.3-70b-versatile — score difficulty 1-5."""
-    summary = state.get("summary", "")
+async def _score_difficulty(state: LinkedInState) -> int:
+    """Score difficulty 1-5 for an AI practitioner audience."""
+    summary  = state.get("summary", "")
+    concepts = state.get("key_concepts", [])
 
     response = await call_llm(
-        prompt=f"""You are rating technical difficulty FOR AN AI PRACTITIONER audience (developers, data scientists, ML engineers).
-Judge difficulty WITHIN this field, not against the general public.
+        prompt=f"""Rate technical difficulty for an AI practitioner (1-5):
+1=Beginner, 2=Basic, 3=Intermediate, 4=Advanced, 5=Expert
 
-Scale:
-1 = Beginner  — No prior ML/AI knowledge needed. (e.g. "What is AI?", "How to use ChatGPT", introductory overviews)
-2 = Basic     — Requires general programming/tech background. (e.g. "What is a neural network?", API usage tutorials, basic Python ML)
-3 = Intermediate — Requires working ML/AI knowledge. (e.g. "How does attention work?", RAG basics, fine-tuning intro, common agent patterns)
-4 = Advanced  — Requires deep expertise in specific sub-domain. (e.g. RLHF internals, custom training loops, complex multi-agent orchestration, model distillation)
-5 = Expert    — Cutting-edge research or highly specialized systems. (e.g. novel architectures, frontier model alignment, production-scale LLMOps at thousands of QPS)
+Summary: {summary}
+Concepts: {concepts}
 
-Content summary: {summary}
-Concepts covered: {state.get("key_concepts", [])}
-
-Think step by step:
-- Who is the intended reader?
-- What prerequisite knowledge is assumed?
-- Is this introductory, practical, or research-level?
-
-Reply with ONLY the number (1, 2, 3, 4, or 5). Nothing else.""",
-        system="You are a technical difficulty assessor for AI practitioners. Be calibrated — most practical tutorials are 2-3, most application guides are 3, only truly deep internals are 4-5.",
-        max_tokens=10,
+Reply ONLY with the digit.""",
+        system="Technical difficulty rater. Reply only with a single digit 1-5.",
+        max_tokens=5,
         temperature=0,
     )
 
-    try:
-        clean = response.strip()
-        for char in clean:
-            if char.isdigit():
-                difficulty = int(char)
-                difficulty = max(1, min(5, difficulty))
-                break
-        else:
-            difficulty = 3
-    except Exception:
-        difficulty = 3
-
-    return {
-        "difficulty":  difficulty,
-        "agent_steps": [f"✅ Difficulty scored: {difficulty}/5"],
-    }
+    for char in response.strip():
+        if char.isdigit():
+            return max(1, min(5, int(char)))
+    return 3
 
 
 # ── Node 9: Place in knowledge tree ─────────────────────────────────────────
@@ -483,7 +465,7 @@ AI_CONCEPTS_LIST = [
     "Retrieval-Augmented Generation (RAG)", "Knowledge Graphs", "Vector Databases", "Semantic Search",
     "Fine-Tuning", "Parameter-Efficient Fine-Tuning (PEFT)", "Quantization", "Model Distillation",
     "AI Agents", "Agentic AI", "Multi-Agent Systems", "Agent Frameworks",
-    "AI Memory", "Model Context Protocol (MCP)", "AI Tools", "AI Frameworks",
+    "AI Memory", "Model Context Protocol (MCP)", "AI Tools", "AI Frameworks", "FastAPI for AI",
     "AI APIs", "Open-Source LLMs", "AI Cloud Platforms", "AI Infrastructure",
     "MLOps", "LLMOps", "AI Deployment", "AI Evaluation", "AI Benchmarks",
     "AI Observability", "AI Guardrails", "AI Safety", "AI Security", "AI Privacy",
@@ -495,165 +477,140 @@ AI_CONCEPTS_LIST = [
     "AI in Software Development", "Future of AI"
 ]
 
-async def place_in_knowledge_tree(state: LinkedInState) -> dict:
-    """LLM Call — Groq llama-3.3-70b-versatile — map to predefined taxonomy."""
+async def _place_in_knowledge_tree(state: LinkedInState) -> str:
+    """Map to predefined taxonomy. Returns the chosen tree path."""
     summary  = state.get("summary", "")
     concepts = state.get("key_concepts", [])
     tags     = state.get("tags", [])
     concept  = state.get("concept") or ""
 
     response = await call_llm(
-        prompt=f"""Determine where this content belongs in our predefined knowledge taxonomy.
-You MUST choose exactly ONE concept from the provided ALLOWED_CONCEPTS list that best matches the content.
-If the user provided a concept ('{concept}'), use it to help you pick the closest match from the list.
+        prompt=f"""Choose exactly ONE entry from ALLOWED_CONCEPTS that best matches this content.
+Return ONLY: {{"tree_path": "<exact entry>"}}
 
-ALLOWED_CONCEPTS:
-{', '.join(AI_CONCEPTS_LIST)}
-
-Return ONLY a JSON object:
-{{
-  "tree_path": "The EXACT concept string you chose from the ALLOWED_CONCEPTS list"
-}}
+ALLOWED_CONCEPTS: {', '.join(AI_CONCEPTS_LIST)}
 
 Summary: {summary}
-Concepts: {concepts}
 Tags: {tags}
+Concepts: {concepts}
+User concept hint: {concept}
 
 Return ONLY valid JSON.""",
-        system="You are a knowledge taxonomy expert. You strictly adhere to the allowed list. Return only valid JSON.",
-        max_tokens=150,
+        system="Knowledge taxonomy expert. Pick exactly one from the allowed list. Return only valid JSON.",
+        max_tokens=60,
         temperature=0,
     )
 
     try:
-        clean     = response.strip().strip("```json").strip("```").strip()
-        tree_data = json.loads(clean)
-        chosen_path = tree_data.get("tree_path")
-        if chosen_path not in AI_CONCEPTS_LIST:
-            # Fallback if LLM halluciantes a path
-            chosen_path = "Artificial Intelligence (AI)"
+        clean = response.strip().strip("```json").strip("```").strip()
+        chosen = json.loads(clean).get("tree_path", "")
+        if chosen not in AI_CONCEPTS_LIST:
+            chosen = "Artificial Intelligence (AI)"
     except Exception:
-        chosen_path = "Artificial Intelligence (AI)"
-
-    return {
-        "knowledge_tree": chosen_path,
-        "agent_steps":    [f"✅ Placed in taxonomy: {chosen_path}"],
-    }
+        chosen = "Artificial Intelligence (AI)"
+    return chosen
 
 
 
 # ── Node 10: Detect if it's an Interview QnA ────────────────────────────────
 
-async def detect_interview_qna(state: LinkedInState) -> dict:
-    """LLM Call — Groq llama-3.1-8b-instant — check if content is interview prep/QnA."""
+async def _detect_and_extract_qna(state: LinkedInState) -> tuple[bool, list]:
+    """Detect QnA and extract pairs if applicable. Returns (is_qna, qna_pairs)."""
     summary = state.get("summary", "")
     content = state.get("combined_text") or state.get("post_text") or ""
-    
-    response = await call_llm(
-        prompt=f"""Determine if this content is primarily a list of Interview Questions and Answers (or interview preparation material).
-Return ONLY a JSON object:
-{{
-  "is_interview_qna": true or false
-}}
 
-Summary: {summary}
-Content sample: {content[:2000]}
-
-Return ONLY valid JSON.""",
-        system="You are a classifier. Return only valid JSON.",
-        max_tokens=50,
-        temperature=0,
-    )
-    
-    try:
-        clean = response.strip().strip("```json").strip("```").strip()
-        data = json.loads(clean)
-        is_qna = bool(data.get("is_interview_qna", False))
-    except Exception:
-        is_qna = False
-        
+    # Fast-path: URL contains 'interview'
     if "interview" in state.get("url", "").lower():
         is_qna = True
-        
-    steps = [f"✅ Classified as Interview QnA"] if is_qna else []
-    
-    qna_pairs = []
-    
-    has_attachment = bool(state.get("downloaded_files"))
-    
-    if is_qna and not has_attachment:
-        steps.append("🤖 Extracting QnA and answering missing questions...")
-        qna_prompt = f"""You are an expert Principal AI Engineer conducting a senior technical interview.
-The following text contains a list of multiple interview questions, often preceded by an interviewer situation or context.
-You MUST extract EVERY SINGLE QUESTION from the text (there are usually 10-20 questions). Do not stop after the first one!
-For each question:
-1. Extract any background scenario or setup text into the "context" field. If there is no background scenario in the original text, leave this field completely empty "". Do not invent a scenario.
-2. Extract the exact question into the "q" field.
-2. Extract the answer or explanation from the text into the "a" field. The "a" field MUST be a SINGLE JSON string, NOT an array. IF the source text is a single massive block without line breaks (e.g. from OCR extraction), YOU MUST reformat it by adding bullet points and double newlines (`\\n\\n`) between logical points so it is highly readable. Do NOT change the actual wording, but DO add markdown formatting (bullet points, bolding, and `\\n\\n` spacing). Do NOT leave the explanation as a single unformatted paragraph.
-3. Only if an answer is COMPLETELY MISSING from the original text, YOU MUST write a high-quality, professional, and comprehensive answer yourself. 
-   - The answer should be tailored for a senior AI/ML interview.
-   - Use Markdown formatting (bullet points, bold text, line breaks) to make it highly readable.
-   - Do NOT simply restate or repeat the question. 
-   - Provide a direct, insightful, and technically accurate explanation.
-4. Map the question to EXACTLY ONE of the following AI topics:
-{chr(10).join([f"- {t}" for t in AI_CONCEPTS_LIST])}
-5. Generate 4-8 searchable keywords for this specific question. Think in layers:
-   a) DOMAIN/CONTEXT: broad topic area (e.g. "multi-agent systems", "LangGraph", "transformer architecture")
-   b) CONCEPT: the core subject (e.g. "deadlock", "attention mechanism", "backpropagation")
-   c) METHODS/TECHNIQUES: specific approaches mentioned (e.g. "circular wait prevention", "resource ordering")
-   d) SYNONYMS/VARIANTS: alternate search terms someone might use (e.g. "agent coordination", "livelock")
-   Include keywords from all relevant layers. Do NOT repeat the full question text as a keyword.
-
-Return ONLY a valid JSON array of objects:
-[
-  {{
-    "context": "The background setup or scenario (or empty string if none)",
-    "q": "The actual question",
-    "a": "The high-quality technical answer",
-    "topic": "The exact topic from the list above",
-    "keywords": ["multi-agent systems", "deadlock", "circular wait", "resource ordering", "agent coordination"]
-  }}
-]
-
-Text:
-{content}
-"""
-        qna_response = await call_llm(
-            prompt=qna_prompt,
-            system="You are an expert interview question extractor. Return valid JSON only.",
-            max_tokens=8000,
+    else:
+        response = await call_llm(
+            prompt=f"""Is this content primarily interview Q&A or interview prep material?
+Return ONLY: {{"is_interview_qna": true}} or {{"is_interview_qna": false}}
+Summary: {summary}
+Content sample: {content[:1000]}""",
+            system="Classifier. Return only valid JSON.",
+            max_tokens=20,
             temperature=0,
         )
         try:
-            print("--- LLM QNA RESPONSE ---")
-            print(qna_response)
-            print("------------------------")
-            
-            # Use regex to extract the JSON array robustly
-            import re
-            match = re.search(r'\[\s*\{.*\}\s*\]', qna_response, re.DOTALL)
-            if match:
-                qna_clean = match.group(0)
-            else:
-                qna_clean = qna_response.replace("```json", "").replace("```", "").strip()
-                
-            qna_pairs = json.loads(qna_clean)
-            if isinstance(qna_pairs, list):
-                for pair in qna_pairs:
-                    context = pair.pop("context", "").strip()
-                    if context:
-                        pair["q"] = f"**Situation:** {context}\n\n**Question:** {pair['q']}"
-                steps.append(f"✅ Extracted {len(qna_pairs)} QnA pairs")
-            else:
-                qna_pairs = []
-        except Exception as e:
-            print("Failed to parse QnA pairs:", e)
-            qna_pairs = []
+            is_qna = bool(json.loads(response.strip().strip("```json").strip("```")).get("is_interview_qna", False))
+        except Exception:
+            is_qna = False
+
+    if not is_qna or bool(state.get("downloaded_files")):
+        return is_qna, []
+
+    # Extract QnA pairs
+    qna_prompt = f"""You are an expert Principal AI Engineer conducting a senior technical interview.
+Extract EVERY question from the text. For each:
+1. "context": background scenario (or "" if none)
+2. "q": the exact question
+3. "a": answer from text — reformat with bullet points/bold/newlines if it's a wall of text. Write a high-quality answer if missing.
+4. "topic": EXACTLY ONE from: {', '.join(AI_CONCEPTS_LIST[:30])}... (pick closest)
+5. "keywords": 4-8 searchable keywords
+
+Return ONLY a valid JSON array:
+[{{"context": "", "q": "...", "a": "...", "topic": "...", "keywords": [...]}}]
+
+Text:
+{content}"""
+
+    qna_response = await call_llm(
+        prompt=qna_prompt,
+        model="groq/openai/gpt-oss-20b",
+        system="Expert interview question extractor. Return valid JSON array only.",
+        temperature=0,
+    )
+    try:
+        import re
+        match = re.search(r'\[\s*\{.*\}\s*\]', qna_response, re.DOTALL)
+        qna_clean = match.group(0) if match else qna_response.replace("```json", "").replace("```", "").strip()
+        qna_pairs = json.loads(qna_clean)
+        if isinstance(qna_pairs, list):
+            for pair in qna_pairs:
+                ctx = pair.pop("context", "").strip()
+                if ctx:
+                    pair["q"] = f"**Situation:** {ctx}\n\n**Question:** {pair['q']}"
+            return True, qna_pairs
+    except Exception as e:
+        print("Failed to parse QnA pairs:", e)
+    return True, []
+
+
+# ── Node: Parallel analysis (domain + difficulty + tree + qna) ────────────────
+
+async def analyze_all(state: LinkedInState) -> dict:
+    """
+    Runs four independent analyses in parallel via asyncio.gather():
+      • infer knowledge domain
+      • score difficulty
+      • place in knowledge tree
+      • detect interview QnA (+ extract pairs if needed)
+    """
+    domain_task   = _infer_domain(state)
+    diff_task     = _score_difficulty(state)
+    tree_task     = _place_in_knowledge_tree(state)
+    qna_task      = _detect_and_extract_qna(state)
+
+    domain, difficulty, tree_path, (is_qna, qna_pairs) = await asyncio.gather(
+        domain_task, diff_task, tree_task, qna_task
+    )
+
+    steps = [
+        f"📁 Domain: {domain}",
+        f"✅ Difficulty: {difficulty}/5",
+        f"✅ Tree: {tree_path}",
+    ]
+    if is_qna:
+        steps.append(f"✅ Interview QnA detected ({len(qna_pairs)} pairs)")
 
     return {
+        "knowledge_domain": domain,
+        "difficulty":       difficulty,
+        "knowledge_tree":   tree_path,
         "is_interview_qna": is_qna,
-        "qna_pairs": qna_pairs,
-        "agent_steps": steps
+        "qna_pairs":        qna_pairs,
+        "agent_steps":      steps,
     }
 
 
@@ -669,10 +626,7 @@ def build_linkedin_subgraph() -> StateGraph:
     graph.add_node("summarize",            summarize_content)
     graph.add_node("extract_concepts",     extract_key_concepts)
     graph.add_node("generate_metadata",    generate_metadata)
-    graph.add_node("infer_domain",         infer_domain)
-    graph.add_node("score_difficulty",     score_difficulty)
-    graph.add_node("place_in_tree",        place_in_knowledge_tree)
-    graph.add_node("detect_qna",           detect_interview_qna)
+    graph.add_node("analyze_all",          analyze_all)   # parallel: domain+diff+tree+qna
 
     graph.set_entry_point("fetch_page")
     graph.add_edge("fetch_page",           "extract_post")
@@ -681,11 +635,8 @@ def build_linkedin_subgraph() -> StateGraph:
     graph.add_edge("build_combined_text",  "summarize")
     graph.add_edge("summarize",            "extract_concepts")
     graph.add_edge("extract_concepts",     "generate_metadata")
-    graph.add_edge("generate_metadata",    "infer_domain")
-    graph.add_edge("infer_domain",         "score_difficulty")
-    graph.add_edge("score_difficulty",     "place_in_tree")
-    graph.add_edge("place_in_tree",        "detect_qna")
-    graph.add_edge("detect_qna",           END)
+    graph.add_edge("generate_metadata",    "analyze_all")
+    graph.add_edge("analyze_all",          END)
 
     return graph
 
