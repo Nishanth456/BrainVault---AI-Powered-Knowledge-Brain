@@ -30,7 +30,7 @@ export default function InterviewsPage() {
       fetchItems={fetchItems}
       renderCard={(item, onDelete) => {
         if (item.attachments && item.attachments.length > 0) {
-          return <LinkedInCard key={item.id} item={item as unknown as LinkedInItem} onDelete={onDelete} />
+          return <LinkedInCard key={item.id} item={item as unknown as LinkedInItem} onDelete={onDelete} readerBasePath="/knowledge/interviews" />
         }
         return (
           <div key={item.id} className="col-span-1 md:col-span-2 lg:col-span-3">

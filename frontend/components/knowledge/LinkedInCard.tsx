@@ -59,7 +59,15 @@ const LinkedInLogo = ({ size = 13, className = "" }: { size?: number; className?
   </svg>
 )
 
-export function LinkedInCard({ item, onDelete }: { item: LinkedInItem; onDelete?: (id: string) => void }) {
+export function LinkedInCard({
+  item,
+  onDelete,
+  readerBasePath = "/knowledge/linkedin",
+}: {
+  item: LinkedInItem
+  onDelete?: (id: string) => void
+  readerBasePath?: string
+}) {
   const hasPdf = item.attachments?.some(a => a.file_type === "pdf")
   const pdfAtt = item.attachments?.find(a => a.file_type === "pdf")
   const diff = item.difficulty || 0
@@ -174,7 +182,7 @@ export function LinkedInCard({ item, onDelete }: { item: LinkedInItem; onDelete?
       <div className="flex items-center gap-2 mt-auto pt-2 border-t border-border/50">
         {hasPdf && (
           <Link
-            href={`/knowledge/linkedin/${item.id}/reader`}
+            href={`${readerBasePath}/${item.id}/reader`}
             className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium
                        bg-violet-600/20 hover:bg-violet-600/35 text-violet-300 hover:text-violet-200
                        rounded-lg py-2 px-3 transition-all duration-200 border border-violet-600/20
