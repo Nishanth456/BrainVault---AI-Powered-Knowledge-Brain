@@ -39,7 +39,10 @@ export default function InterviewsPage() {
         )
       }}
       getItemId={(item) => item.id}
-      
+      groupBy={(item) => {
+        if (item.attachments && item.attachments.length > 0) return "Attached Documents"
+        return "Interview Questions"
+      }}
     />
   )
 }
