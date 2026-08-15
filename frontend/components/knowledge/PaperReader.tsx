@@ -492,11 +492,14 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
               )
             })}
 
-            {/* Tags */}
-            {item.tags?.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-2">
-                {item.tags.map((t) => (
-                  <span
+            {/* Tags & Concepts */}
+      {(() => {
+        const allTags = Array.from(new Set([...(item.key_concepts || []), ...(item.tags || [])]));
+        if (allTags.length === 0) return null;
+        return (
+          <div className="flex flex-wrap gap-1.5 pt-2">
+            {allTags.map(tag => (
+              <span
                     key={t}
                     className="text-[10px] text-indigo-400/70 bg-indigo-600/8
                                              px-1.5 py-0.5 rounded-full border border-indigo-600/15"

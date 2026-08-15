@@ -30,7 +30,7 @@ const navGroups = [
   {
     label: "Overview",
     items: [
-      { label: "Dashboard",       href: "/",                        icon: Brain },
+      { label: "Home",            href: "/",                        icon: Brain },
       { label: "Profile",          href: "/profile",                  icon: User },
     ]
   },

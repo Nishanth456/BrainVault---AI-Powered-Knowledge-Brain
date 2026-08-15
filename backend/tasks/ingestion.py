@@ -73,7 +73,9 @@ def run_ingestion_pipeline(self, job_id: str, raw_input: str, concept: str = "")
     try:
         asyncio.run(_run())
     except Exception as exc:
-        print(f"❌ Ingestion pipeline failed for job {job_id}: {exc}")
+        import traceback
+        tb = traceback.format_exc()
+        print(f"❌ Ingestion pipeline failed for job {job_id}:\n{tb}")
         # Mark job as failed in PostgreSQL
         async def _fail():
             from backend.services.storage_service import mark_job_failed

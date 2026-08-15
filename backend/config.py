@@ -22,8 +22,9 @@ class Settings(BaseSettings):
     MINIO_BUCKET_NAME: str = "brainvault-files"
     MINIO_SECURE: bool = False
 
-    GROQ_API_KEY: str
+    GROQ_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
+    OPENROUTER_API_KEYS: str = ""
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_EMBED_MODEL: str = "nomic-embed-text"
     EMBED_DIMENSION: int = 768

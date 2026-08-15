@@ -139,20 +139,24 @@ export function LinkedInCard({ item, onDelete }: { item: LinkedInItem; onDelete?
         {item.summary}
       </p>
 
-      {/* Tags */}
-      {item.tags?.length > 0 && (
-        <div className="tag-scroll flex gap-1.5 overflow-x-auto pb-1">
-          {item.tags?.map(tag => (
-            <span
-              key={tag}
-              className="px-2 py-0.5 text-[11px] bg-violet-600/10 text-violet-300
-                         whitespace-nowrap flex-shrink-0 rounded-full border border-violet-600/15"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
+      {/* Tags & Concepts */}
+      {(() => {
+        const allTags = Array.from(new Set([...(item.key_concepts || []), ...(item.tags || [])]));
+        if (allTags.length === 0) return null;
+        return (
+          <div className="tag-scroll flex gap-1.5 overflow-x-auto pb-1">
+            {allTags.map(tag => (
+              <span
+                key={tag}
+                className="px-2 py-0.5 text-[11px] bg-violet-600/10 text-violet-300
+                           whitespace-nowrap flex-shrink-0 rounded-full border border-violet-600/15"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        );
+      })()}
 
 
       {/* PDF attachment badge */}

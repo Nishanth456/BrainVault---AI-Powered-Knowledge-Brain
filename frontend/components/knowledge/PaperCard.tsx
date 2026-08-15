@@ -153,11 +153,14 @@ export function PaperCard({
             </p>
           )}
 
-          {/* Tags */}
-          {item.tags?.length > 0 && (
-            <div className="flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-0.5">
-              {item.tags?.map(tag => (
-                <span
+          {/* Tags & Concepts */}
+      {(() => {
+        const allTags = Array.from(new Set([...(item.key_concepts || []), ...(item.tags || [])]));
+        if (allTags.length === 0) return null;
+        return (
+          <div className="flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-0.5">
+            {allTags.map(tag => (
+              <span
                   key={tag}
                   className="px-2 py-0.5 text-[11px] bg-indigo-600/10 text-indigo-300
                              whitespace-nowrap flex-shrink-0 rounded-full border border-indigo-600/15"

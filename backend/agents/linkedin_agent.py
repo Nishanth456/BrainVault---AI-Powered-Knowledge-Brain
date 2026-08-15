@@ -16,7 +16,7 @@ from backend.tools.browser import linkedin_scraper
 from backend.tools.pdf_extractor import pdf_extractor
 from backend.tools.pdf_generator import create_slides_pdf
 from backend.tools.minio_uploader import download_and_store_pdf, store_bytes_to_minio
-from backend.services.llm import call_llm
+from backend.services.llm import fast_llm, reasoning_llm
 import asyncio
 import json
 import uuid
@@ -279,7 +279,7 @@ IMPORTANT: Do NOT include any introductory or concluding phrases (e.g., "Here is
 Content:
 {content[:6000]}"""
 
-    summary = await call_llm(
+    summary = await fast_llm(
         prompt=prompt,
         system="You are a technical knowledge extraction expert. Write clear, specific, one-sentence summaries.",
     )
@@ -299,7 +299,7 @@ async def extract_key_concepts(state: LinkedInState) -> dict:
 
     context_text = content[:4000] if content else f"Topic: {concept}"
 
-    response = await call_llm(
+    response = await fast_llm(
         prompt=f"""Extract key concepts and tags from this content.
 Return ONLY a JSON object:
 {{"concepts": ["concept1", ...up to 6], "tags": ["tag1", ...up to 5]}}
@@ -354,7 +354,7 @@ async def generate_metadata(state: LinkedInState) -> dict:
     concept   = state.get("concept") or ""
     doc_title = state.get("document_title") or ""
 
-    response = await call_llm(
+    response = await reasoning_llm.json(
         prompt=f"""Generate metadata for this LinkedIn post. Return ONLY this JSON:
 {{
   "title": "5-8 word article-style title. MUST include the primary technology/framework (e.g., FastAPI, LangChain, Docker) if it is present in the Summary or Tags. Example: 'FastAPI RAG Pipeline Production Deployment'. Concept hint: '{concept}'",
@@ -365,21 +365,12 @@ Summary: {summary}
 Tags: {tags}
 Doc title: {doc_title}
 Return ONLY valid JSON.""",
-        model="groq/openai/gpt-oss-120b",
-        system="You are a knowledge management expert. Return only valid compact JSON.",
-        temperature=0.1,
     )
 
     try:
-        clean = response.strip()
-        if clean.startswith("```json"):
-            clean = clean[7:]
-        if clean.startswith("```"):
-            clean = clean[3:]
-        if clean.endswith("```"):
-            clean = clean[:-3]
-        clean = clean.strip()
-        metadata = json.loads(clean)
+        metadata = response
+        if not isinstance(metadata, dict):
+            metadata = {}
     except Exception as e:
         print(f"❌ generate_metadata JSON parse failed: {e}\nRaw response:\n{response}")
         # Fallback title uses concept or document title
@@ -408,7 +399,7 @@ async def _infer_domain(state: LinkedInState) -> dict:
     tags    = state.get("tags") or []
     concept = state.get("concept") or ""
 
-    response = await call_llm(
+    response = await fast_llm(
         prompt=f"""Choose ONE knowledge domain from this list:
 Artificial Intelligence, Machine Learning, Python, System Design, SQL, Cloud Computing, DevOps, Mathematics, General
 
@@ -417,7 +408,6 @@ Tags: {tags}{f', Concept: {concept}' if concept else ''}
 
 Respond with ONLY the domain name.""",
         system="You are a knowledge domain classifier. Reply with only the domain name.",
-        model="groq/qwen/qwen3.6-27b",
         max_tokens=15,
         temperature=0,
     )
@@ -433,7 +423,7 @@ async def _score_difficulty(state: LinkedInState) -> int:
     summary  = state.get("summary", "")
     concepts = state.get("key_concepts", [])
 
-    response = await call_llm(
+    response = await fast_llm(
         prompt=f"""Rate technical difficulty for an AI practitioner (1-5):
 1=Beginner, 2=Basic, 3=Intermediate, 4=Advanced, 5=Expert
 
@@ -474,7 +464,13 @@ AI_CONCEPTS_LIST = [
     "AI Use Cases", "AI Project Development", "AI System Design", "AI Research Trends",
     "Edge AI", "Robotics and AI", "Autonomous Systems", "Internet of Things (IoT) with AI",
     "AI in Healthcare", "AI in Finance", "AI in Education", "AI in Cybersecurity",
-    "AI in Software Development", "Future of AI"
+    "AI in Software Development", "Future of AI",
+    
+    # General Software Engineering & Frameworks
+    "FastAPI", "React", "Docker", "Kubernetes", "CI/CD", 
+    "Production Engineering", "General Software Engineering", 
+    "Backend Development", "Frontend Development", "Database Engineering",
+    "Cloud Computing", "DevOps"
 ]
 
 async def _place_in_knowledge_tree(state: LinkedInState) -> str:
@@ -484,8 +480,10 @@ async def _place_in_knowledge_tree(state: LinkedInState) -> str:
     tags     = state.get("tags", [])
     concept  = state.get("concept") or ""
 
-    response = await call_llm(
+    response = await reasoning_llm.json(
         prompt=f"""Choose exactly ONE entry from ALLOWED_CONCEPTS that best matches this content.
+IMPORTANT: You MUST choose the most SPECIFIC category possible. Do NOT choose broad categories like "Artificial Intelligence (AI)" unless absolutely no other specific category fits.
+
 Return ONLY: {{"tree_path": "<exact entry>"}}
 
 ALLOWED_CONCEPTS: {', '.join(AI_CONCEPTS_LIST)}
@@ -496,17 +494,16 @@ Concepts: {concepts}
 User concept hint: {concept}
 
 Return ONLY valid JSON.""",
-        system="Knowledge taxonomy expert. Pick exactly one from the allowed list. Return only valid JSON.",
-        max_tokens=60,
-        temperature=0,
+        max_tokens=60
     )
 
     try:
-        clean = response.strip().strip("```json").strip("```").strip()
-        chosen = json.loads(clean).get("tree_path", "")
+        chosen = response.get("tree_path", "")
         if chosen not in AI_CONCEPTS_LIST:
+            print(f"⚠️ Invalid taxonomy chosen: {chosen}. Falling back to AI.")
             chosen = "Artificial Intelligence (AI)"
-    except Exception:
+    except Exception as e:
+        print(f"⚠️ Error parsing taxonomy: {e}. Falling back to AI.")
         chosen = "Artificial Intelligence (AI)"
     return chosen
 
@@ -523,7 +520,7 @@ async def _detect_and_extract_qna(state: LinkedInState) -> tuple[bool, list]:
     if "interview" in state.get("url", "").lower():
         is_qna = True
     else:
-        response = await call_llm(
+        response = await fast_llm(
             prompt=f"""Is this content primarily interview Q&A or interview prep material?
 Return ONLY: {{"is_interview_qna": true}} or {{"is_interview_qna": false}}
 Summary: {summary}
@@ -555,9 +552,8 @@ Return ONLY a valid JSON array:
 Text:
 {content}"""
 
-    qna_response = await call_llm(
+    qna_response = await fast_llm(
         prompt=qna_prompt,
-        model="groq/openai/gpt-oss-20b",
         system="Expert interview question extractor. Return valid JSON array only.",
         temperature=0,
     )

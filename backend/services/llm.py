@@ -47,14 +47,14 @@ Input: {raw_input[:500]}
 Respond with ONLY the category name, nothing else."""
 
     try:
-        response = await acompletion(
-            
-            messages=[{"role": "user", "content": prompt}],
+        response = await fast_llm(
+            prompt=prompt,
+            system="You are a classifier. Respond with ONLY the category name, nothing else.",
             max_tokens=10,
             temperature=0,
         )
 
-        detected = response.choices[0].message.content.strip().lower()
+        detected = response.strip().lower()
         valid_types = ["linkedin", "blog", "pdf", "research", "github", "youtube", "course", "certification", "plaintext"]
         return detected if detected in valid_types else "plaintext"
 
@@ -65,7 +65,7 @@ Respond with ONLY the category name, nothing else."""
 
 async def call_llm(
     prompt: str,
-    model: str = "groq/openai/gpt-oss-120b",
+    model: str,
     system: str = "You are a helpful AI assistant.",
     temperature: float = 0.1,
     max_tokens: int = 1000,
@@ -81,18 +81,53 @@ async def call_llm(
         kwargs["response_format"] = response_format
 
     try:
-        response = await acompletion(
-            model=model,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=temperature,
-            max_tokens=max_tokens,
-            num_retries=3,
-            **kwargs
-        )
-        content = response.choices[0].message.content.strip()
+        if model in ["nvidia/nemotron-3-super-120b-a12b:free", "nvidia/nemotron-3-nano-30b-a3b:free"]:
+            from openai import AsyncOpenAI
+            
+            keys = [k.strip() for k in settings.OPENROUTER_API_KEYS.split(",") if k.strip()]
+            if not keys:
+                raise ValueError("No OpenRouter API keys configured in environment.")
+
+            last_err = None
+            for key in keys:
+                try:
+                    client = AsyncOpenAI(
+                        api_key=key,
+                        base_url="https://openrouter.ai/api/v1",
+                    )
+                    response = await client.chat.completions.create(
+                        model=model,
+                        messages=[
+                            {"role": "system", "content": system},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                        **kwargs
+                    )
+                    break  # Success!
+                except Exception as e:
+                    print(f"⚠️ OpenRouter key {key[:10]}... failed for call_llm: {e}")
+                    last_err = e
+            else:
+                # If we exhausted all keys without a break
+                if last_err:
+                    raise last_err
+                raise Exception("All OpenRouter API keys failed.")
+        else:
+            response = await acompletion(
+                model=model,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=temperature,
+                max_tokens=max_tokens,
+                num_retries=3,
+                **kwargs
+            )
+        raw_content = response.choices[0].message.content
+        content = raw_content.strip() if raw_content else ""
         # Strip <think>...</think> blocks from reasoning models (like Qwen)
         import re
         content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip()
@@ -109,7 +144,7 @@ async def stream_rag_response(system: str, prompt: str):
     Yields text chunks as they arrive.
     """
     models = [
-        "groq/openai/gpt-oss-120b",
+        "nvidia/nemotron-3-nano-30b-a3b:free",
         "groq/openai/gpt-oss-20b",
         "groq/qwen/qwen3.6-27b",
         "gemini/gemini-2.0-flash",
@@ -117,18 +152,52 @@ async def stream_rag_response(system: str, prompt: str):
     last_error = None
     for model in models:
         try:
-            response = await acompletion(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.2,
-                max_tokens=2000,
-                stream=True,
-            )
+            if model in ["nvidia/nemotron-3-super-120b-a12b:free", "nvidia/nemotron-3-nano-30b-a3b:free"]:
+                from openai import AsyncOpenAI
+                
+                keys = [k.strip() for k in settings.OPENROUTER_API_KEYS.split(",") if k.strip()]
+                if not keys:
+                    raise ValueError("No OpenRouter API keys configured in environment.")
+                
+                key_last_err = None
+                for key in keys:
+                    try:
+                        client = AsyncOpenAI(
+                            api_key=key,
+                            base_url="https://openrouter.ai/api/v1",
+                        )
+                        response = await client.chat.completions.create(
+                            model=model,
+                            messages=[
+                                {"role": "system", "content": system},
+                                {"role": "user", "content": prompt}
+                            ],
+                            temperature=0.2,
+                            max_tokens=2000,
+                            stream=True,
+                        )
+                        break
+                    except Exception as e:
+                        print(f"⚠️ OpenRouter key {key[:10]}... failed for stream_rag_response: {e}")
+                        key_last_err = e
+                else:
+                    if key_last_err:
+                        raise key_last_err
+                    raise Exception("All OpenRouter API keys failed.")
+            else:
+                response = await acompletion(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.2,
+                    max_tokens=2000,
+                    stream=True,
+                )
+            
             async for chunk in response:
-                delta = chunk.choices[0].delta.content
+                delta = chunk.choices[0].delta.content if hasattr(chunk.choices[0].delta, 'content') else chunk.choices[0].get("delta", {}).get("content")
                 if delta:
                     yield delta
             return
@@ -143,7 +212,7 @@ async def stream_rag_response(system: str, prompt: str):
 
 async def call_llm_json(
     prompt: str,
-    model: str = "groq/openai/gpt-oss-120b",
+    model: str,
     max_tokens: int = 1500,
 ) -> dict:
     """
@@ -160,14 +229,43 @@ async def call_llm_json(
         system="You are a helpful AI assistant. Always respond with valid JSON only. Do not add any commentary outside the JSON.",
         max_tokens=max_tokens,
     )
-    # Strip ```json ... ``` or ``` ... ``` fences
-    raw = raw.strip()
-    raw = _re.sub(r"^```(?:json)?\s*", "", raw, flags=_re.MULTILINE)
-    raw = _re.sub(r"\s*```\s*$", "", raw, flags=_re.MULTILINE)
-    raw = raw.strip()
+    # Attempt to extract JSON block using regex if there's preamble text
+    match = _re.search(r'(\{.*\}|\[.*\])', raw, _re.DOTALL)
+    if match:
+        raw = match.group(0)
+
     try:
         return _json.loads(raw)
+    except _json.JSONDecodeError as e:
+        # One last fallback attempt if it's still failing (sometimes there are weird characters)
+        try:
+             import ast
+             parsed = ast.literal_eval(raw)
+             if isinstance(parsed, (dict, list)):
+                 return parsed
+        except Exception:
+             pass
+        print(f"⚠️ call_llm_json parse failed: {e}\nRaw output (first 500 chars): {raw[:500]}")
+        return {}
     except Exception as e:
         print(f"⚠️ call_llm_json parse failed: {e}\nRaw output (first 500 chars): {raw[:500]}")
         return {}
 
+class LLMClient:
+    """Wrapper to maintain standardized LLM models and provide a clean async interface."""
+    def __init__(self, model_name: str):
+        self.model = model_name
+
+    async def __call__(self, prompt: str, system: str = "You are a helpful AI assistant.", temperature: float = 0.1, max_tokens: int = 1000, response_format: dict = None) -> str:
+        return await call_llm(prompt, model=self.model, system=system, temperature=temperature, max_tokens=max_tokens, response_format=response_format)
+    
+    async def json(self, prompt: str, max_tokens: int = 1500) -> dict:
+        return await call_llm_json(prompt, model=self.model, max_tokens=max_tokens)
+
+
+# Single Source of Truth for Models
+# fast_llm = LLMClient("openrouter/nvidia/nemotron-3-nano-30b-a3b:free")
+# reasoning_llm = LLMClient("openrouter/nvidia/nemotron-4-340b-instruct")
+
+fast_llm = LLMClient("groq/llama-3.1-8b-instant")
+reasoning_llm = LLMClient("groq/llama-3.3-70b-versatile")
