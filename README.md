@@ -60,7 +60,7 @@ Each knowledge type lives in its own curated space within the platform:
 | **LinkedIn Knowledge** | Cards with thumbnail, summary, difficulty, tags, attachments |
 | **Blog Library** | Article cards with image, author, reading time, key concepts |
 | **Research Papers** | Papers grouped by domain with method/results summaries |
-| **Interview Questions** | Auto-extracted Q&As grouped by domain |
+| **Interview Questions** | Auto-extracted Q&As and source documents, neatly separated into "Attachments" and "Q&A" groups by topic |
 | **AI Notes** | Quick pasted text, auto-classified hierarchically |
 | **GitHub Repos** | Repo cards with architecture, tech stack, language, stars |
 | **PDF Library** | Books and documents with reader + AI summary |
@@ -94,6 +94,14 @@ For a deep dive into the technical stack, architecture, and flows, please refer 
 ## 🚀 Quick Start (Local Development)
 
 The entire application is Dockerized. You can start the infrastructure, backend API, celery workers, and frontend with a single command.
+
+### 0. Environment Setup
+
+Create a `.env` file in the `backend/` directory with your API keys. You can copy the provided `.env.example`:
+```bash
+cp backend/.env.example backend/.env
+```
+Ensure you fill in your `GROQ_API_KEY` (and any other optional keys like `GEMINI_API_KEY` or `OPENROUTER_API_KEYS`).
 
 ### 1. Start all services
 
