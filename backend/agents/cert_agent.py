@@ -70,7 +70,8 @@ async def fetch_cert_page_node(state: CertState) -> dict:
 # ── Node 2: Extract Info ──────────────────────────────────────────────────────
 
 async def extract_cert_info_node(state: CertState) -> dict:
-    if state.get("error"): return {}
+    if state.get("error"):
+        return {}
     
     prompt = f"""You are an expert data extractor. Extract certification/credential details from the following page text.
     Return ONLY a JSON object with these keys:
@@ -109,7 +110,8 @@ async def extract_cert_info_node(state: CertState) -> dict:
 # ── Node 3: Generate Summary & Metadata ───────────────────────────────────────
 
 async def summarize_cert_node(state: CertState) -> dict:
-    if state.get("error"): return {}
+    if state.get("error"):
+        return {}
     
     prompt = f"""Summarize this certification in 2-3 concise sentences.
     Focus on what it validates.
@@ -135,7 +137,8 @@ async def summarize_cert_node(state: CertState) -> dict:
 
 
 async def extract_concepts_node(state: CertState) -> dict:
-    if state.get("error"): return {}
+    if state.get("error"):
+        return {}
     
     prompt = f"""Extract 5 to 10 key technical concepts tested in this certification.
     CRITICAL: You MUST include the issuing vendor (e.g., "AWS", "Microsoft", "Google") and key terms from the certification name as concepts.
@@ -155,7 +158,8 @@ async def extract_concepts_node(state: CertState) -> dict:
 
 
 async def map_knowledge_tree_node(state: CertState) -> dict:
-    if state.get("error"): return {}
+    if state.get("error"):
+        return {}
     
     prompt = f"""Map this certification into our knowledge tree.
     Our top-level domains include: {", ".join(AI_CONCEPTS_LIST[:20])} (and general SWE/Tech).
@@ -182,7 +186,8 @@ async def map_knowledge_tree_node(state: CertState) -> dict:
 
 
 async def score_cert_difficulty_node(state: CertState) -> dict:
-    if state.get("error"): return {}
+    if state.get("error"):
+        return {}
     
     summary = state.get("summary", "")
     concepts = state.get("key_concepts", [])

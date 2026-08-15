@@ -17,7 +17,7 @@ from pathlib import Path
 BACKEND_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(BACKEND_ROOT))
 
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright  # noqa: E402
 
 # Save next to backend/tools/browser.py's _COOKIE_FILE expectation
 SESSION_FILE = BACKEND_ROOT / "linkedin_session.json"
@@ -53,12 +53,12 @@ async def main():
             # Wait until we reach the feed page (or any clear post-login page)
             await page.wait_for_url("**/feed/**", timeout=120000)
             print("\n✅ Successfully logged in!")
-        except Exception as e:
+        except Exception:
             current = page.url
             if "feed" in current or "mynetwork" in current or current == "https://www.linkedin.com/":
                 print("\n✅ Logged in (detected via current URL)")
             else:
-                print(f"\n❌ Timed out waiting for login or browser was closed.")
+                print("\n❌ Timed out waiting for login or browser was closed.")
                 print(f"   Last URL: {current}")
                 # Save debug dump so the user can inspect what LinkedIn showed
                 try:

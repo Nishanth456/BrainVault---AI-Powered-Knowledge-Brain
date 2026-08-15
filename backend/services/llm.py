@@ -18,13 +18,20 @@ async def detect_input_type(raw_input: str) -> str:
     
     # Fast path for obvious URLs to save LLM calls and avoid rate limits/misclassifications
     if raw_input_lower.startswith("http://") or raw_input_lower.startswith("https://"):
-        if "linkedin.com" in raw_input_lower: return "linkedin"
-        if "github.com" in raw_input_lower: return "github"
-        if "youtube.com" in raw_input_lower or "youtu.be" in raw_input_lower: return "youtube"
-        if any(domain in raw_input_lower for domain in ["udemy.com", "coursera.org", "deeplearning.ai", "fast.ai"]): return "course"
-        if any(domain in raw_input_lower for domain in ["medium.com", "dev.to", "hashnode.com", "substack.com"]): return "blog"
-        if "arxiv.org" in raw_input_lower or "researchgate.net" in raw_input_lower: return "research"
-        if raw_input_lower.split("?")[0].endswith(".pdf"): return "pdf"
+        if "linkedin.com" in raw_input_lower:
+            return "linkedin"
+        if "github.com" in raw_input_lower:
+            return "github"
+        if "youtube.com" in raw_input_lower or "youtu.be" in raw_input_lower:
+            return "youtube"
+        if any(domain in raw_input_lower for domain in ["udemy.com", "coursera.org", "deeplearning.ai", "fast.ai"]):
+            return "course"
+        if any(domain in raw_input_lower for domain in ["medium.com", "dev.to", "hashnode.com", "substack.com"]):
+            return "blog"
+        if "arxiv.org" in raw_input_lower or "researchgate.net" in raw_input_lower:
+            return "research"
+        if raw_input_lower.split("?")[0].endswith(".pdf"):
+            return "pdf"
         
         # If it's a URL but didn't match the above, let the LLM try to figure out if it's a blog/cert/etc
 

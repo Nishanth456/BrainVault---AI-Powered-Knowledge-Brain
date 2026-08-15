@@ -28,7 +28,6 @@ def run_ingestion_pipeline(self, job_id: str, raw_input: str, concept: str = "")
       3. Job is automatically marked 'done' by save_knowledge_item()
     """
     from backend.agents.orchestrator import master_graph
-    from backend.services.storage_service import mark_job_failed
 
     async def _run():
         # Mark job as running
@@ -77,8 +76,8 @@ def run_ingestion_pipeline(self, job_id: str, raw_input: str, concept: str = "")
         tb = traceback.format_exc()
         print(f"❌ Ingestion pipeline failed for job {job_id}:\n{tb}")
         # Mark job as failed in PostgreSQL
-        async def _fail():
+        async def _fail(err):
             from backend.services.storage_service import mark_job_failed
-            await mark_job_failed(job_id, str(exc))
-        asyncio.run(_fail())
+            await mark_job_failed(job_id, str(err))
+        asyncio.run(_fail(exc))
         self.retry(exc=exc, countdown=10)

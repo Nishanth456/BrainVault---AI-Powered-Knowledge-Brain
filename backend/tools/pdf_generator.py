@@ -22,8 +22,6 @@ def images_to_pdf(image_bytes_list: list[bytes]) -> bytes:
 
     for img_bytes in image_bytes_list:
         try:
-            # Open image as a fitz Pixmap
-            img_stream = io.BytesIO(img_bytes)
             # fitz.open can open image streams
             img_doc = fitz.open(stream=img_bytes, filetype="jpeg")
             # Convert image to PDF page
@@ -50,7 +48,8 @@ def images_to_pdf_reportlab(image_bytes_list: list[bytes], title: str = "LinkedI
     try:
         from PIL import Image
         from fpdf import FPDF
-        import tempfile, os
+        import tempfile
+        import os
 
         pdf = FPDF()
         pdf.set_auto_page_break(False)

@@ -10,8 +10,6 @@ Supports:
 Uses yt-dlp for metadata + thumbnails and youtube-transcript-api for captions.
 """
 import asyncio
-import re
-import tempfile
 from urllib.parse import parse_qs, urlparse
 
 from backend.services.minio import upload_bytes

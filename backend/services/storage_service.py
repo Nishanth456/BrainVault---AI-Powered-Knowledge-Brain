@@ -5,7 +5,6 @@ Phase 1: also saves attachments and generates/upserts embeddings.
 import json
 import uuid
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 from backend.models.database import AsyncSessionLocal
 from backend.agents.state import BrainVaultState
 

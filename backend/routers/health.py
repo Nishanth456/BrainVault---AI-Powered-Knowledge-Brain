@@ -25,7 +25,7 @@ async def health_check():
         from backend.tasks.ingestion import celery_app
         celery_app.control.inspect(timeout=1.0).ping()
         status["services"]["redis"] = "ok"
-    except Exception as e:
+    except Exception:
         status["services"]["redis"] = "ok (broker reachable, no workers running)"
 
     return status

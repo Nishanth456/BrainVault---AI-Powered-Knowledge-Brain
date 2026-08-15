@@ -9,7 +9,6 @@ Run from the project root:
 """
 
 import asyncio
-import json
 from sqlalchemy import select, update
 from backend.models.database import AsyncSessionLocal
 from backend.models.schemas import KnowledgeItem

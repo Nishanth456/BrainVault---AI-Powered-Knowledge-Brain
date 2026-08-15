@@ -105,7 +105,6 @@ async def plaintext_agent_node(state: BrainVaultState) -> dict:
     result = await compiled.ainvoke(plaintext_state)
 
     metadata = result.get("metadata") or {}
-    is_qna = result.get("is_interview_qna")
 
     # If interview Q&A detected, storage_service will create interview_qna items
     # from qna_pairs. The primary note is still saved as type="note".

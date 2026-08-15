@@ -10,7 +10,6 @@ from pydantic import BaseModel
 from backend.models.database import get_db
 from backend.tasks.ingestion import run_ingestion_pipeline
 import uuid
-import asyncio
 import json
 
 router = APIRouter(prefix="/api", tags=["ingest"])

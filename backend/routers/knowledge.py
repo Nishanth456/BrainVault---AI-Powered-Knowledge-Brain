@@ -7,7 +7,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text, select, func
-from datetime import datetime, timezone
+from datetime import datetime
 from fastapi import HTTPException
 from sqlalchemy.orm import selectinload
 from backend.models.database import get_db
@@ -854,26 +854,5 @@ async def export_knowledge(item_id: str, format: str = Query("markdown"), db: As
         from fastapi.responses import PlainTextResponse
         return PlainTextResponse(md)
 
-@router.get("/trash")
-async def list_trash(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(KnowledgeItem)
-        .where(KnowledgeItem.deleted_at.is_not(None))
-        .order_by(KnowledgeItem.deleted_at.desc())
-    )
-    items = result.scalars().all()
-    return [
-        {
-            "id": str(item.id),
-            "type": item.type,
-            "title": item.title,
-            "summary": item.summary,
-            "source_url": item.source_url,
-            "difficulty": item.difficulty,
-            "knowledge_domain": item.knowledge_domain,
-            "created_at": item.created_at.isoformat() if item.created_at else None,
-            "is_bookmarked": item.is_bookmarked,
-        }
-        for item in items
-    ]
+
 

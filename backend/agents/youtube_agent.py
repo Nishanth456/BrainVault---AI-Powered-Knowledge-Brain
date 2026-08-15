@@ -98,7 +98,7 @@ async def resolve_youtube_node(state: YouTubeState) -> dict:
             "thumbnail_path": data.get("thumbnail_path"),
             "chapters": [],
             "agent_steps": [
-                f"✅ Resolved YouTube playlist",
+                "✅ Resolved YouTube playlist",
                 f"📋 {playlist_title}",
             ],
         }
@@ -140,7 +140,6 @@ async def summarize_per_chapter(state: YouTubeState) -> dict:
 
     if not chapters:
         # If no chapters, create a single pseudo-chapter for the whole video
-        full_text = " ".join([seg.get("text") or "" for seg in transcript])
         chapters = [{"title": title, "start_seconds": 0, "start_text": "0:00"}]
 
     chapter_summaries = []

@@ -20,7 +20,6 @@ from backend.services.llm import fast_llm, reasoning_llm
 import asyncio
 import json
 import uuid
-import httpx
 
 
 # ── LinkedIn-specific state ───────────────────────────────────────────────────

@@ -300,7 +300,6 @@ def _estimate_importance(raw: str, concepts: list[str], tags: list[str], concept
 async def generate_metadata(state: PlainTextState) -> dict:
     """Generate title, reading time, and importance score deterministically."""
     raw = state["raw_input"]
-    summary = state.get("summary", "")
     concepts = state.get("key_concepts", []) or []
     tags = state.get("tags", []) or []
     concept_hint = state.get("concept") or None

@@ -93,7 +93,7 @@ async def fetch_blog(url: str) -> dict:
         # If we got a Cloudflare challenge or tiny payload, fall back to Playwright
         if len(html) < 2000 or "challenges.cloudflare.com" in html or "cf-mitigated" in html:
             raise ValueError("Cloudflare challenge detected")
-    except Exception as e:
+    except Exception:
         # Fallback to Playwright for Medium and other protected sites
         try:
             html = await _fetch_with_playwright(url)

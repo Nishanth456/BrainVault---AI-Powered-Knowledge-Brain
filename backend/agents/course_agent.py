@@ -72,7 +72,8 @@ async def fetch_course_page_node(state: CourseState) -> dict:
 # ── Node 2: Extract Info ──────────────────────────────────────────────────────
 
 async def extract_course_info_node(state: CourseState) -> dict:
-    if state.get("error"): return {}
+    if state.get("error"):
+        return {}
     
     prompt = f"""You are an expert data extractor. Extract course details from the following page text.
     Return ONLY a JSON object with these keys:
@@ -112,7 +113,8 @@ async def extract_course_info_node(state: CourseState) -> dict:
 # ── Node 3: Extract Syllabus ──────────────────────────────────────────────────
 
 async def extract_syllabus_node(state: CourseState) -> dict:
-    if state.get("error"): return {}
+    if state.get("error"):
+        return {}
     
     prompt = f"""You are an expert data extractor. Extract the course syllabus/curriculum from the following text.
     Return ONLY a JSON object with a single key "syllabus" containing an array of modules/sections. 
@@ -136,7 +138,7 @@ async def extract_syllabus_node(state: CourseState) -> dict:
             "syllabus": json.dumps(syllabus),
             "agent_steps": [f"✅ Extracted syllabus ({len(syllabus)} modules)"]
         }
-    except Exception as e:
+    except Exception:
         return {
             "syllabus": "[]",
             "agent_steps": ["⚠️ Failed to extract syllabus, skipping"]
@@ -146,7 +148,8 @@ async def extract_syllabus_node(state: CourseState) -> dict:
 # ── Node 4: Generate Summary & Metadata ───────────────────────────────────────
 
 async def summarize_course_node(state: CourseState) -> dict:
-    if state.get("error"): return {}
+    if state.get("error"):
+        return {}
     
     prompt = f"""Summarize this course in 3-5 concise sentences.
     Focus on what the student will learn.
@@ -165,7 +168,8 @@ async def summarize_course_node(state: CourseState) -> dict:
 
 
 async def extract_concepts_node(state: CourseState) -> dict:
-    if state.get("error"): return {}
+    if state.get("error"):
+        return {}
     
     prompt = f"""Extract 5 to 10 key technical concepts taught in this course.
     Return ONLY a comma-separated list of strings.
@@ -182,7 +186,8 @@ async def extract_concepts_node(state: CourseState) -> dict:
 
 
 async def map_knowledge_tree_node(state: CourseState) -> dict:
-    if state.get("error"): return {}
+    if state.get("error"):
+        return {}
     
     prompt = f"""Map this course into our knowledge tree.
     Our top-level domains include: {", ".join(AI_CONCEPTS_LIST[:20])} (and general SWE/Tech).
@@ -209,7 +214,8 @@ async def map_knowledge_tree_node(state: CourseState) -> dict:
 
 
 async def score_course_difficulty_node(state: CourseState) -> dict:
-    if state.get("error"): return {}
+    if state.get("error"):
+        return {}
     
     summary = state.get("summary", "")
     concepts = state.get("key_concepts", [])

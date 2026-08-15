@@ -8,9 +8,6 @@ Flow:
 4. Extract: post text, author, date, PDF download URL or carousel slide images
 5. Download the PDF/images for storage in MinIO
 """
-import asyncio
-import json
-import os
 import httpx
 from pathlib import Path
 from playwright.async_api import async_playwright, Page, BrowserContext
@@ -95,7 +92,7 @@ class LinkedInScraper:
             # Wait for login to complete by checking for a known post-login element or URL
             try:
                 await page.wait_for_url("**/feed/**", timeout=15000)
-            except:
+            except Exception:
                 pass
             current_url = page.url
             if "feed" in current_url or "mynetwork" in current_url or current_url == "https://www.linkedin.com/":

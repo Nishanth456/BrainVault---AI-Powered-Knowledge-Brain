@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from sqlalchemy import String, Text, Integer, ARRAY, ForeignKey, BigInteger, func, Float
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB as PG_JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.models.database import Base
 
@@ -137,8 +137,6 @@ class LearningPath(Base):
 
 
 # ── Phase 11: User Profile ────────────────────────────────────────────────────
-
-from sqlalchemy.dialects.postgresql import JSONB as PG_JSONB
 
 class UserProfile(Base):
     __tablename__ = "user_profile"

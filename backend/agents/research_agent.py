@@ -19,9 +19,8 @@ from typing import TypedDict, Optional
 
 from backend.tools.arxiv_client import resolve_research_source, download_arxiv_pdf
 from backend.tools.pdf_extractor import pdf_extractor
-from backend.services.llm import call_llm, fast_llm, reasoning_llm
+from backend.services.llm import fast_llm
 from backend.services.minio import upload_bytes
-from backend.config import settings
 
 
 # ── Research-specific state ───────────────────────────────────────────────────

@@ -7,7 +7,6 @@ POST /api/profile/resume   → upload resume to MinIO
 GET  /api/profile/resume   → redirect to resume download URL
 """
 
-import json
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.responses import StreamingResponse
