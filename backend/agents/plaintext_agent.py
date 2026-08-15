@@ -427,12 +427,16 @@ Extract EVERY SINGLE QUESTION from the text. For each question:
 3. Extract the answer or explanation from the text into the "a" field. The "a" field MUST be a SINGLE JSON string, NOT an array. IF the source text is a single massive block without line breaks (e.g. from OCR extraction), YOU MUST reformat it by adding bullet points and double newlines (`\\n\\n`) between logical points so it is highly readable. Do NOT change the actual wording, but DO add markdown formatting (bullet points, bolding, and `\\n\\n` spacing). Do NOT leave the explanation as a single unformatted paragraph. If the answer is missing or weak, write a strong senior-level answer yourself using Markdown formatting.
 4. Map the question to EXACTLY ONE topic from this list:
 {chr(10).join([f"- {t}" for t in AI_CONCEPTS_LIST])}
-5. Generate 4-8 searchable keywords for this specific question. Include keywords from all relevant layers. Do NOT repeat the full question text as a keyword.
+1. "context": specific background scenario. MUST be strictly empty ("") unless the text provides a hypothetical situation.
+2. "q": the exact question
+3. "a": answer from text — reformat with bullet points/bold/newlines if it's a wall of text. Write a high-quality answer if missing.
+4. "topic": EXACTLY ONE from: {', '.join(AI_CONCEPTS_LIST[:30])}... (pick closest)
+5. "keywords": 4-8 searchable keywords
 
 Return ONLY a valid JSON array of objects:
 [
   {{
-    "context": "The background setup or scenario (or empty string if none)",
+    "context": "",
     "q": "The actual question",
     "a": "The high-quality technical answer",
     "topic": "The exact topic from the list above",
@@ -457,7 +461,7 @@ Text:
             if isinstance(qna_pairs, list):
                 for pair in qna_pairs:
                     context = pair.pop("context", "").strip()
-                    if context:
+                    if context and context.lower() not in ["none", "n/a", "null", "general", "interview", "general context"]:
                         pair["q"] = f"**Situation:** {context}\n\n**Question:** {pair['q']}"
                 steps.append(f"✅ Extracted {len(qna_pairs)} QnA pairs")
             else:

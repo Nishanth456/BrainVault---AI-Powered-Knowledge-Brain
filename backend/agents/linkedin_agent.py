@@ -577,15 +577,17 @@ Return ONLY valid JSON.""",
 
 
 
-# ── Node 10: Detect if it's an Interview QnA ────────────────────────────────
-
 async def _detect_and_extract_qna(state: LinkedInState) -> tuple[bool, list]:
     """Detect QnA and extract pairs if applicable. Returns (is_qna, qna_pairs)."""
     summary = state.get("summary", "")
-    content = state.get("combined_text") or state.get("post_text") or ""
+    # Only use the post text for QnA extraction, not the combined text (which includes the PDF)
+    # The user wants attachments to be saved as regular document tiles, but if the user typed
+    # questions directly in the post text, those should be extracted.
+    content = state.get("post_text") or ""
 
-    # Fast-path: URL contains 'interview'
-    if "interview" in state.get("url", "").lower():
+    post_lower = content.lower()
+    # Fast-path: URL or post text contains 'interview'
+    if "interview" in state.get("url", "").lower() or "interview" in post_lower:
         is_qna = True
     else:
         response = await fast_llm(
@@ -602,13 +604,13 @@ Content sample: {content[:1000]}""",
         except Exception:
             is_qna = False
 
-    if not is_qna or bool(state.get("downloaded_files")):
+    if not is_qna:
         return is_qna, []
 
     # Extract QnA pairs
     qna_prompt = f"""You are an expert Principal AI Engineer conducting a senior technical interview.
 Extract EVERY question from the text. For each:
-1. "context": background scenario (or "" if none)
+1. "context": specific background scenario. MUST be strictly empty ("") unless the text provides a hypothetical situation.
 2. "q": the exact question
 3. "a": answer from text — reformat with bullet points/bold/newlines if it's a wall of text. Write a high-quality answer if missing.
 4. "topic": EXACTLY ONE from: {', '.join(AI_CONCEPTS_LIST[:30])}... (pick closest)
@@ -624,6 +626,7 @@ Text:
         prompt=qna_prompt,
         system="Expert interview question extractor. Return valid JSON array only.",
         temperature=0,
+        max_tokens=8000,
     )
     try:
         import re
@@ -633,7 +636,8 @@ Text:
         if isinstance(qna_pairs, list):
             for pair in qna_pairs:
                 ctx = pair.pop("context", "").strip()
-                if ctx:
+                # Ignore generic/invented contexts from the LLM
+                if ctx and ctx.lower() not in ["none", "n/a", "null", "general", "interview", "general context"]:
                     pair["q"] = f"**Situation:** {ctx}\n\n**Question:** {pair['q']}"
             return True, qna_pairs
     except Exception as e:
