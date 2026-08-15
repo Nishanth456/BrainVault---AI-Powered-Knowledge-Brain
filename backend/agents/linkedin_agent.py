@@ -670,6 +670,8 @@ async def analyze_all(state: LinkedInState) -> dict:
         domain_task, diff_task, tree_task, qna_task
     )
 
+    is_qna = is_qna and len(qna_pairs) > 0
+
     steps = [
         f"📁 Domain: {domain}",
         f"✅ Difficulty: {difficulty}/5",

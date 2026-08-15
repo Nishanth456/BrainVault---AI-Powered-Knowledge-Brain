@@ -468,6 +468,8 @@ Article:
             print("Failed to parse QnA pairs:", e)
             qna_pairs = []
 
+    is_qna = is_qna and len(qna_pairs) > 0
+
     return {
         "is_interview_qna": is_qna,
         "qna_pairs": qna_pairs,
