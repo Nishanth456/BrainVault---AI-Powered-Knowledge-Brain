@@ -65,7 +65,7 @@ Respond with ONLY the category name, nothing else."""
 
 async def call_llm(
     prompt: str,
-    model: str,
+    model: str = "groq/llama-3.3-70b-versatile",
     system: str = "You are a helpful AI assistant.",
     temperature: float = 0.1,
     max_tokens: int = 1000,
@@ -212,7 +212,7 @@ async def stream_rag_response(system: str, prompt: str):
 
 async def call_llm_json(
     prompt: str,
-    model: str,
+    model: str = "groq/llama-3.3-70b-versatile",
     max_tokens: int = 1500,
 ) -> dict:
     """

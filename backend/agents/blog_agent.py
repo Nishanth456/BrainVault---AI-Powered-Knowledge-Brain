@@ -8,7 +8,7 @@ Pipeline:
 from langgraph.graph import StateGraph, END
 from typing import TypedDict, Optional
 from backend.tools.blog_scraper import fetch_blog
-from backend.services.llm import call_llm
+from backend.services.llm import fast_llm, reasoning_llm
 import json
 import re
 
@@ -98,7 +98,7 @@ async def extract_blog_metadata(state: BlogState) -> dict:
     # If we already have a good title from the scraper, trust it and just clean author
     if title and len(title) > 5:
         if not author:
-            response = await call_llm(
+            response = await fast_llm(
                 prompt=f"""Extract the author name or publication from this blog text.
 Return ONLY a JSON object:
 {{
@@ -130,7 +130,7 @@ Return ONLY valid JSON.""",
             "agent_steps": [f"✅ Metadata extracted — {title} by {final_author}"],
         }
 
-    response = await call_llm(
+    response = await fast_llm(
         prompt=f"""Extract the article title and author from this blog text.
 Return ONLY a JSON object:
 {{
@@ -172,7 +172,7 @@ async def summarize_blog(state: BlogState) -> dict:
     """Create a 2-3 sentence summary of the article."""
     text = (state.get("article_text") or "")[:8000]
 
-    summary = await call_llm(
+    summary = await fast_llm(
         prompt=f"""Summarize this blog article in exactly 2 to 3 very short, easy-to-read sentences.
 Focus on the core idea or key takeaway. Use simple language and keep the total summary under 40 words.
 
@@ -215,7 +215,7 @@ async def extract_blog_concepts(state: BlogState) -> dict:
     text = (state.get("article_text") or "")[:5000]
     concept = state.get("concept") or ""
 
-    response = await call_llm(
+    response = await fast_llm(
         prompt=f"""Extract key concepts and tags from this blog article.
 Return a JSON object with two lists:
 - "concepts": 3-8 specific technical concepts
@@ -261,7 +261,7 @@ async def generate_blog_metadata(state: BlogState) -> dict:
     tags = state.get("tags", [])
     existing_title = state.get("title") or "Untitled Blog Post"
 
-    response = await call_llm(
+    response = await fast_llm(
         prompt=f"""Rate the importance of this blog article on a scale of 1-10.
 Return ONLY a JSON object:
 
@@ -306,7 +306,7 @@ async def score_blog_difficulty(state: BlogState) -> dict:
     summary = state.get("summary", "")
     concepts = state.get("key_concepts", [])
 
-    response = await call_llm(
+    response = await fast_llm(
         prompt=f"""You are rating technical difficulty FOR AN AI PRACTITIONER audience (developers, data scientists, ML engineers).
 Judge difficulty WITHIN this field, not against the general public.
 
@@ -354,7 +354,7 @@ async def place_blog_in_tree(state: BlogState) -> dict:
     text = (state.get("article_text") or "")[:4000]
     concept = state.get("concept") or ""
 
-    response = await call_llm(
+    response = await fast_llm(
         prompt=f"""Determine where this blog article belongs in our predefined knowledge taxonomy.
 You MUST choose exactly ONE concept from the provided ALLOWED_CONCEPTS list.
 
@@ -399,7 +399,7 @@ async def detect_blog_interview_qna(state: BlogState) -> dict:
     text = state.get("article_text") or ""
     summary = state.get("summary", "")
 
-    response = await call_llm(
+    response = await fast_llm(
         prompt=f"""Determine if this blog article is primarily a list of Interview Questions and Answers.
 Return ONLY a JSON object:
 {{
@@ -449,7 +449,7 @@ Return ONLY a valid JSON array of objects:
 Article:
 {text}
 """
-        qna_response = await call_llm(
+        qna_response = await reasoning_llm(
             prompt=qna_prompt,
             system="You are an expert AI Interviewer. Return only valid JSON.",
             max_tokens=4000,
