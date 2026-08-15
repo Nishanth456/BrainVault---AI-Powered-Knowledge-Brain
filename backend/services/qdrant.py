@@ -149,7 +149,27 @@ async def search_knowledge(
     # Qdrant MatchText is case-sensitive by default. Build a set of query
     # variants and also run a client-side regex fallback over payloads so
     # lowercase queries like "fastapi" still find "FastAPI".
-    query_tokens = {query, query.lower(), query.capitalize(), query.upper()}
+    #
+    # IMPORTANT: We also extract individual meaningful words from the query so
+    # that a long natural-language question like
+    #   "what is microsoft workiq, do i have any resources"
+    # still matches a title containing "WorkIQ" or "Microsoft WorkIQ".
+    STOP_WORDS = {
+        "a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
+        "do", "does", "did", "have", "has", "had", "i", "my", "me", "we",
+        "our", "you", "your", "it", "its", "in", "on", "at", "to", "for",
+        "of", "and", "or", "but", "not", "with", "this", "that", "what",
+        "which", "who", "how", "when", "where", "why", "any", "some",
+        "can", "could", "would", "should", "will", "may", "might",
+        "about", "from", "by", "as", "if", "so",
+    }
+    # Extract individual meaningful words (≥3 chars) from the query
+    word_tokens: set[str] = set()
+    for word in re.sub(r"[^\w\s]", " ", query).split():
+        if len(word) >= 3 and word.lower() not in STOP_WORDS:
+            word_tokens.update({word, word.lower(), word.capitalize(), word.upper()})
+
+    query_tokens = {query, query.lower(), query.capitalize(), query.upper()} | word_tokens
     # Only match against title, tags and key_concepts — NOT summary.
     # Answers often mention related concepts (e.g. an answer about "mutex" may mention
     # "deadlock"), so matching summary causes false positives across interview Q&A items.
@@ -225,7 +245,10 @@ async def search_knowledge(
     # With 768-dim Gemini embeddings on this small corpus, scores cluster around
     # 0.55-0.70. Use a moderate threshold to suppress obvious drift while still
     # returning results for natural-language questions.
-    SEMANTIC_THRESHOLD = 0.62
+    # 0.58 is intentionally a bit lower than 0.62 to catch niche product/brand
+    # name queries (e.g. "WorkIQ", "Gemini 2.5") whose embedding similarity to
+    # generic text may not reach 0.62 even when the item is clearly relevant.
+    SEMANTIC_THRESHOLD = 0.58
     # When keyword matches exist, only keep semantic results that are clearly
     # related (score >= 0.68). Otherwise fall back to the base threshold.
     semantic_threshold = 0.68 if merged else SEMANTIC_THRESHOLD
