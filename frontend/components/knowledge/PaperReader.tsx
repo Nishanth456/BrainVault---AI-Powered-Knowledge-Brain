@@ -121,6 +121,14 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
     if (!container) return
 
     const handleWheel = (e: WheelEvent) => {
+      // Trackpad pinch-to-zoom
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault()
+        const zoomChange = e.deltaY > 0 ? -0.05 : 0.05
+        setScale((s) => Math.min(Math.max(0.5, +(s + zoomChange).toFixed(2)), 2.5))
+        return
+      }
+
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
         e.preventDefault()
         container.scrollLeft += e.deltaY * 1.2
@@ -295,7 +303,7 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setScale((s) => Math.max(0.5, +(s - 0.15).toFixed(2)))}
+              onClick={() => setScale((s) => Math.max(0.5, +(s - 0.05).toFixed(2)))}
               className="text-muted-foreground hover:text-foreground p-1.5 h-8 w-8 rounded-lg"
               title="Zoom out"
             >
@@ -307,7 +315,7 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setScale((s) => Math.min(2.5, +(s + 0.15).toFixed(2)))}
+              onClick={() => setScale((s) => Math.min(2.5, +(s + 0.05).toFixed(2)))}
               className="text-muted-foreground hover:text-foreground p-1.5 h-8 w-8 rounded-lg"
               title="Zoom in"
             >
