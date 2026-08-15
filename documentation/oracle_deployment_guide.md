@@ -18,10 +18,11 @@ Oracle offers an extremely generous "Always Free" tier. You will be claiming an 
 4. **Step 2: Security**
    - You can safely ignore this tab. Leave both "Shielded instance" and "Confidential computing" turned off and click "Next".
 5. **Step 3: Networking & SSH Keys (CRITICAL)**
+   - **VNIC name:** You can type anything here (e.g., `brainvault-vnic`).
    - Under **Primary network**, select the **"Create new virtual cloud network"** radio button. (You can leave the auto-generated VCN name as-is).
    - Under **Subnet**, select the **"Create new public subnet"** radio button. (You can leave the auto-generated Subnet name as-is).
    - For **Private IPv4 address assignment**, leave it as "Automatically assign private IPv4 address".
-   - For **Public IPv4 address assignment**, ensure the toggle for **"Automatically assign public IPv4 address"** is turned **ON**.
+   - For **Public IPv4 address assignment**, ensure the toggle for **"Automatically assign public IPv4 address"** is turned **ON**. *(Note: If this toggle is grayed out, it means you forgot to select the "Create new public subnet" radio button above!)*
    - Leave the IPv6 toggle OFF.
    - **CRITICAL STEP:** Scroll down and expand the **"Advanced options"** section at the bottom. Under **"Add SSH keys"**, select the **"Generate a key pair for me"** radio button.
    - Click the **"Download private key"** button (it will save as a `.key` file). **Do not lose this file**, you cannot connect to your server without it!
