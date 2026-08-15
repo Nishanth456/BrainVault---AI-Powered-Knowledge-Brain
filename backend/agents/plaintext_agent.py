@@ -10,7 +10,7 @@ Phase 2: replaces the plaintext stub in orchestrator.py.
 """
 from langgraph.graph import StateGraph, END
 from typing import TypedDict, Optional
-from backend.services.llm import call_llm
+from backend.services.llm import call_llm, reasoning_llm
 import json
 import re
 
@@ -420,13 +420,13 @@ Return ONLY valid JSON.""",
         steps.append("🤖 Extracting QnA pairs...")
 
         qna_prompt = f"""You are an expert Principal AI Engineer conducting a senior technical interview.
-The following text contains interview questions and answers.
-Extract EVERY SINGLE QUESTION from the text. For each question:
-1. Extract any background scenario or setup text into the "context" field. If there is no background scenario in the original text, leave this field completely empty "". Do not invent a scenario.
-2. Extract the exact question into the "q" field.
-3. Extract the answer or explanation from the text into the "a" field. The "a" field MUST be a SINGLE JSON string, NOT an array. IF the source text is a single massive block without line breaks (e.g. from OCR extraction), YOU MUST reformat it by adding bullet points and double newlines (`\\n\\n`) between logical points so it is highly readable. Do NOT change the actual wording, but DO add markdown formatting (bullet points, bolding, and `\\n\\n` spacing). Do NOT leave the explanation as a single unformatted paragraph. If the answer is missing or weak, write a strong senior-level answer yourself using Markdown formatting.
-4. Map the question to EXACTLY ONE topic from this list:
-{chr(10).join([f"- {t}" for t in AI_CONCEPTS_LIST])}
+Extract ONLY REAL, TECHNICAL interview questions from the text. 
+IMPORTANT: 
+- DO NOT convert general statements, advice, conversational text, or rhetorical questions into Q&A pairs.
+- Only extract questions that would actually be asked in a technical interview (e.g., system design, coding, concept explanations).
+- If the text contains NO actual technical interview questions, you MUST return an empty array [].
+
+For each valid question, extract:
 1. "context": specific background scenario. MUST be strictly empty ("") unless the text provides a hypothetical situation.
 2. "q": the exact question
 3. "a": answer from text — reformat with bullet points/bold/newlines if it's a wall of text. Write a high-quality answer if missing.
@@ -447,7 +447,7 @@ Return ONLY a valid JSON array of objects:
 Text:
 {content}
 """
-        qna_response = await call_llm(
+        qna_response = await reasoning_llm(
             prompt=qna_prompt,
             system="You are an expert AI Interviewer. Return only valid JSON.",
             max_tokens=4000,

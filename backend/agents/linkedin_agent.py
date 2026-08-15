@@ -609,7 +609,13 @@ Content sample: {content[:1000]}""",
 
     # Extract QnA pairs
     qna_prompt = f"""You are an expert Principal AI Engineer conducting a senior technical interview.
-Extract EVERY question from the text. For each:
+Extract ONLY REAL, TECHNICAL interview questions from the text. 
+IMPORTANT: 
+- DO NOT convert general statements, advice, conversational text, or rhetorical questions into Q&A pairs.
+- Only extract questions that would actually be asked in a technical interview (e.g., system design, coding, concept explanations).
+- If the text contains NO actual technical interview questions, you MUST return an empty array [].
+
+For each valid question, extract:
 1. "context": specific background scenario. MUST be strictly empty ("") unless the text provides a hypothetical situation.
 2. "q": the exact question
 3. "a": answer from text — reformat with bullet points/bold/newlines if it's a wall of text. Write a high-quality answer if missing.
@@ -622,7 +628,7 @@ Return ONLY a valid JSON array:
 Text:
 {content}"""
 
-    qna_response = await fast_llm(
+    qna_response = await reasoning_llm(
         prompt=qna_prompt,
         system="Expert interview question extractor. Return valid JSON array only.",
         temperature=0,

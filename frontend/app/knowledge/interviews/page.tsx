@@ -29,7 +29,8 @@ export default function InterviewsPage() {
       emptyHint="Paste Q&A text in the dashboard."
       fetchItems={fetchItems}
       renderCard={(item, onDelete) => {
-        if (item.attachments && item.attachments.length > 0) {
+        const isDoc = (item as any).type === "linkedin" || (item as any).type === "blog" || (item.attachments && item.attachments.length > 0)
+        if (isDoc) {
           return <LinkedInCard key={item.id} item={item as unknown as LinkedInItem} onDelete={onDelete} readerBasePath="/knowledge/interviews" />
         }
         return (
@@ -40,8 +41,10 @@ export default function InterviewsPage() {
       }}
       getItemId={(item) => item.id}
       groupBy={(item) => {
-        if (item.attachments && item.attachments.length > 0) return "Attached Documents"
-        return "Interview Questions"
+        const topic = item.knowledge_tree || "Uncategorized"
+        const isDoc = (item as any).type === "linkedin" || (item as any).type === "blog" || (item.attachments && item.attachments.length > 0)
+        if (isDoc) return `Attachments - ${topic}`
+        return `Q&A - ${topic}`
       }}
     />
   )
