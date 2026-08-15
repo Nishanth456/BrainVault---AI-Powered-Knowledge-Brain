@@ -372,70 +372,18 @@ async def generate_metadata(state: LinkedInState) -> dict:
 
     logger.warning(f"🏷️ generate_metadata — url={url[:80]}, doc_title='{doc_title}', post_text[:60]='{post_text[:60]}'")
 
-    # ── Priority 1: URL slug — most reliable for LinkedIn posts ───────────────
-    # URL format: /posts/<author>_<slug>-ugcPost-<id> or /posts/<author>_<slug>-activity-<id>
-    slug_match = _re.search(
-        r'/posts/[^/]+?_([a-z0-9][a-z0-9-]+?)-(ugcPost|activity)',
-        url, _re.IGNORECASE
-    )
-    if slug_match:
-        slug = slug_match.group(1).replace('-', ' ').strip()
-        if len(slug) >= 8:
-            doc_title = slug.title()
-            logger.warning(f"🔗 Title from URL slug: {doc_title}")
-            return {
-                "metadata": {
-                    "title":                doc_title,
-                    "reading_time_minutes": max(1, len(summary.split()) // 200),
-                    "importance_score":     7,
-                },
-                "agent_steps": [f"✅ Metadata generated (URL slug: {doc_title})"],
-            }
-
-    # ── Priority 2: DOM-scraped document title ────────────────────────────────
-    if doc_title:
-        logger.warning(f"📄 Title from DOM: {doc_title}")
-        return {
-            "metadata": {
-                "title":                doc_title,
-                "reading_time_minutes": max(1, len(summary.split()) // 200),
-                "importance_score":     7,
-            },
-            "agent_steps": [f"✅ Metadata generated (DOM: {doc_title})"],
-        }
-
-    # ── Priority 3: First real line of PDF text ───────────────────────────────
-    for f in state.get("downloaded_files", []):
-        if f.get("file_type") == "pdf" and f.get("extracted_text"):
-            for line in f["extracted_text"].splitlines():
-                line = line.strip()
-                if (len(line) >= 8
-                        and not line.startswith("[Page")
-                        and not line.startswith("http")
-                        and not line.isdigit()):
-                    doc_title = line
-                    logger.warning(f"📄 Title from PDF first line: {doc_title}")
-                    return {
-                        "metadata": {
-                            "title":                doc_title,
-                            "reading_time_minutes": max(1, len(summary.split()) // 200),
-                            "importance_score":     7,
-                        },
-                        "agent_steps": [f"✅ Metadata generated (PDF: {doc_title})"],
-                    }
-
-
-    # ── Priority 4: LLM from post_text (last resort) ─────────────────────────
-    title_source = post_text[:800] if post_text else summary[:800]
+    # Always use LLM to generate an accurate title based on content context
+    content_for_title = state.get("combined_text") or post_text or summary
+    title_source = content_for_title[:2000]
 
     response = await reasoning_llm.json(
-        prompt=f"""Generate a title for this LinkedIn post. Return ONLY this JSON:
+        prompt=f"""Generate a title for this LinkedIn post/document. Return ONLY this JSON:
 {{
   "title": "Concise title (5-10 words) reflecting the content topic. Ignore author/company names. Focus on what the document or post is about.{(' Concept hint: ' + concept) if concept else ''}",
   "reading_time_minutes": <integer>,
   "importance_score": <1-10>
 }}
-Post text: {title_source}
+Content context: {title_source}
 Tags: {tags}
 Return ONLY valid JSON.""",
     )
@@ -585,24 +533,19 @@ async def _detect_and_extract_qna(state: LinkedInState) -> tuple[bool, list]:
     # questions directly in the post text, those should be extracted.
     content = state.get("post_text") or ""
 
-    post_lower = content.lower()
-    # Fast-path: URL or post text contains 'interview'
-    if "interview" in state.get("url", "").lower() or "interview" in post_lower:
-        is_qna = True
-    else:
-        response = await fast_llm(
-            prompt=f"""Is this content primarily interview Q&A or interview prep material?
+    response = await fast_llm(
+        prompt=f"""Determine if this content is primarily a list of Interview Questions and Answers.
 Return ONLY: {{"is_interview_qna": true}} or {{"is_interview_qna": false}}
 Summary: {summary}
 Content sample: {content[:1000]}""",
-            system="Classifier. Return only valid JSON.",
-            max_tokens=20,
-            temperature=0,
-        )
-        try:
-            is_qna = bool(json.loads(response.strip().strip("```json").strip("```")).get("is_interview_qna", False))
-        except Exception:
-            is_qna = False
+        system="Classifier. Return only valid JSON.",
+        max_tokens=20,
+        temperature=0,
+    )
+    try:
+        is_qna = bool(json.loads(response.strip().strip("```json").strip("```")).get("is_interview_qna", False))
+    except Exception:
+        is_qna = False
 
     if not is_qna:
         return is_qna, []
