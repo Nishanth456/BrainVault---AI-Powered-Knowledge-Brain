@@ -172,15 +172,16 @@ export function NoteCard({ item, onDelete }: NoteCardProps) {
           <div className="flex gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-0.5">
             {allTags.map(tag => (
               <span
-              key={tag}
-              className="px-2 py-0.5 text-[11px] bg-cyan-600/10 text-cyan-300
-                         whitespace-nowrap flex-shrink-0 rounded-full border border-cyan-600/15"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
+                key={tag}
+                className="px-2 py-0.5 text-[11px] bg-cyan-600/10 text-cyan-300
+                           whitespace-nowrap flex-shrink-0 rounded-full border border-cyan-600/15"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Footer */}
       {!!item.reading_time && (

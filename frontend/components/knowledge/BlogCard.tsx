@@ -112,15 +112,16 @@ export function BlogCard({ item, onDelete }: { item: BlogItem; onDelete?: (id: s
           <div className="tag-scroll flex gap-1.5 overflow-x-auto pb-1">
             {allTags.map(tag => (
               <span
-              key={tag}
-              className="px-2 py-0.5 text-[11px] bg-orange-600/10 text-orange-300
-                         whitespace-nowrap flex-shrink-0 rounded-full border border-orange-600/15"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
+                key={tag}
+                className="px-2 py-0.5 text-[11px] bg-orange-600/10 text-orange-300
+                           whitespace-nowrap flex-shrink-0 rounded-full border border-orange-600/15"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Footer actions */}
       <div className="flex items-center gap-2 mt-auto pt-2 border-t border-border/50">

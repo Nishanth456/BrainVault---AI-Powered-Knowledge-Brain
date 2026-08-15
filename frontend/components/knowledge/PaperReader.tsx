@@ -493,22 +493,23 @@ export function PaperReader({ item, pdfMinioPaths }: PaperReaderProps) {
             })}
 
             {/* Tags & Concepts */}
-      {(() => {
-        const allTags = Array.from(new Set([...(item.key_concepts || []), ...(item.tags || [])]));
-        if (allTags.length === 0) return null;
-        return (
-          <div className="flex flex-wrap gap-1.5 pt-2">
-            {allTags.map(tag => (
-              <span
-                    key={t}
-                    className="text-[10px] text-indigo-400/70 bg-indigo-600/8
-                                             px-1.5 py-0.5 rounded-full border border-indigo-600/15"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            )}
+            {(() => {
+              const allTags = Array.from(new Set([...(item.key_concepts || []), ...(item.tags || [])]));
+              if (allTags.length === 0) return null;
+              return (
+                <div className="flex flex-wrap gap-1.5 pt-2">
+                  {allTags.map(tag => (
+                    <span
+                      key={tag}
+                      className="text-[10px] text-indigo-400/70 bg-indigo-600/8
+                                 px-1.5 py-0.5 rounded-full border border-indigo-600/15"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
