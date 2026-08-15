@@ -47,6 +47,7 @@ export default async function InterviewReaderPage({ params }: ReaderPageProps) {
     <LinkedInReaderWrapper
       item={item}
       pdfMinioPaths={pdfPaths}
+      backHref="/knowledge/interviews"
     />
   )
 }

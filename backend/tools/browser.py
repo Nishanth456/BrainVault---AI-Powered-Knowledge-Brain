@@ -299,12 +299,48 @@ class LinkedInScraper:
                     result["pdf_urls"].append(href)
                     result["has_attachment"] = True
 
-        # (Legacy image stitching for slides is removed to avoid scraping profile pictures instead)
+        # ── Extract document title ────────────────────────────────────────────
+        # LinkedIn document carousels and PDF attachments have a visible title
+        doc_title_selectors = [
+            # Document viewer title
+            ".document-title",
+            ".update-components-document__title",
+            ".feed-shared-document__title",
+            # Carousel title
+            ".update-components-carousel__title",
+            ".feed-shared-carousel__name",
+            # Article/rich media title
+            ".update-components-article__title",
+            ".feed-shared-article__title",
+            # Generic entity title used in some post formats
+            ".update-components-entity__title",
+            "span.document-title",
+            "div.document-title",
+        ]
+        for selector in doc_title_selectors:
+            el = soup.select_one(selector)
+            if el:
+                text = el.get_text(strip=True)
+                if text and len(text) > 3:
+                    result["document_title"] = text
+                    break
+
+        # Fallback: try og:title — LinkedIn often sets it to the document name
+        # for posts that have a document/PDF attachment
+        if not result["document_title"]:
+            og_title = soup.find("meta", {"property": "og:title"})
+            if og_title and og_title.get("content"):
+                og = og_title["content"]
+                # og:title format: "Author on LinkedIn: Post text" — skip those
+                # but if it's a document viewer page it's just the document name
+                if " on LinkedIn" not in og and len(og) > 4:
+                    result["document_title"] = og.strip()
 
         print(f"📊 Extraction: text={len(result['post_text'])} chars, "
               f"author='{result['author']}', "
               f"pdfs={len(result['pdf_urls'])}, "
-              f"slides={len(result['carousel_image_urls'])}")
+              f"slides={len(result['carousel_image_urls'])}, "
+              f"doc_title='{result['document_title']}'")
 
         return result
 

@@ -47,9 +47,10 @@ interface LinkedInReaderProps {
     is_bookmarked?: boolean
   }
   pdfMinioPaths: string[] // e.g. ["brainvault-files/linkedin_abc.pdf"]
+  backHref?: string       // where the ← back button navigates (default: /knowledge/linkedin)
 }
 
-export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
+export function LinkedInReader({ item, pdfMinioPaths, backHref = "/knowledge/linkedin" }: LinkedInReaderProps) {
   const [numPages, setNumPages] = useState<number>(0)
   const [pageNumber, setPageNumber] = useState<number>(1)
   const [pageInput, setPageInput] = useState<string>("1")
@@ -255,14 +256,14 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
       <div className="flex flex-col items-center justify-center h-screen bg-[#0A0A0F] text-muted-foreground gap-4">
         <FileText size={40} className="text-zinc-700" />
         <p className="text-sm">No PDF attachment found for this item.</p>
-        <Link href="/knowledge/linkedin">
+        <Link href={backHref}>
           <Button
             variant="outline"
             size="sm"
             className="border-border text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft size={14} className="mr-2" />
-            Back to LinkedIn
+            Back
           </Button>
         </Link>
       </div>
@@ -279,7 +280,7 @@ export function LinkedInReader({ item, pdfMinioPaths }: LinkedInReaderProps) {
                         bg-[#0D0D14]/90 backdrop-blur-md flex-shrink-0 w-full overflow-x-auto no-scrollbar relative z-30"
         >
           {/* Back button */}
-          <Link href="/knowledge/linkedin">
+          <Link href={backHref}>
             <Button
               variant="ghost"
               size="sm"

@@ -19,7 +19,7 @@ from typing import TypedDict, Optional
 
 from backend.tools.arxiv_client import resolve_research_source, download_arxiv_pdf
 from backend.tools.pdf_extractor import pdf_extractor
-from backend.services.llm import call_llm
+from backend.services.llm import call_llm, fast_llm, reasoning_llm
 from backend.services.minio import upload_bytes
 from backend.config import settings
 
@@ -198,8 +198,8 @@ async def extract_pdf_text_node(state: ResearchState) -> dict:
 # ── Node 4: Structured extraction with Gemini ─────────────────────────────────
 
 async def extract_structured_node(state: ResearchState) -> dict:
-    """Use Gemini 2.5 Flash for long-context structured extraction."""
-    text = (state.get("article_text") or "")[:30000]
+    # Heavily truncated to fit within Groq's 6,000 TPM free limit
+    text = (state.get("article_text") or "")[:2000]
     abstract = state.get("abstract") or ""
     title = state.get("title") or "Untitled Research Paper"
 
@@ -239,9 +239,8 @@ Paper text:
 Return ONLY valid JSON."""
 
     try:
-        response = await call_llm(
+        response = await fast_llm(
             prompt=prompt,
-            model="gemini/gemini-2.5-flash-preview-05-20",
             system="You are a research paper analysis assistant. Return only valid JSON.",
             max_tokens=2000,
             temperature=0,
@@ -280,7 +279,8 @@ Return ONLY valid JSON."""
 
 async def summarize_research_node(state: ResearchState) -> dict:
     """Create a concise 3-5 sentence summary of the paper."""
-    text = (state.get("article_text") or "")[:12000]
+    # Heavily truncated for Groq
+    text = (state.get("article_text") or "")[:2000]
     abstract = state.get("abstract") or ""
 
     # If the source page was blocked and we have no real content, don't hallucinate a summary
@@ -297,7 +297,7 @@ async def summarize_research_node(state: ResearchState) -> dict:
             "agent_steps": ["✅ Research summary generated from abstract"],
         }
 
-    summary = await call_llm(
+    summary = await fast_llm(
         prompt=f"""Summarize this research paper in 3-5 short sentences as one paragraph.
 Focus on the key contribution, method, and result.
 
@@ -311,7 +311,6 @@ Abstract: {abstract}
 
 Paper text:
 {text}""",
-        model="gemini/gemini-2.5-flash-preview-05-20",
         system="You are a technical knowledge extraction expert. Return only the requested summary with no meta commentary.",
         max_tokens=400,
     )
@@ -336,8 +335,9 @@ Paper text:
 
 async def extract_research_concepts_node(state: ResearchState) -> dict:
     """Extract key concepts and short tags from the paper."""
-    text = (state.get("article_text") or "")[:6000]
-    abstract = (state.get("abstract") or "")[:2000]
+    # Truncated for Groq
+    text = (state.get("article_text") or "")[:2000]
+    abstract = (state.get("abstract") or "")[:1000]
     concept = state.get("concept") or ""
     category = state.get("primary_category") or ""
     title = state.get("title") or ""
@@ -353,7 +353,7 @@ async def extract_research_concepts_node(state: ResearchState) -> dict:
             "agent_steps": ["⚠️ No content available; tags derived from title"],
         }
 
-    response = await call_llm(
+    response = await fast_llm(
         prompt=f"""Extract key concepts and tags from this research paper.
 Return a JSON object with two lists:
 - "concepts": 4-10 specific technical concepts
@@ -400,7 +400,7 @@ async def generate_research_metadata_node(state: ResearchState) -> dict:
     tags = state.get("tags", [])
     existing_title = state.get("title") or "Untitled Research Paper"
 
-    response = await call_llm(
+    response = await fast_llm(
         prompt=f"""Rate the importance of this research paper on a scale of 1-10.
 Return ONLY a JSON object:
 
@@ -442,7 +442,7 @@ Return ONLY valid JSON.""",
 async def extract_research_title_node(state: ResearchState) -> dict:
     """If the generic scraper only gave a generic title, ask LLM to extract the exact paper title."""
     title = state.get("title") or ""
-    text = (state.get("article_text") or "")[:4000]
+    text = (state.get("article_text") or "")[:2000]
     abstract = (state.get("abstract") or "")[:1500]
 
     # If title looks already specific (more than 8 words), trust it
@@ -452,7 +452,7 @@ async def extract_research_title_node(state: ResearchState) -> dict:
     if not text.strip() and not abstract.strip():
         return {"title": title or "Untitled Research Paper", "agent_steps": ["⚠️ No content to extract title from"]}
 
-    response = await call_llm(
+    response = await fast_llm(
         prompt=f"""Extract the exact title of the research paper from this text.
 Return ONLY a JSON object:
 
@@ -494,7 +494,7 @@ async def score_research_difficulty_node(state: ResearchState) -> dict:
     summary = state.get("summary", "")
     concepts = state.get("key_concepts", [])
 
-    response = await call_llm(
+    response = await fast_llm(
         prompt=f"""You are rating technical difficulty FOR AN AI PRACTITIONER audience (developers, data scientists, ML engineers).
 Judge difficulty WITHIN this field, not against the general public.
 
@@ -539,11 +539,11 @@ Reply with ONLY the number (1, 2, 3, 4, or 5). Nothing else.""",
 
 async def place_research_in_tree_node(state: ResearchState) -> dict:
     """Map the paper to the predefined AI_CONCEPTS_LIST taxonomy."""
-    text = (state.get("article_text") or "")[:4000]
+    text = (state.get("article_text") or "")[:2000]
     concept = state.get("concept") or ""
     category = state.get("primary_category") or ""
 
-    response = await call_llm(
+    response = await fast_llm(
         prompt=f"""Determine where this research paper belongs in our predefined knowledge taxonomy.
 You MUST choose exactly ONE concept from the provided ALLOWED_CONCEPTS list.
 

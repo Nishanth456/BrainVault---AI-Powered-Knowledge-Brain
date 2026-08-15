@@ -253,8 +253,18 @@ async def summarize_content(state: LinkedInState) -> dict:
     if state.get("error"):
         return {}
 
-    content = state.get("combined_text") or state.get("post_text") or ""
     concept = state.get("concept") or ""
+    has_attachment = bool(state.get("downloaded_files"))
+
+    # For posts WITH attachments (PDF/carousel), summarize from the post caption
+    # only — the caption describes what the document IS (e.g. "30 GenAI interview
+    # questions covering…"). Using combined_text would just summarize the first
+    # Q&A answer which is misleading.
+    # For text-only posts, use the full combined_text.
+    if has_attachment and state.get("post_text"):
+        content = state["post_text"]
+    else:
+        content = state.get("combined_text") or state.get("post_text") or ""
 
     if not content and not concept:
         return {"summary": "No content extracted.", "agent_steps": ["⚠️ No content to summarize"]}
@@ -269,25 +279,27 @@ Write a specific, technical one-sentence summary about what this post likely cov
 
 IMPORTANT: Do NOT include any introductory or concluding phrases. Output ONLY the single summary sentence itself."""
     else:
-        prompt = f"""Summarize this LinkedIn post (and any attached document) in exactly ONE single, short sentence.
-Focus on the key technical insight or learning. Be specific, not generic.
+        prompt = f"""Summarize this LinkedIn post in exactly ONE single, short sentence.
+Describe WHAT the content/document is about (its topic and scope), not the answer to any individual question.
+Be specific, not generic.
 
-IMPORTANT: Do NOT include any introductory or concluding phrases (e.g., "Here is a summary", "In conclusion"). Output ONLY the single summary sentence itself.
+IMPORTANT: Do NOT include any introductory or concluding phrases. Output ONLY the single summary sentence itself.
 
 {f'Primary concept: {concept}' if concept else ''}
 
 Content:
-{content[:6000]}"""
+{content[:3000]}"""
 
     summary = await fast_llm(
         prompt=prompt,
-        system="You are a technical knowledge extraction expert. Write clear, specific, one-sentence summaries.",
+        system="You are a technical knowledge extraction expert. Write clear, specific, one-sentence summaries that describe what the content is about, not individual details.",
     )
 
     return {
         "summary": summary,
         "agent_steps": ["✅ Summary generated"],
     }
+
 
 
 # ── Node 6: Extract concepts + tags ──────────────────────────────────────────
@@ -347,23 +359,85 @@ Return ONLY valid JSON.""",
 # ── Node 7: Generate metadata ─────────────────────────────────────────────────
 
 async def generate_metadata(state: LinkedInState) -> dict:
-    """LLM Call — Groq GPT-OSS 120B — generate full metadata JSON."""
+    """Generate title + metadata for a LinkedIn post/document."""
+    import re as _re
+    import logging
+    logger = logging.getLogger(__name__)
+
     summary   = state.get("summary", "")
-    concepts  = state.get("key_concepts", [])
     tags      = state.get("tags", [])
     concept   = state.get("concept") or ""
+    post_text = state.get("post_text") or ""
     doc_title = state.get("document_title") or ""
+    url       = state.get("url") or ""
+
+    logger.warning(f"🏷️ generate_metadata — url={url[:80]}, doc_title='{doc_title}', post_text[:60]='{post_text[:60]}'")
+
+    # ── Priority 1: URL slug — most reliable for LinkedIn posts ───────────────
+    # URL format: /posts/<author>_<slug>-ugcPost-<id> or /posts/<author>_<slug>-activity-<id>
+    slug_match = _re.search(
+        r'/posts/[^/]+?_([a-z0-9][a-z0-9-]+?)-(ugcPost|activity)',
+        url, _re.IGNORECASE
+    )
+    if slug_match:
+        slug = slug_match.group(1).replace('-', ' ').strip()
+        if len(slug) >= 8:
+            doc_title = slug.title()
+            logger.warning(f"🔗 Title from URL slug: {doc_title}")
+            return {
+                "metadata": {
+                    "title":                doc_title,
+                    "reading_time_minutes": max(1, len(summary.split()) // 200),
+                    "importance_score":     7,
+                },
+                "agent_steps": [f"✅ Metadata generated (URL slug: {doc_title})"],
+            }
+
+    # ── Priority 2: DOM-scraped document title ────────────────────────────────
+    if doc_title:
+        logger.warning(f"📄 Title from DOM: {doc_title}")
+        return {
+            "metadata": {
+                "title":                doc_title,
+                "reading_time_minutes": max(1, len(summary.split()) // 200),
+                "importance_score":     7,
+            },
+            "agent_steps": [f"✅ Metadata generated (DOM: {doc_title})"],
+        }
+
+    # ── Priority 3: First real line of PDF text ───────────────────────────────
+    for f in state.get("downloaded_files", []):
+        if f.get("file_type") == "pdf" and f.get("extracted_text"):
+            for line in f["extracted_text"].splitlines():
+                line = line.strip()
+                if (len(line) >= 8
+                        and not line.startswith("[Page")
+                        and not line.startswith("http")
+                        and not line.isdigit()):
+                    doc_title = line
+                    logger.warning(f"📄 Title from PDF first line: {doc_title}")
+                    return {
+                        "metadata": {
+                            "title":                doc_title,
+                            "reading_time_minutes": max(1, len(summary.split()) // 200),
+                            "importance_score":     7,
+                        },
+                        "agent_steps": [f"✅ Metadata generated (PDF: {doc_title})"],
+                    }
+
+
+    # ── Priority 4: LLM from post_text (last resort) ─────────────────────────
+    title_source = post_text[:800] if post_text else summary[:800]
 
     response = await reasoning_llm.json(
-        prompt=f"""Generate metadata for this LinkedIn post. Return ONLY this JSON:
+        prompt=f"""Generate a title for this LinkedIn post. Return ONLY this JSON:
 {{
-  "title": "5-8 word article-style title. MUST include the primary technology/framework (e.g., FastAPI, LangChain, Docker) if it is present in the Summary or Tags. Example: 'FastAPI RAG Pipeline Production Deployment'. Concept hint: '{concept}'",
+  "title": "Concise title (5-10 words) reflecting the content topic. Ignore author/company names. Focus on what the document or post is about.{(' Concept hint: ' + concept) if concept else ''}",
   "reading_time_minutes": <integer>,
   "importance_score": <1-10>
 }}
-Summary: {summary}
+Post text: {title_source}
 Tags: {tags}
-Doc title: {doc_title}
 Return ONLY valid JSON.""",
     )
 
@@ -372,15 +446,9 @@ Return ONLY valid JSON.""",
         if not isinstance(metadata, dict):
             metadata = {}
     except Exception as e:
-        print(f"❌ generate_metadata JSON parse failed: {e}\nRaw response:\n{response}")
-        # Fallback title uses concept or document title
-        fallback_title = (
-            doc_title or
-            (f"{concept} — LinkedIn Post" if concept else None) or
-            "LinkedIn Post"
-        )
+        print(f"❌ generate_metadata failed: {e}")
         metadata = {
-            "title":                fallback_title,
+            "title":                (f"{concept} — LinkedIn Post" if concept else "LinkedIn Post"),
             "reading_time_minutes": 3,
             "importance_score":     5,
         }
@@ -389,6 +457,7 @@ Return ONLY valid JSON.""",
         "metadata":    metadata,
         "agent_steps": ["✅ Metadata generated"],
     }
+
 
 
 # ── Helper: Infer Knowledge Domain (runs inside analyze_all) ─────────────────
