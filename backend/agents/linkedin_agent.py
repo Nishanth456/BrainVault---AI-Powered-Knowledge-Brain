@@ -547,8 +547,9 @@ Content sample: {post_text[:1500]}
     if not is_qna:
         return is_qna, []
 
-    # Use combined_text for extraction so we can pull the actual questions from the PDF attachment
-    extraction_content = state.get("combined_text") or state.get("post_text") or ""
+    # Extract QnA pairs strictly from the post text, bypassing the huge PDF attachment.
+    # If the questions are in the PDF, the user will just read the PDF using the frontend's PDF viewer.
+    extraction_content = state.get("post_text") or ""
 
     # Extract QnA pairs
     qna_prompt = f"""You are an expert Principal AI Engineer conducting a senior technical interview.
