@@ -245,219 +245,6 @@ async def build_combined_text(state: LinkedInState) -> dict:
     }
 
 
-# ── Node 5: Summarize ────────────────────────────────────────────────────────
-
-async def summarize_content(state: LinkedInState) -> dict:
-    """LLM Call — generate a single short sentence summary."""
-    if state.get("error"):
-        return {}
-
-    concept = state.get("concept") or ""
-    has_attachment = bool(state.get("downloaded_files"))
-
-    # For posts WITH attachments (PDF/carousel), summarize from the post caption
-    # only — the caption describes what the document IS (e.g. "30 GenAI interview
-    # questions covering…"). Using combined_text would just summarize the first
-    # Q&A answer which is misleading.
-    # For text-only posts, use the full combined_text.
-    if has_attachment and state.get("post_text"):
-        content = state["post_text"]
-    else:
-        content = state.get("combined_text") or state.get("post_text") or ""
-
-    if not content and not concept:
-        return {"summary": "No content extracted.", "agent_steps": ["⚠️ No content to summarize"]}
-
-    # If we have concept but no post text (scraping failed), generate from concept
-    if not state.get("post_text") and concept:
-        prompt = f"""Generate a single, short sentence summary for a LinkedIn post about: "{concept}"
-The post is from: {state.get("url", "")}
-Author: {state.get("author", "unknown")}
-
-Write a specific, technical one-sentence summary about what this post likely covers regarding {concept}.
-
-IMPORTANT: Do NOT include any introductory or concluding phrases. Output ONLY the single summary sentence itself."""
-    else:
-        prompt = f"""Summarize this LinkedIn post in exactly ONE single, short sentence.
-Describe WHAT the content/document is about (its topic and scope), not the answer to any individual question.
-Be specific, not generic.
-
-IMPORTANT: Do NOT include any introductory or concluding phrases. Output ONLY the single summary sentence itself.
-
-{f'Primary concept: {concept}' if concept else ''}
-
-Content:
-{content[:3000]}"""
-
-    summary = await fast_llm(
-        prompt=prompt,
-        system="You are a technical knowledge extraction expert. Write clear, specific, one-sentence summaries that describe what the content is about, not individual details.",
-    )
-
-    return {
-        "summary": summary,
-        "agent_steps": ["✅ Summary generated"],
-    }
-
-
-
-# ── Node 6: Extract concepts + tags ──────────────────────────────────────────
-
-async def extract_key_concepts(state: LinkedInState) -> dict:
-    """LLM Call — extract concepts and tags."""
-    content = state.get("combined_text") or state.get("post_text") or ""
-    concept = state.get("concept") or ""
-
-    context_text = content[:4000] if content else f"Topic: {concept}"
-
-    response_data = await fast_llm.json(
-        prompt=f"""Extract key concepts and tags from this content.
-Return ONLY a JSON object:
-{{"concepts": ["concept1", ...up to 6], "tags": ["tag1", ...up to 5]}}
-
-IMPORTANT: Explicitly check for AI/web frameworks or technologies (e.g., FastAPI, LangChain, Docker, React, etc.) and MUST include them as tags if they are mentioned or implied.
-
-Primary concept (must be included): "{concept}"
-
-URL: {state.get("url", "")}
-Document Title: {state.get("document_title", "")}
-
-Content:
-{context_text}
-""",
-        max_tokens=1000
-    )
-
-    if not response_data:
-        print("❌ extract_concepts JSON parse failed, using fallback.")
-        concepts = [concept] if concept else []
-        tags = [concept] if concept else []
-    elif isinstance(response_data, dict):
-        concepts = response_data.get("concepts", [])
-        tags = response_data.get("tags", [])
-    elif isinstance(response_data, list):
-        # LLM returned a list instead of a dict — treat as concepts
-        concepts = [str(c) for c in response_data[:6]]
-        tags = concepts[:5]
-    else:
-        concepts = [concept] if concept else []
-        tags = [concept] if concept else []
-
-    return {
-        "key_concepts": concepts,
-        "tags": tags,
-        "agent_steps": [f"✅ Extracted {len(concepts)} concepts, {len(tags)} tags"],
-    }
-
-
-# ── Node 7: Generate metadata ─────────────────────────────────────────────────
-
-async def generate_metadata(state: LinkedInState) -> dict:
-    """Generate title + metadata for a LinkedIn post/document."""
-    import re as _re
-    import logging
-    logger = logging.getLogger(__name__)
-
-    summary   = state.get("summary", "")
-    tags      = state.get("tags", [])
-    concept   = state.get("concept") or ""
-    post_text = state.get("post_text") or ""
-    doc_title = state.get("document_title") or ""
-    url       = state.get("url") or ""
-
-    logger.warning(f"🏷️ generate_metadata — url={url[:80]}, doc_title='{doc_title}', post_text[:60]='{post_text[:60]}'")
-
-    # Always use LLM to generate an accurate title based on content context
-    content_for_title = state.get("combined_text") or post_text or summary
-    title_source = content_for_title[:2000]
-
-    response = await reasoning_llm.json(
-        prompt=f"""Generate a title for this LinkedIn post/document. Return ONLY this JSON:
-{{
-  "title": "Concise title (5-10 words) reflecting the content topic. Ignore author/company names. Focus on what the document or post is about.{(' Concept hint: ' + concept) if concept else ''}",
-  "reading_time_minutes": <integer>,
-  "importance_score": <1-10>
-}}
-Content context: {title_source}
-Tags: {tags}
-Return ONLY valid JSON.""",
-    )
-
-    try:
-        metadata = response if isinstance(response, dict) else {}
-        if not metadata:
-            metadata = {
-                "title":                (f"{concept} — LinkedIn Post" if concept else "LinkedIn Post"),
-                "reading_time_minutes": 3,
-                "importance_score":     5,
-            }
-    except Exception as e:
-        print(f"❌ generate_metadata failed: {e}")
-        metadata = {
-            "title":                (f"{concept} — LinkedIn Post" if concept else "LinkedIn Post"),
-            "reading_time_minutes": 3,
-            "importance_score":     5,
-        }
-
-    return {
-        "metadata":    metadata,
-        "agent_steps": ["✅ Metadata generated"],
-    }
-
-
-
-# ── Helper: Infer Knowledge Domain (runs inside analyze_all) ─────────────────
-
-async def _infer_domain(state: LinkedInState) -> dict:
-    """Pick the broad knowledge domain for the post."""
-    summary = state.get("summary") or ""
-    tags    = state.get("tags") or []
-    concept = state.get("concept") or ""
-
-    response = await fast_llm(
-        prompt=f"""Choose ONE knowledge domain from this list:
-Artificial Intelligence, Machine Learning, Python, System Design, SQL, Cloud Computing, DevOps, Mathematics, General
-
-Summary: {summary}
-Tags: {tags}{f', Concept: {concept}' if concept else ''}
-
-Respond with ONLY the domain name.""",
-        system="You are a knowledge domain classifier. Reply with only the domain name.",
-        max_tokens=15,
-        temperature=0,
-    )
-
-    domain = response.strip()
-    valid_domains = {"Artificial Intelligence", "Machine Learning", "Python", "System Design", "SQL", "Cloud Computing", "DevOps", "Mathematics", "General"}
-    return domain if domain in valid_domains else "General"
-
-# ── Helper: Score difficulty (runs inside analyze_all) ───────────────────────
-
-async def _score_difficulty(state: LinkedInState) -> int:
-    """Score difficulty 1-5 for an AI practitioner audience."""
-    summary  = state.get("summary", "")
-    concepts = state.get("key_concepts", [])
-
-    response = await fast_llm(
-        prompt=f"""Rate technical difficulty for an AI practitioner (1-5):
-1=Beginner, 2=Basic, 3=Intermediate, 4=Advanced, 5=Expert
-
-Summary: {summary}
-Concepts: {concepts}
-
-Reply ONLY with the digit.""",
-        system="Technical difficulty rater. Reply only with a single digit 1-5.",
-        max_tokens=5,
-        temperature=0,
-    )
-
-    for char in response.strip():
-        if char.isdigit():
-            return max(1, min(5, int(char)))
-    return 3
-
-
-# ── Node 9: Place in knowledge tree ─────────────────────────────────────────
 
 AI_CONCEPTS_LIST = [
     "Artificial Intelligence (AI)", "History of AI", "Types of AI", "Mathematics for AI",
@@ -480,78 +267,122 @@ AI_CONCEPTS_LIST = [
     "Edge AI", "Robotics and AI", "Autonomous Systems", "Internet of Things (IoT) with AI",
     "AI in Healthcare", "AI in Finance", "AI in Education", "AI in Cybersecurity",
     "AI in Software Development", "Future of AI",
-    
-    # General Software Engineering & Frameworks
     "FastAPI", "React", "Docker", "Kubernetes", "CI/CD", 
     "Production Engineering", "General Software Engineering", 
     "Backend Development", "Frontend Development", "Database Engineering",
     "Cloud Computing", "DevOps"
 ]
 
-async def _place_in_knowledge_tree(state: LinkedInState) -> str:
-    """Map to predefined taxonomy. Returns the chosen tree path."""
-    summary  = state.get("summary", "")
-    concepts = state.get("key_concepts", [])
-    tags     = state.get("tags", [])
-    concept  = state.get("concept") or ""
+# ── Node 5: Single-Pass Metadata Analysis ──────────────────────────────────
 
-    response = await fast_llm.json(
-        prompt=f"""Choose exactly ONE entry from ALLOWED_CONCEPTS that best matches this content.
-IMPORTANT: You MUST choose the most SPECIFIC category possible. Do NOT choose broad categories like "Artificial Intelligence (AI)" unless absolutely no other specific category fits.
+async def analyze_post(state: LinkedInState) -> dict:
+    """
+    Combined LLM Call (fast_llm: gemini-3.1-flash-lite) to extract ALL metadata at once:
+    - Summary, Tags, Concepts, Title, Domain, Difficulty, Tree, QnA detection
+    """
+    import json
+    
+    if state.get("error"):
+        return {}
 
-Return ONLY: {{"tree_path": "<exact entry>"}}
+    concept = state.get("concept") or ""
+    has_attachment = bool(state.get("downloaded_files"))
+    post_text = state.get("post_text") or ""
+    combined_text = state.get("combined_text") or post_text
 
-ALLOWED_CONCEPTS: {', '.join(AI_CONCEPTS_LIST)}
+    # Title extraction context
+    title_source = combined_text[:2000]
 
-Summary: {summary}
-Tags: {tags}
-Concepts: {concepts}
-User concept hint: {concept}
+    # For posts WITH attachments, summarizing from the post caption is better.
+    if has_attachment and post_text:
+        summary_content = post_text
+    else:
+        summary_content = combined_text
 
-Return ONLY valid JSON.""",
-        max_tokens=400
-    )
+    prompt = f"""You are an expert technical knowledge extractor. Analyze this LinkedIn post and extract all required metadata into a SINGLE JSON object.
+
+Content Context for Title: {title_source}
+Content for Analysis: {summary_content[:4000]}
+Primary Concept (hint): {concept}
+
+Return ONLY this EXACT JSON structure:
+{{
+  "title": "Concise title (5-10 words). Ignore author/company names.",
+  "summary": "Specific, technical one-sentence summary of WHAT the post/document covers.",
+  "key_concepts": ["concept1", "concept2", ...up to 6],
+  "tags": ["tag1", ...up to 5. MUST include AI/web frameworks if mentioned],
+  "reading_time_minutes": <int>,
+  "importance_score": <1-10>,
+  "knowledge_domain": "Must be one of: Artificial Intelligence, Machine Learning, Python, System Design, SQL, Cloud Computing, DevOps, Mathematics, General",
+  "difficulty": <1-5 digit, where 1=Beginner, 5=Expert>,
+  "knowledge_tree": "Must be one of the ALLOWED_CONCEPTS (pick most specific)",
+  "is_interview_qna": <boolean: true if content shares interview questions or a guide>
+}}
+
+ALLOWED_CONCEPTS for knowledge_tree: {', '.join(AI_CONCEPTS_LIST)}
+"""
 
     try:
-        if isinstance(response, dict):
-            chosen = response.get("tree_path", "")
-        else:
-            chosen = ""
-        if chosen not in AI_CONCEPTS_LIST:
-            print(f"⚠️ Invalid taxonomy chosen: {chosen}. Falling back to AI.")
-            chosen = "Artificial Intelligence (AI)"
+        response = await fast_llm.json(
+            prompt=prompt + "\n\nSystem: You are a data extraction API. Output strictly valid JSON matching the schema.",
+            max_tokens=1500
+        )
+        
+        metadata = response if isinstance(response, dict) else {}
     except Exception as e:
-        print(f"⚠️ Error parsing taxonomy: {e}. Falling back to AI.")
-        chosen = "Artificial Intelligence (AI)"
-    return chosen
+        print(f"❌ analyze_post failed: {e}")
+        metadata = {}
+
+    # Defaults in case LLM missed fields
+    title = metadata.get("title") or (f"{concept} — LinkedIn Post" if concept else "LinkedIn Post")
+    summary = metadata.get("summary") or "No summary generated."
+    key_concepts = metadata.get("key_concepts") or ([concept] if concept else [])
+    tags = metadata.get("tags") or ([concept] if concept else [])
+    domain = metadata.get("knowledge_domain") or "General"
+    difficulty = metadata.get("difficulty") or 3
+    tree = metadata.get("knowledge_tree") or "Artificial Intelligence (AI)"
+    is_qna = bool(metadata.get("is_interview_qna", False))
+
+    if tree not in AI_CONCEPTS_LIST:
+        tree = "Artificial Intelligence (AI)"
+
+    return {
+        "metadata": {
+            "title": title,
+            "reading_time_minutes": metadata.get("reading_time_minutes", 3),
+            "importance_score": metadata.get("importance_score", 5),
+        },
+        "summary": summary,
+        "key_concepts": key_concepts,
+        "tags": tags,
+        "knowledge_domain": domain,
+        "difficulty": difficulty,
+        "knowledge_tree": tree,
+        "is_interview_qna": is_qna,
+        "agent_steps": [
+            "✅ Single-pass metadata analysis complete",
+            f"📁 Domain: {domain}",
+            f"✅ Difficulty: {difficulty}/5",
+            f"✅ Tree: {tree}",
+        ]
+    }
 
 
+# ── Node 6: Extract QnA Pairs (Conditional) ──────────────────────────────────
 
-async def _detect_and_extract_qna(state: LinkedInState) -> tuple[bool, list]:
-    """Detect QnA and extract pairs if applicable. Returns (is_qna, qna_pairs)."""
-    summary = state.get("summary", "")
-    post_text = state.get("post_text") or ""
+async def extract_qna_pairs(state: LinkedInState) -> dict:
+    """
+    Called ONLY if is_interview_qna is True.
+    Uses reasoning_llm (gemini-3.6-flash) for deep QnA extraction.
+    """
+    if not state.get("is_interview_qna"):
+        return {"qna_pairs": [], "agent_steps": []}
 
-    response = await fast_llm.json(
-        prompt=f"""You must determine if this content is related to Interview Questions.
-If the text contains interview questions, OR if the text explicitly states it is sharing an Interview Guide, Interview Questions, or preparing for interviews, return {{"is_interview_qna": true}}.
-Otherwise return {{"is_interview_qna": false}}.
-
-Summary: {summary}
-Content sample: {post_text[:1500]}
-""",
-        max_tokens=50
-    )
-    is_qna = bool(response.get("is_interview_qna", False))
-
-    if not is_qna:
-        return is_qna, []
-
-    # Extract QnA pairs strictly from the post text, bypassing the huge PDF attachment.
-    # If the questions are in the PDF, the user will just read the PDF using the frontend's PDF viewer.
+    import json
+    
+    # We strictly extract questions from post text, bypassing heavy PDF scans.
     extraction_content = state.get("post_text") or ""
-
-    # Extract QnA pairs
+    
     qna_prompt = f"""You are an expert Principal AI Engineer conducting a senior technical interview.
 Extract ONLY REAL, TECHNICAL interview questions from the text. 
 IMPORTANT: 
@@ -563,7 +394,7 @@ For each valid question, extract:
 1. "context": specific background scenario. MUST be strictly empty ("") unless the text provides a hypothetical situation.
 2. "q": the exact question
 3. "a": answer from text — reformat with bullet points/bold/newlines if it's a wall of text. Write a high-quality answer if missing.
-4. "topic": EXACTLY ONE from this full list (pick the MOST SPECIFIC match — e.g. "AI Memory" for memory questions, "AI Agents" for agent questions, not a broad category): {', '.join(AI_CONCEPTS_LIST)}
+4. "topic": EXACTLY ONE from this full list (pick the MOST SPECIFIC match): {', '.join(AI_CONCEPTS_LIST)}
 5. "keywords": 4-8 searchable keywords
 
 Return ONLY a valid JSON array:
@@ -572,66 +403,34 @@ Return ONLY a valid JSON array:
 Text:
 {extraction_content}"""
 
-    qna_response = await reasoning_llm(
-        prompt=qna_prompt,
-        system="Expert interview question extractor. Return valid JSON array only.",
-        temperature=0,
-        max_tokens=8000,
-    )
     try:
+        qna_response = await reasoning_llm(
+            prompt=qna_prompt,
+            system="Expert interview question extractor. Return valid JSON array only.",
+            temperature=0,
+            max_tokens=8000,
+        )
+        
         import re
-        match = re.search(r'\[\s*\{.*\}\s*\]', qna_response, re.DOTALL)
-        qna_clean = match.group(0) if match else qna_response.replace("```json", "").replace("```", "").strip()
+        match = re.search(r'\[\\s*\\{.*\\}\\s*\]', qna_response, re.DOTALL)
+        qna_clean = match.group(0) if match else qna_response.replace("`json", "").replace("`", "").strip()
         qna_pairs = json.loads(qna_clean)
+        
         if isinstance(qna_pairs, list):
             for pair in qna_pairs:
                 ctx = pair.pop("context", "").strip()
-                # Ignore generic/invented contexts from the LLM
                 if ctx and ctx.lower() not in ["none", "n/a", "null", "general", "interview", "general context"]:
                     pair["q"] = f"**Situation:** {ctx}\n\n**Question:** {pair['q']}"
-            return True, qna_pairs
+            
+            return {
+                "is_interview_qna": len(qna_pairs) > 0,
+                "qna_pairs": qna_pairs,
+                "agent_steps": [f"✅ Interview QnA extracted ({len(qna_pairs)} pairs)"] if len(qna_pairs) > 0 else []
+            }
     except Exception as e:
         print("Failed to parse QnA pairs:", e)
-    return True, []
-
-
-# ── Node: Parallel analysis (domain + difficulty + tree + qna) ────────────────
-
-async def analyze_all(state: LinkedInState) -> dict:
-    """
-    Runs four independent analyses in parallel via asyncio.gather():
-      • infer knowledge domain
-      • score difficulty
-      • place in knowledge tree
-      • detect interview QnA (+ extract pairs if needed)
-    """
-    domain_task   = _infer_domain(state)
-    diff_task     = _score_difficulty(state)
-    tree_task     = _place_in_knowledge_tree(state)
-    qna_task      = _detect_and_extract_qna(state)
-
-    domain, difficulty, tree_path, (is_qna, qna_pairs) = await asyncio.gather(
-        domain_task, diff_task, tree_task, qna_task
-    )
-
-    is_qna = is_qna and len(qna_pairs) > 0
-
-    steps = [
-        f"📁 Domain: {domain}",
-        f"✅ Difficulty: {difficulty}/5",
-        f"✅ Tree: {tree_path}",
-    ]
-    if is_qna:
-        steps.append(f"✅ Interview QnA detected ({len(qna_pairs)} pairs)")
-
-    return {
-        "knowledge_domain": domain,
-        "difficulty":       difficulty,
-        "knowledge_tree":   tree_path,
-        "is_interview_qna": is_qna,
-        "qna_pairs":        qna_pairs,
-        "agent_steps":      steps,
-    }
+        
+    return {"is_interview_qna": False, "qna_pairs": [], "agent_steps": []}
 
 
 # ── Build the LinkedIn subgraph ───────────────────────────────────────────────
@@ -643,20 +442,16 @@ def build_linkedin_subgraph() -> StateGraph:
     graph.add_node("extract_post",         extract_post_content)
     graph.add_node("download_attachments", download_attachments)
     graph.add_node("build_combined_text",  build_combined_text)
-    graph.add_node("summarize",            summarize_content)
-    graph.add_node("extract_concepts",     extract_key_concepts)
-    graph.add_node("generate_metadata",    generate_metadata)
-    graph.add_node("analyze_all",          analyze_all)   # parallel: domain+diff+tree+qna
+    graph.add_node("analyze_post",         analyze_post)
+    graph.add_node("extract_qna_pairs",    extract_qna_pairs)
 
     graph.set_entry_point("fetch_page")
     graph.add_edge("fetch_page",           "extract_post")
     graph.add_edge("extract_post",         "download_attachments")
     graph.add_edge("download_attachments", "build_combined_text")
-    graph.add_edge("build_combined_text",  "summarize")
-    graph.add_edge("summarize",            "extract_concepts")
-    graph.add_edge("extract_concepts",     "generate_metadata")
-    graph.add_edge("generate_metadata",    "analyze_all")
-    graph.add_edge("analyze_all",          END)
+    graph.add_edge("build_combined_text",  "analyze_post")
+    graph.add_edge("analyze_post",         "extract_qna_pairs")
+    graph.add_edge("extract_qna_pairs",    END)
 
     return graph
 
