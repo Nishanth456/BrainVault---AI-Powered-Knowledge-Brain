@@ -34,8 +34,8 @@ async def search_content(state: LearningPathState) -> LearningPathState:
 
 async def group_and_order(state: LearningPathState) -> LearningPathState:
     """
-    Single LLM call: group content by concept, order progressively, detect gaps.
-    Uses Groq llama-3.3-70b-versatile for best reasoning quality.
+    Single LLM call: Generate an overall roadmap (a list of sections and module definitions)
+    using the reasoning LLM.
     """
     results = state["raw_results"]
     if not results:

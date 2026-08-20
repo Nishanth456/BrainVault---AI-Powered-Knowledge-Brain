@@ -245,10 +245,10 @@ async def build_combined_text(state: LinkedInState) -> dict:
     }
 
 
-# ── Node 5: Summarize with Groq GPT-OSS 20B ─────────────────────────────────
+# ── Node 5: Summarize ────────────────────────────────────────────────────────
 
 async def summarize_content(state: LinkedInState) -> dict:
-    """LLM Call — Groq GPT-OSS 20B — generate a single short sentence summary."""
+    """LLM Call — generate a single short sentence summary."""
     if state.get("error"):
         return {}
 
@@ -304,13 +304,13 @@ Content:
 # ── Node 6: Extract concepts + tags ──────────────────────────────────────────
 
 async def extract_key_concepts(state: LinkedInState) -> dict:
-    """LLM Call — Groq GPT-OSS 20B — extract concepts and tags."""
+    """LLM Call — extract concepts and tags."""
     content = state.get("combined_text") or state.get("post_text") or ""
     concept = state.get("concept") or ""
 
     context_text = content[:4000] if content else f"Topic: {concept}"
 
-    response = await fast_llm(
+    response_data = await fast_llm.json(
         prompt=f"""Extract key concepts and tags from this content.
 Return ONLY a JSON object:
 {{"concepts": ["concept1", ...up to 6], "tags": ["tag1", ...up to 5]}}
@@ -324,27 +324,22 @@ Document Title: {state.get("document_title", "")}
 
 Content:
 {context_text}
-
-Return ONLY valid JSON.""",
-        system="You are a technical content analyst. Return only valid JSON.",
-        temperature=0.1,
+""",
+        max_tokens=1000
     )
 
-    try:
-        clean = response.strip()
-        if clean.startswith("```json"):
-            clean = clean[7:]
-        if clean.startswith("```"):
-            clean = clean[3:]
-        if clean.endswith("```"):
-            clean = clean[:-3]
-        clean = clean.strip()
-        data = json.loads(clean)
-        concepts = data.get("concepts", [])
-        tags = data.get("tags", [])
-    except Exception as e:
-        print(f"❌ extract_concepts JSON parse failed: {e}\nRaw response:\n{response}")
-        # Fallback: use the concept as at least one tag
+    if not response_data:
+        print("❌ extract_concepts JSON parse failed, using fallback.")
+        concepts = [concept] if concept else []
+        tags = [concept] if concept else []
+    elif isinstance(response_data, dict):
+        concepts = response_data.get("concepts", [])
+        tags = response_data.get("tags", [])
+    elif isinstance(response_data, list):
+        # LLM returned a list instead of a dict — treat as concepts
+        concepts = [str(c) for c in response_data[:6]]
+        tags = concepts[:5]
+    else:
         concepts = [concept] if concept else []
         tags = [concept] if concept else []
 
@@ -389,9 +384,13 @@ Return ONLY valid JSON.""",
     )
 
     try:
-        metadata = response
-        if not isinstance(metadata, dict):
-            metadata = {}
+        metadata = response if isinstance(response, dict) else {}
+        if not metadata:
+            metadata = {
+                "title":                (f"{concept} — LinkedIn Post" if concept else "LinkedIn Post"),
+                "reading_time_minutes": 3,
+                "importance_score":     5,
+            }
     except Exception as e:
         print(f"❌ generate_metadata failed: {e}")
         metadata = {
@@ -496,7 +495,7 @@ async def _place_in_knowledge_tree(state: LinkedInState) -> str:
     tags     = state.get("tags", [])
     concept  = state.get("concept") or ""
 
-    response = await reasoning_llm.json(
+    response = await fast_llm.json(
         prompt=f"""Choose exactly ONE entry from ALLOWED_CONCEPTS that best matches this content.
 IMPORTANT: You MUST choose the most SPECIFIC category possible. Do NOT choose broad categories like "Artificial Intelligence (AI)" unless absolutely no other specific category fits.
 
@@ -510,11 +509,14 @@ Concepts: {concepts}
 User concept hint: {concept}
 
 Return ONLY valid JSON.""",
-        max_tokens=60
+        max_tokens=400
     )
 
     try:
-        chosen = response.get("tree_path", "")
+        if isinstance(response, dict):
+            chosen = response.get("tree_path", "")
+        else:
+            chosen = ""
         if chosen not in AI_CONCEPTS_LIST:
             print(f"⚠️ Invalid taxonomy chosen: {chosen}. Falling back to AI.")
             chosen = "Artificial Intelligence (AI)"
@@ -528,27 +530,25 @@ Return ONLY valid JSON.""",
 async def _detect_and_extract_qna(state: LinkedInState) -> tuple[bool, list]:
     """Detect QnA and extract pairs if applicable. Returns (is_qna, qna_pairs)."""
     summary = state.get("summary", "")
-    # Only use the post text for QnA extraction, not the combined text (which includes the PDF)
-    # The user wants attachments to be saved as regular document tiles, but if the user typed
-    # questions directly in the post text, those should be extracted.
-    content = state.get("post_text") or ""
+    post_text = state.get("post_text") or ""
 
-    response = await fast_llm(
-        prompt=f"""Determine if this content is primarily a list of Interview Questions and Answers.
-Return ONLY: {{"is_interview_qna": true}} or {{"is_interview_qna": false}}
+    response = await fast_llm.json(
+        prompt=f"""You must determine if this content is related to Interview Questions.
+If the text contains interview questions, OR if the text explicitly states it is sharing an Interview Guide, Interview Questions, or preparing for interviews, return {{"is_interview_qna": true}}.
+Otherwise return {{"is_interview_qna": false}}.
+
 Summary: {summary}
-Content sample: {content[:1000]}""",
-        system="Classifier. Return only valid JSON.",
-        max_tokens=20,
-        temperature=0,
+Content sample: {post_text[:1500]}
+""",
+        max_tokens=50
     )
-    try:
-        is_qna = bool(json.loads(response.strip().strip("```json").strip("```")).get("is_interview_qna", False))
-    except Exception:
-        is_qna = False
+    is_qna = bool(response.get("is_interview_qna", False))
 
     if not is_qna:
         return is_qna, []
+
+    # Use combined_text for extraction so we can pull the actual questions from the PDF attachment
+    extraction_content = state.get("combined_text") or state.get("post_text") or ""
 
     # Extract QnA pairs
     qna_prompt = f"""You are an expert Principal AI Engineer conducting a senior technical interview.
@@ -562,14 +562,14 @@ For each valid question, extract:
 1. "context": specific background scenario. MUST be strictly empty ("") unless the text provides a hypothetical situation.
 2. "q": the exact question
 3. "a": answer from text — reformat with bullet points/bold/newlines if it's a wall of text. Write a high-quality answer if missing.
-4. "topic": EXACTLY ONE from: {', '.join(AI_CONCEPTS_LIST[:30])}... (pick closest)
+4. "topic": EXACTLY ONE from this full list (pick the MOST SPECIFIC match — e.g. "AI Memory" for memory questions, "AI Agents" for agent questions, not a broad category): {', '.join(AI_CONCEPTS_LIST)}
 5. "keywords": 4-8 searchable keywords
 
 Return ONLY a valid JSON array:
 [{{"context": "", "q": "...", "a": "...", "topic": "...", "keywords": [...]}}]
 
 Text:
-{content}"""
+{extraction_content}"""
 
     qna_response = await reasoning_llm(
         prompt=qna_prompt,

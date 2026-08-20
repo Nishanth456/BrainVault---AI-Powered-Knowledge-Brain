@@ -28,7 +28,7 @@ async def save_knowledge_item(state: BrainVaultState) -> uuid.UUID:
         inserted_items = []
 
         # ── Interview Q&A: one item per Q&A pair ────────────────────────────────
-        if qna_pairs and len(qna_pairs) > 0:
+        if qna_pairs and len(qna_pairs) > 0 and not state.get("attachments"):
             for pair in qna_pairs:
                 q_id = uuid.uuid4()
                 await db.execute(text("""

@@ -6,12 +6,14 @@ from backend.config import settings
 os.environ["GROQ_API_KEY"] = settings.GROQ_API_KEY
 if settings.GEMINI_API_KEY:
     os.environ["GEMINI_API_KEY"] = settings.GEMINI_API_KEY
+if settings.OPENROUTER_API_KEYS:
+    # OPENROUTER_API_KEYS may be a comma-separated list; LiteLLM expects a single key
+    os.environ["OPENROUTER_API_KEY"] = settings.OPENROUTER_API_KEYS.split(",")[0].strip()
 
 
 async def detect_input_type(raw_input: str) -> str:
     """
     LLM Call #1 (the ONLY real LLM call in Phase 0).
-    Uses Groq GPT-OSS 20B (openai/gpt-oss-20b) — fast and capable.
     Returns: 'linkedin' | 'blog' | 'pdf' | 'research' | 'github' | 'youtube' | 'course' | 'plaintext'
     """
     raw_input_lower = raw_input.strip().lower()
@@ -72,67 +74,32 @@ Respond with ONLY the category name, nothing else."""
 
 async def call_llm(
     prompt: str,
-    model: str = "groq/llama-3.3-70b-versatile",
+    model: str,
     system: str = "You are a helpful AI assistant.",
     temperature: float = 0.1,
     max_tokens: int = 1000,
-    fallback_model: str = None,  # User requested to disable Gemini fallback temporarily
     response_format: dict = None
 ) -> str:
-    """
-    Unified LLM call with automatic fallback.
-    Default: Groq 70B
-    """
     kwargs = {}
     if response_format:
         kwargs["response_format"] = response_format
 
-    try:
-        if model in ["nvidia/nemotron-3-super-120b-a12b:free", "nvidia/nemotron-3-nano-30b-a3b:free"]:
-            from openai import AsyncOpenAI
-            
-            keys = [k.strip() for k in settings.OPENROUTER_API_KEYS.split(",") if k.strip()]
-            if not keys:
-                raise ValueError("No OpenRouter API keys configured in environment.")
+    # Gemini models can infinite-loop with temperature < 1.0
+    if "gemini" in model and temperature < 1.0:
+        temperature = 1.0
 
-            last_err = None
-            for key in keys:
-                try:
-                    client = AsyncOpenAI(
-                        api_key=key,
-                        base_url="https://openrouter.ai/api/v1",
-                    )
-                    response = await client.chat.completions.create(
-                        model=model,
-                        messages=[
-                            {"role": "system", "content": system},
-                            {"role": "user", "content": prompt}
-                        ],
-                        temperature=temperature,
-                        max_tokens=max_tokens,
-                        **kwargs
-                    )
-                    break  # Success!
-                except Exception as e:
-                    print(f"⚠️ OpenRouter key {key[:10]}... failed for call_llm: {e}")
-                    last_err = e
-            else:
-                # If we exhausted all keys without a break
-                if last_err:
-                    raise last_err
-                raise Exception("All OpenRouter API keys failed.")
-        else:
-            response = await acompletion(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=temperature,
-                max_tokens=max_tokens,
-                num_retries=3,
-                **kwargs
-            )
+    try:
+        response = await acompletion(
+            model=model,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=temperature,
+            max_tokens=max_tokens,
+            num_retries=3,
+            **kwargs
+        )
         raw_content = response.choices[0].message.content
         content = raw_content.strip() if raw_content else ""
         # Strip <think>...</think> blocks from reasoning models (like Qwen)
@@ -146,62 +113,23 @@ async def call_llm(
 
 async def stream_rag_response(system: str, prompt: str):
     """
-    Stream a Groq response token-by-token for RAG.
-    Falls back to Gemini if Groq is unavailable.
+    Stream a response token-by-token for RAG.
     Yields text chunks as they arrive.
     """
-    models = [
-        "nvidia/nemotron-3-nano-30b-a3b:free",
-        "groq/openai/gpt-oss-20b",
-        "groq/qwen/qwen3.6-27b",
-        "gemini/gemini-2.0-flash",
-    ]
+    models = ["gemini/gemini-3.6-flash"]
     last_error = None
     for model in models:
         try:
-            if model in ["nvidia/nemotron-3-super-120b-a12b:free", "nvidia/nemotron-3-nano-30b-a3b:free"]:
-                from openai import AsyncOpenAI
-                
-                keys = [k.strip() for k in settings.OPENROUTER_API_KEYS.split(",") if k.strip()]
-                if not keys:
-                    raise ValueError("No OpenRouter API keys configured in environment.")
-                
-                key_last_err = None
-                for key in keys:
-                    try:
-                        client = AsyncOpenAI(
-                            api_key=key,
-                            base_url="https://openrouter.ai/api/v1",
-                        )
-                        response = await client.chat.completions.create(
-                            model=model,
-                            messages=[
-                                {"role": "system", "content": system},
-                                {"role": "user", "content": prompt}
-                            ],
-                            temperature=0.2,
-                            max_tokens=2000,
-                            stream=True,
-                        )
-                        break
-                    except Exception as e:
-                        print(f"⚠️ OpenRouter key {key[:10]}... failed for stream_rag_response: {e}")
-                        key_last_err = e
-                else:
-                    if key_last_err:
-                        raise key_last_err
-                    raise Exception("All OpenRouter API keys failed.")
-            else:
-                response = await acompletion(
-                    model=model,
-                    messages=[
-                        {"role": "system", "content": system},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.2,
-                    max_tokens=2000,
-                    stream=True,
-                )
+            response = await acompletion(
+                model=model,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.2,
+                max_tokens=2000,
+                stream=True,
+            )
             
             async for chunk in response:
                 delta = chunk.choices[0].delta.content if hasattr(chunk.choices[0].delta, 'content') else chunk.choices[0].get("delta", {}).get("content")
@@ -219,7 +147,7 @@ async def stream_rag_response(system: str, prompt: str):
 
 async def call_llm_json(
     prompt: str,
-    model: str = "groq/llama-3.3-70b-versatile",
+    model: str,
     max_tokens: int = 1500,
 ) -> dict:
     """
@@ -230,33 +158,51 @@ async def call_llm_json(
     import re as _re
     import json as _json
 
-    raw = await call_llm(
-        prompt=prompt,
-        model=model,
-        system="You are a helpful AI assistant. Always respond with valid JSON only. Do not add any commentary outside the JSON.",
-        max_tokens=max_tokens,
-    )
-    # Attempt to extract JSON block using regex if there's preamble text
-    match = _re.search(r'(\{.*\}|\[.*\])', raw, _re.DOTALL)
-    if match:
-        raw = match.group(0)
-
-    try:
-        return _json.loads(raw)
-    except _json.JSONDecodeError as e:
-        # One last fallback attempt if it's still failing (sometimes there are weird characters)
+    for attempt in range(4):
         try:
-             import ast
-             parsed = ast.literal_eval(raw)
-             if isinstance(parsed, (dict, list)):
-                 return parsed
-        except Exception:
-             pass
-        print(f"⚠️ call_llm_json parse failed: {e}\nRaw output (first 500 chars): {raw[:500]}")
-        return {}
-    except Exception as e:
-        print(f"⚠️ call_llm_json parse failed: {e}\nRaw output (first 500 chars): {raw[:500]}")
-        return {}
+            raw = await call_llm(
+                prompt=prompt,
+                model=model,
+                system="You are a helpful AI assistant. Always respond with valid JSON only. Do not add any commentary outside the JSON.",
+                max_tokens=max_tokens,
+                response_format={"type": "json_object"}
+            )
+            # Attempt to extract JSON block using regex if there's preamble text
+            match = _re.search(r'(\{.*\}|\[.*\])', raw, _re.DOTALL)
+            if match:
+                raw = match.group(0)
+
+            try:
+                parsed = _json.loads(raw)
+                return parsed
+            except _json.JSONDecodeError:
+                import ast
+                parsed = ast.literal_eval(raw)
+                if isinstance(parsed, (dict, list)):
+                    return parsed
+                raise ValueError("ast.literal_eval failed to return dict or list")
+        except Exception as e:
+            print(f"⚠️ call_llm_json attempt {attempt+1} parse/eval failed with {model}: {e}\nRaw output: {raw[:100]}...")
+            
+    # Fallback to gemini 3.6 flash if we exhausted attempts
+    if model != "gemini/gemini-3.6-flash":
+        print(f"⚠️ Exhausted attempts with {model}. Retrying with gemini/gemini-3.6-flash...")
+        try:
+            fallback_raw = await call_llm(
+                prompt=prompt,
+                model="gemini/gemini-3.6-flash",
+                system="You are a helpful AI assistant. Always respond with valid JSON only. Do not add any commentary outside the JSON.",
+                max_tokens=max_tokens,
+                response_format={"type": "json_object"}
+            )
+            fallback_match = _re.search(r'(\{.*\}|\[.*\])', fallback_raw, _re.DOTALL)
+            if fallback_match:
+                fallback_raw = fallback_match.group(0)
+            return _json.loads(fallback_raw)
+        except Exception as fallback_e:
+            print(f"⚠️ call_llm_json fallback failed: {fallback_e}")
+
+    return {}
 
 class LLMClient:
     """Wrapper to maintain standardized LLM models and provide a clean async interface."""
@@ -271,8 +217,5 @@ class LLMClient:
 
 
 # Single Source of Truth for Models
-# fast_llm = LLMClient("openrouter/nvidia/nemotron-3-nano-30b-a3b:free")
-# reasoning_llm = LLMClient("openrouter/nvidia/nemotron-4-340b-instruct")
-
-fast_llm = LLMClient("groq/llama-3.1-8b-instant")
-reasoning_llm = LLMClient("groq/llama-3.3-70b-versatile")
+fast_llm = LLMClient("gemini/gemini-3.1-flash-lite")
+reasoning_llm = LLMClient("gemini/gemini-3.6-flash")
