@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  output: process.env.VERCEL ? undefined : "standalone",
   typescript: {
     // Pre-existing type errors from dev — skip during build to unblock Docker
     ignoreBuildErrors: true,
