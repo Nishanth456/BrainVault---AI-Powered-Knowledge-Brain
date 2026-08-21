@@ -47,14 +47,21 @@ async def run_ingestion_pipeline_async(job_id: str, raw_input: str, concept: str
 
     # Stream langgraph execution node by node
     try:
-        async for event in master_graph.astream(initial_state, config=config, stream_mode="updates"):
-            for node, output in event.items():
-                if "agent_steps" in output and output["agent_steps"]:
-                    for step in output["agent_steps"]:
-                        await r.publish(f"job:{job_id}:steps", step)
-        
-        # Publish stats refresh event when done
-        await r.publish("brainvault:events", json.dumps({"type": "stats_refresh"}))
+        try:
+            async for event in master_graph.astream(initial_state, config=config, stream_mode="updates"):
+                for node, output in event.items():
+                    if "agent_steps" in output and output["agent_steps"]:
+                        for step in output["agent_steps"]:
+                            await r.publish(f"job:{job_id}:steps", step)
+            
+            # Publish stats refresh event when done
+            await r.publish("brainvault:events", json.dumps({"type": "stats_refresh"}))
+        except Exception as e:
+            import traceback
+            tb = traceback.format_exc()
+            print(f"Ingestion pipeline failed for job {job_id}:\n{tb}")
+            from backend.services.storage_service import mark_job_failed
+            await mark_job_failed(job_id, str(e))
     finally:
         await r.aclose()
 
