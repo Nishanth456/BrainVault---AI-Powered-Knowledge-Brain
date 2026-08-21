@@ -51,7 +51,7 @@ export function RepoCard({ item, onDelete }: { item: RepoItem; onDelete?: (id: s
 
     setIsDeleting(true)
     try {
-      const res = await fetch(`http://localhost:8000/api/knowledge/${item.id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/knowledge/${item.id}`, {
         method: "DELETE"
       })
       if (res.ok) {

@@ -29,7 +29,7 @@ export default function CertificationsPage() {
   const fetchItems = () => {
     setLoading(true)
     setError(false)
-    fetch("http://localhost:8000/api/knowledge/certifications")
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/knowledge/certifications`)
       .then(r => {
         if (!r.ok) throw new Error("API error")
         return r.json()

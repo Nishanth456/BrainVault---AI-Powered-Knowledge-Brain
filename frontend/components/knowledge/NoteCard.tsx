@@ -47,7 +47,7 @@ export function NoteCard({ item, onDelete }: NoteCardProps) {
   const handleSave = async () => {
     setSaving(true)
     try {
-      await fetch(`http://localhost:8000/api/knowledge/${item.id}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/knowledge/${item.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ raw_content: editValue }),

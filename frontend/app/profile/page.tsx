@@ -10,7 +10,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
-const API = "http://localhost:8000/api/profile"
+const API = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/profile`
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

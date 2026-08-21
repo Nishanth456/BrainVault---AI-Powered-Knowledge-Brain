@@ -29,7 +29,7 @@ export default function CoursesPage() {
   const fetchItems = () => {
     setLoading(true)
     setError(false)
-    fetch("http://localhost:8000/api/knowledge/courses")
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/knowledge/courses`)
       .then(r => {
         if (!r.ok) throw new Error("API error")
         return r.json()

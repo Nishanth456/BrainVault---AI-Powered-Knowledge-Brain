@@ -20,7 +20,7 @@ export function ExportButton({ attachments }: { attachments?: Attachment[] }) {
     const att = attachments[0]
     if (!att.minio_path) return
 
-    const url = `http://localhost:8000/api/files/${att.minio_path}`
+    const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/files/${att.minio_path}`
     
     const a = document.createElement("a")
     a.href = url

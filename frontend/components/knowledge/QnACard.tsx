@@ -149,7 +149,7 @@ export function QnACard({ item, onDelete }: QnACardProps) {
         return (
           <div className="px-5 pb-4">
             <a
-              href={`http://localhost:8000/api/files/${encodeURIComponent(att.minio_path)}`}
+              href={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/files/${encodeURIComponent(att.minio_path)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2.5 px-3 py-2 rounded-lg

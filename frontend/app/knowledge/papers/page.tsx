@@ -10,7 +10,7 @@ export default function PapersPage() {
   const fetchItems = async (filters: Record<string, string>, sort: string) => {
     const params = new URLSearchParams(filters)
     params.set("sort", sort)
-    const res = await fetch(`http://localhost:8000/api/knowledge/papers?${params.toString()}`)
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/knowledge/papers?${params.toString()}`)
     if (!res.ok) throw new Error("Failed to fetch")
     const data = await res.json()
     return Array.isArray(data) ? data : (data.items || [])
