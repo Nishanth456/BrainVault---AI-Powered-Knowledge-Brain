@@ -15,7 +15,14 @@ from backend.services.embedding import generate_embedding
 import uuid
 import re
 
-client = QdrantClient(host=settings.QDRANT_HOST, port=settings.QDRANT_PORT, timeout=30.0)
+if settings.ENV_MODE == "cloud":
+    client = QdrantClient(
+        url=settings.QDRANT_HOST,
+        api_key=settings.QDRANT_API_KEY,
+        timeout=30.0
+    )
+else:
+    client = QdrantClient(host=settings.QDRANT_HOST, port=settings.QDRANT_PORT, timeout=30.0)
 
 
 def ensure_collection():

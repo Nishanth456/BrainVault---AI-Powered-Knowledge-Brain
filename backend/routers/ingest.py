@@ -2,7 +2,7 @@
 ingest.py — Ingestion API endpoints.
 Phase 1: adds GET /ingest/{job_id}/stream — real SSE progress stream.
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
@@ -27,11 +27,12 @@ class IngestResponse(BaseModel):
 
 
 @router.post("/ingest", response_model=IngestResponse)
-async def ingest(request: IngestRequest, db: AsyncSession = Depends(get_db)):
+async def ingest(request: IngestRequest, background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):
     """
-    Accept user input, create a job record, queue the Celery task.
-    Returns immediately — pipeline runs in background via Celery.
+    Accept user input, create a job record, queue the task.
+    Uses Celery locally, or FastAPI BackgroundTasks in cloud mode.
     """
+    from backend.config import settings
     job_id = str(uuid.uuid4())
 
     await db.execute(text("""
@@ -40,7 +41,15 @@ async def ingest(request: IngestRequest, db: AsyncSession = Depends(get_db)):
     """), {"id": job_id, "raw_input": request.raw_input})
     await db.commit()
 
-    run_ingestion_pipeline.delay(job_id, request.raw_input, request.concept)
+    if settings.ENV_MODE == "cloud":
+        from backend.tasks.ingestion import run_ingestion_pipeline_async
+        import asyncio
+        # We need to wrap it in a function that creates a new event loop or runs in the same loop.
+        # Since run_ingestion_pipeline_async is an async function, FastAPI can run it directly:
+        background_tasks.add_task(run_ingestion_pipeline_async, job_id, request.raw_input, request.concept)
+    else:
+        from backend.tasks.ingestion import run_ingestion_pipeline
+        run_ingestion_pipeline.delay(job_id, request.raw_input, request.concept)
 
     return IngestResponse(
         job_id=job_id,
