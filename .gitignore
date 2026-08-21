@@ -85,3 +85,6 @@ backend/*.session.pkl
 # ── Project Specific Folders ──────────────────────────────────────────────────
 phases/
 documentation/deployment_plan.md
+documentation/database_passoword.txt
+deploy.bat
+secrets.txt
